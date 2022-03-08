@@ -1,0 +1,100 @@
+#########################
+#
+#   Dagify script
+#
+#########################
+
+The Dagify script will generate a DAG file suitable for execution in Dagster program from a Dimacs formatted CNF file.
+
+the minimal invocation is:
+
+--- python dagify.py <CNF_FILE> <DAG_FILE> <number_of_nodes>
+
+where the CNF_FILE is the name of the dimacs formatted CNF file input into the script
+The DAG_FILE is the name of the dag file to be generated
+and number_of_nodes is the number of nodes in the resulting dag file.
+
+The computation will take some time, and the output dag file can be passed together with the respective CNF file into the Dagster solver
+
+
+Requirements
+------------
+
+The Dagify script is a python script and requires a python environment in which there is installed the libraries:
+
+* networkx
+* click
+* tqdm
+* PIL (optional for image output)
+
+
+Options
+-------
+
+There are a range of additional command line options
+
+  --icf FLOAT                     the factor by which the algorithm will
+                                  prioritise minimising incomming branches to
+                                  a node
+
+  --ocf FLOAT                     the factor by which the algorithm will
+                                  prioritise minimising outgoing branches to a
+                                  node
+
+  --continuous_reduction          is a flag that instructs dagify to do
+                                  transitive reduction in the process of
+                                  minimising the dag it tends to produce dags
+                                  which are less branching, but is slightly
+                                  more expensive computationally
+
+  --not_pass_all_data             is a flag which instructs dagify to make it
+                                  such that nodes only pass variables onwards
+                                  if future nodes need them not reccommended
+                                  for reporting of solutions X-(
+
+  --dot_output TEXT               a filename to output an image displaying the
+                                  connection graph dag structure
+
+  --image_output TEXT             a filename to output an image to, showing
+                                  the min-fill association between the
+                                  variables, hopefully problem structure
+                                  should be visible
+
+  --dag_reduction_sample_size INTEGER
+                                  is a option to specify how much to sample
+                                  for the best places to minimise when the dag
+                                  is being compacted unspecified means a
+                                  complete search, specify to create a less
+                                  perfect search at the prospect of faster dag
+                                  generation
+
+  --min_fill_sample_size INTEGER  is a option to specify how much to sample
+                                  for the best variables to eliminate in the
+                                  min-fill algorithm unspecified means a
+                                  complete search, specify to create a less
+                                  perfect dag at the prospect of faster dag
+                                  generation
+
+  --help                          Show the help message and exit.
+
+
+#########################
+#
+#   Dagify script
+#
+#########################
+
+the dag checker script will run some sanity checks to make sure that the dag corresponds to the solving of a cnf file
+the minimal invoaction is:
+
+--- python dag_checker.py <CNF_FILE> <DAG_FILE>
+
+the script will exit with either a zero or a one exit code and a message "successfull dag" if all sanity checks are passed.
+it assumes that the dag was not generated with the --not_pass_all_data option.
+
+
+
+
+
+
+
