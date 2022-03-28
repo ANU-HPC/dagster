@@ -99,7 +99,7 @@ int main(int argc, char** argv){
     print__dist__exists();
     for(auto i=starting_index; i < problem.num_clauses; i++) ADD_NO_MATTER_WHAT(i);/*********************************************************************/
 
-    problem.print__dag_file_decomposed_by_column_placements(dagfile_name.str(), problem.CANDIDATES);
+    problem.print__dag_file_decomposed_by_column_placements(dagfile_name.str(), problem.CANDIDATES, problem.CANDIDATES2);
     
     // //problem.print__dag_file(dagfile_name.str(), bisect);
     // if (!super_simple) {

@@ -26,9 +26,13 @@ If not, see <http://www.gnu.org/licenses/>.
 
 class Problem{
 public:
-  const std::vector<int> CANDIDATES{1 , 3  , 5};
+  //const std::vector<int> CANDIDATES{ 8, 10, 6, 4};//, 6, 4};//, 11}; // 13
+  //const std::vector<int> CANDIDATES2{ 6,4 };
   
-  void print__dag_file_decomposed_by_column_placements(const string&, const vector<int>& column_indexes);
+  const std::vector<int> CANDIDATES{ 8, 10, 6, 4};//, 11}; // 13
+  const std::vector<int> CANDIDATES2{ 2,9,5,7,12,14};
+  
+  void print__dag_file_decomposed_by_column_placements(const string&, const vector<int>& column_indexes, const vector<int>& column_indexes2);
   
   // PROPOSITION -- (if orientation=="VERTICAL") The token at horizontal position $index1$ is at $orientation$ location $height$
   int cnfvar(int index, int height, string orientation=string("VERTICAL"));
@@ -76,8 +80,21 @@ public:
 
   /**/
   std::set<int> set_of_clause_indexes;
+  std::set<int> set_of_clause_indexes2;
 };
 
+#define ADD_IF_TARGET_COL2(i,X,Y) {			\
+    const vector<int> candidates = problem.CANDIDATES2;	\
+  bool answer1 = false;					\
+  for (auto x : candidates ) if(X==x)answer1 = true;	\
+  bool answer2 = false;					\
+  for (auto x : candidates ) if(Y==x)answer2 = true;	\
+  if(answer2 && answer1){				\
+    problem.set_of_clause_indexes.insert(i);		\
+    problem.set_of_clause_indexes2.insert(i);		\
+  }							\
+  }							\
+	
 #define ADD_IF_TARGET_COL(i,X,Y) {			\
     const vector<int> candidates = problem.CANDIDATES;	\
   bool answer1 = false;					\
@@ -85,10 +102,12 @@ public:
   bool answer2 = false;					\
   for (auto x : candidates ) if(Y==x)answer2 = true;	\
   if(answer2 && answer1){				\
-    problem.set_of_clause_indexes.insert(i);			\
+    problem.set_of_clause_indexes2.insert(i);		\
   }							\
   }							\
-				    
-#define ADD_NO_MATTER_WHAT(i) {problem.set_of_clause_indexes.insert(i);}
+  ADD_IF_TARGET_COL2(i,X,Y)				\
+	
+			    
+#define ADD_NO_MATTER_WHAT(i) {problem.set_of_clause_indexes.insert(i);problem.set_of_clause_indexes2.insert(i);}
 
 #endif

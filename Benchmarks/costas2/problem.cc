@@ -228,12 +228,12 @@ void Problem::print__dag_file(string filename, bool bisect) {
 }
 
 
-void Problem::print__dag_file_decomposed_by_column_placements(const string& filename, const vector<int>& column_indexes)
+void Problem::print__dag_file_decomposed_by_column_placements(const string& filename, const vector<int>& column_indexes, const vector<int>& column_indexes2)
 {
   ofstream dag_file;
   dag_file.open(filename);
   dag_file << "DAG-FILE" << endl;
-  dag_file << "NODES:" << 2 << endl;
+  dag_file << "NODES:" << 3 << endl;
   dag_file << "GRAPH:" << endl;
   
   dag_file << "0->1:";
@@ -246,37 +246,80 @@ void Problem::print__dag_file_decomposed_by_column_placements(const string& file
     }
   }
   dag_file << endl;
+  dag_file << "1->2:";
+  {
+    auto _column_indexes = column_indexes2;//column_indexes;
+    //for (auto i :column_indexes2) _column_indexes.push_back(i);
+    sort(_column_indexes.begin(), _column_indexes.end());
+    for (auto i : _column_indexes) {
+      for (int j = 0 ; j < N; j++) {
+	dag_file << cnfvar(i,j);
+	if ( ( i < _column_indexes.back() )
+	     || (j<N-1) )
+	  dag_file << ",";
+      }
+    }
+  }
+  dag_file << endl;
   
   dag_file << "CLAUSES:" << endl;
   
-  ostringstream oss;
-  auto current = *set_of_clause_indexes.begin();
-  auto first_index = current;
-  for(auto i : set_of_clause_indexes){
-    if(i == current ) continue;
-    if( current + 1 == i ) {
-      current++; continue;
-    }
-    if(first_index != current){
-      oss<<first_index
-	<<"-"<<current
-	<<",";
-    }else {
+  {ostringstream oss;
+    auto current = *set_of_clause_indexes.begin();
+    auto first_index = current;
+    for(auto i : set_of_clause_indexes){
+      if(i == current ) continue;
+      if( current + 1 == i ) {
+	current++; continue;
+      }
+      if(first_index != current){
+	oss<<first_index
+	   <<"-"<<current
+	   <<",";
+      }else {
 	oss<<first_index<<",";
+      }
+      first_index = i;
+      current = i;			      
     }
-    first_index = i;
-    current = i;			      
-  }
     if(first_index != current){
       oss<<first_index
 	 <<"-"<<current;
     }else {
       oss<<first_index;
     }
-    
+    dag_file << "0:" << oss.str() << endl;
+  }
+
+  {ostringstream oss;
+    auto current = *set_of_clause_indexes2.begin();
+    auto first_index = current;
+    for(auto i : set_of_clause_indexes2){
+      if(i == current ) continue;
+      if( current + 1 == i ) {
+	current++; continue;
+      }
+      if(first_index != current){
+	oss<<first_index
+	   <<"-"<<current
+	   <<",";
+      }else {
+	oss<<first_index<<",";
+      }
+      first_index = i;
+      current = i;			      
+    }
+    if(first_index != current){
+      oss<<first_index
+	 <<"-"<<current;
+    }else {
+      oss<<first_index;
+    }
+    dag_file << "1:" << oss.str() << endl;
+  }
   
-  dag_file << "0:" << oss.str() << endl;
-  dag_file << "1:" << 0 << "-" << num_clauses-1 << endl;  
+  
+  dag_file << "2:" << 0 << "-" << num_clauses-1 << endl;  
   dag_file << "REPORTING:" << endl;
   dag_file << "1-" << (N*N) << endl;
 }
