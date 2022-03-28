@@ -21,6 +21,22 @@ The following packages are required for the full compilation of Dagster:
  - the [CUDD library](https://davidkebo.com/cudd)
  - [Google Testing library 'googletest'](https://github.com/google/googletest) - for running tests
 
+
+## Using Docker
+
+This project can be run using Docker, as follows:
+
+```bash
+docker run -it --mount src=`pwd`,target=/home/appuser,type=bind milthorpe/async-neighbours
+```
+
+#### Building Docker Image
+
+```bash
+docker build --no-cache -t milthorpe/async-neighbours .
+```
+
+
 ## Build
 
 ```
