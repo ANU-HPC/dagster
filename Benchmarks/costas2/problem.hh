@@ -29,8 +29,9 @@ public:
   //const std::vector<int> CANDIDATES{ 8, 10, 6, 4};//, 6, 4};//, 11}; // 13
   //const std::vector<int> CANDIDATES2{ 6,4 };
   
-  const std::vector<int> CANDIDATES{ 2,4 };//, 11}; // 13
-  const std::vector<int> CANDIDATES2{ 1,2,3,4,5};
+  const std::vector<int> CANDIDATES{ 3,5,7};//, 11}; // 13
+  //const std::vector<int> CANDIDATES2{ 2,3,4,5,6,7 };
+  const std::vector<int> CANDIDATES2{3,5,7}; // 2,4,6
   
   void print__dag_file_decomposed_by_column_placements(const string&, const vector<int>& column_indexes, const vector<int>& column_indexes2);
   
@@ -102,7 +103,7 @@ public:
   bool answer2 = false;					\
   for (auto x : candidates ) if(Y==x)answer2 = true;	\
   if(answer2 && answer1){				\
-    problem.set_of_clause_indexes2.insert(i);		\
+    problem.set_of_clause_indexes.insert(i);		\
   }							\
   }							\
   ADD_IF_TARGET_COL2(i,X,Y)				\
