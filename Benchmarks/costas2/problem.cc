@@ -228,7 +228,10 @@ void Problem::print__dag_file(string filename, bool bisect) {
 }
 
 
-void Problem::print__dag_file_decomposed_by_column_placements(const string& filename, const vector<int>& column_indexes, const vector<int>& column_indexes2)
+void Problem::print__dag_file_decomposed_by_column_placements
+(const string& filename,
+ const vector<int>& column_indexes,
+ const vector<int>& column_indexes2)
 {
   ofstream dag_file;
   dag_file.open(filename);

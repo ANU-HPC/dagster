@@ -29,8 +29,8 @@ public:
   //const std::vector<int> CANDIDATES{ 8, 10, 6, 4};//, 6, 4};//, 11}; // 13
   //const std::vector<int> CANDIDATES2{ 6,4 };
   
-  const std::vector<int> CANDIDATES{ 0,2 };//, 11}; // 13
-  const std::vector<int> CANDIDATES2{ 4,6 };
+  const std::vector<int> CANDIDATES{ 2,4 };//, 11}; // 13
+  const std::vector<int> CANDIDATES2{ 1,2,3,4,5};
   
   void print__dag_file_decomposed_by_column_placements(const string&, const vector<int>& column_indexes, const vector<int>& column_indexes2);
   
