@@ -66,10 +66,12 @@ int SatSolver::selectLiteral() {
   if (short_stopping)
     if (verifySolution()) // if CNF is already satisfied return 0
       return 0;
+#ifndef GEOMETRIC_RESTARTING_SCHEME
   if (heuristic_rotation == suggestion_first) // The first thing to try is to select a variable using an SLS process. if suggestion_first flag set
     x = get_suggestion();
   if (x == 0)
     x = selectLiteral__conflict(); // choose a variable from a conflict clause
+#endif
   if ((x == 0) && (heuristic_rotation == cdcl_first))
     x = get_suggestion();
   if (x == 0) // USE VSIDS
@@ -174,12 +176,35 @@ int SatSolver::run() {
         nextClause = clauses.size() - 1;
         // restart at dLevel 1
         bool backtrack = false;
-        if ((nConflicts == nextRestart) && (command_line_arguments.tinisat_restarting==1)) {
+
+
+	// Deprecated -- Please delete below comment after April 2022
+        // if ((nConflicts == nextRestart) && (command_line_arguments.tinisat_restarting==1)) {
+        //   nextRestart += luby.next() * lubyUnit;
+        //   backtrack = true;
+        // } else if (command_line_arguments.tinisat_restarting==2) {
+        //   backtrack = true;
+        // }
+
+	
+#ifdef GEOMETRIC_RESTARTING_SCHEME
+	opportunity_counter++;
+	if (! (opportunity_counter % opportunity_modulo) ){ // CONSIDER RESTART
+	  
+	  if ( (rand() / (RAND_MAX + 1.)) >= probability_of_not_restarting ){
+	    backtrack = true;
+	  }
+	  probability_of_not_restarting *= discount_factor;
+	}
+#else
+        if ( (command_line_arguments.tinisat_restarting==1)
+	     && (nConflicts == nextRestart)) {
           nextRestart += luby.next() * lubyUnit;
           backtrack = true;
         } else if (command_line_arguments.tinisat_restarting==2) {
           backtrack = true;
         }
+#endif
         if (backtrack == true) {
           backtrack_func(1);
           if (dLevel != aLevel)
