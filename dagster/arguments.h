@@ -110,6 +110,9 @@ struct Arguments {
   //discount factor in the geometric restarting scheme (default is 0.95, only applied if opportunity_modulo is nonzero)
   double discount_factor;
 
+  // the filename prefix controlling where to dump the checkpointing files (if enabled by checkpoint_frequency)
+  std::string checkpoint_file_prefix;
+
 
   Arguments();
   

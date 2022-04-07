@@ -63,6 +63,7 @@ Arguments::Arguments() { // all the default arguments
   checkpoint_frequency = 0;
   opportunity_modulo = 0; //800
   discount_factor = 0.95;
+  checkpoint_file_prefix = "checkpoint";
 }
 
 #ifdef VERSION
@@ -96,10 +97,10 @@ static struct argp_option options[] = {
   { "solution trimming", 't', "solution_trimming", 0, "a 0/1 flag whether tinisat should attempt to verify and trim variables passing through"},
   { "checkpoint filename", 'u', "checkpoint_filename", 0, "the checkpoint file to load on initialisation"},
   { "checkpoint frequency", 'v', "checkpoint_frequency", 0, "the number of seconds between checkpoint dumps"},
-  
   { "DLS", 'w', "DLS", 0, "'1' if gNovelty+ is to use clause weights"},
   { "opportunity modulo", 'x', "opportunity_modulo", 0, "opportunity modulo in the geometric restarting scheme (0 is default, = off)"},
   { "discount factor", 'y', "discount_factor", 0, "discount factor in the geometric restarting scheme (default is 0.95, only applied if opportunity_modulo is nonzero)"},
+  { "checkpoint file prefix", 'z', "checkpoint_file_prefix", 0, "the filename prefix controlling where to dump the checkpointing files (if enabled by checkpoint_frequency)"},
   { 0 } 
 };
 
@@ -191,6 +192,9 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
     break;
   case 'y':
     PARSE_ARGUMENT(arguments->discount_factor,"-y::discount_factor");
+    break;
+  case 'z':
+    PARSE_ARGUMENT(arguments->checkpoint_file_prefix,"-z::checkpoint_file_prefix");
     break;
   case ARGP_KEY_END:
     if ( arguments->dag_filename == NULL || arguments->cnf_filename == NULL ) {

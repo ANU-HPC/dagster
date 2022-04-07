@@ -81,8 +81,6 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
   }
   bool terminate_trigger = false;
   
-  VLOG(1) << "MASTER: this->checkpointing = "<<checkpointing<<"  "<<command_line_arguments.opportunity_modulo;
-  
   clock_t t = clock();
   clock_t t2 = clock();
   int checkpointing_index = 0;
@@ -92,7 +90,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       if (clock()-t2 > checkpointing*CLOCKS_PER_SEC) {
         t2 = clock();
         std::stringstream ss;
-        ss << "checkpoint_"<<checkpointing_index<<".check";
+        ss << command_line_arguments.checkpoint_file_prefix<<"_"<<checkpointing_index<<".check";
         VLOG(1) << "MASTER: dumping checkpoint file: "<<ss.str().c_str();
         FILE* fp = fopen(ss.str().c_str(),"w");
         dump_checkpoint(fp);
