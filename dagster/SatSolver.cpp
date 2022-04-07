@@ -63,12 +63,14 @@ int SatSolver::selectLiteral() {
   if (short_stopping)
     if (verifySolution()) // if CNF is already satisfied return 0
       return 0;
-#ifndef GEOMETRIC_RESTARTING_SCHEME
+//#ifndef GEOMETRIC_RESTARTING_SCHEME
+if (command_line_arguments.opportunity_modulo!=0) {
   if (heuristic_rotation == suggestion_first) // The first thing to try is to select a variable using an SLS process. if suggestion_first flag set
     x = get_suggestion();
   if (x == 0)
     x = selectLiteral__conflict(); // choose a variable from a conflict clause
-#endif
+}
+//#endif
   if ((x == 0) && (heuristic_rotation == cdcl_first))
     x = get_suggestion();
   if (x == 0) // USE VSIDS
