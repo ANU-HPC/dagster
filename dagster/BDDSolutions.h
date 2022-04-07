@@ -44,7 +44,6 @@ class BDDSolutions : public WrappedSolutionsInterface {
   void set__BDD_compilation_scheme(const std::string& scheme);
   BDD_compilation_scheme get__BDD_compilation_scheme() const;
   
- private:
   int* max_depth; // points to dag max depth
   int vc;
   BDDSolutions::BDD_compilation_scheme bdd_compilation_scheme;

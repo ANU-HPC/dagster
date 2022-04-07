@@ -22,6 +22,12 @@
 #include "../../../RangeSet.h"
 #include "../../../arguments.h"
 #include "../../../arguments.cpp"
+#include "../../../MasterOrganiser.h"
+#include "../../../MasterOrganiser.cpp"
+#include "../../../MPICommsInterface.h"
+#include "../../../MPICommsInterface.cpp"
+#include "../../../Master.h"
+#include "../../../Master.cpp"
 
 #include "../../../strengthener/MpiBuffer.h"
 #include "../../../strengthener/MpiBuffer.cc"
@@ -40,13 +46,15 @@
 #include "disorganised_array_tests.c"
 #include "rangeSet_tests.c"
 #include "other_tests.c"
+#include "checkpointing_tests.c"
 
 
 Arguments command_line_arguments;
 CnfHolder* cnf_holder;
 
 int main(int argc, char *argv[]) {
-	
+	command_line_arguments.cnf_filename = "wonkywonk";
+	command_line_arguments.dag_filename = "donkeydonk";
   //MPI_Init(NULL, NULL);
 	FILE* f = fopen("EXIT_FILE.txt","w");
 	fprintf(f,"hello\n");
@@ -54,5 +62,7 @@ int main(int argc, char *argv[]) {
 	::testing::InitGoogleTest(&argc, argv);
 	int output = RUN_ALL_TESTS();
 	system("rm EXIT_FILE.txt");
+	
+  //MPI_Finalize();
 	return output;
 }

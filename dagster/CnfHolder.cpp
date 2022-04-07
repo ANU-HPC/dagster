@@ -128,6 +128,8 @@ Cnf* CnfHolder::get_Cnf(int node) {
 // by the indices given in the <indices> vector.
 // returns the maximum variable index found in the process of splitting the files up
 // (NOTE: this function reminiscient of cnf.cpp's CNF() constructor)
+//
+// NOTE: potential bug, if header = 'p cnf 0 0'
 int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
   int nodes = indices.size();
   vector<std::deque<std::pair<int,int>>::iterator> node_index_pairs;
@@ -246,6 +248,7 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
 // by the indices given in the <indices> vector.
 // returns the maximum variable index found in the process of splitting the files up (which is the primary purpose of the function)
 //
+// NOTE: potential bug, if header = 'p cnf 0 0'
 int CnfHolder::pseudo_split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
   int nodes = indices.size();
   vector<std::deque<std::pair<int,int>>::iterator> node_index_pairs;

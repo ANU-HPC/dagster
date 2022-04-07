@@ -42,6 +42,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
+extern Arguments command_line_arguments;
 
 // Master main loop:
 // infinite loop process of:
@@ -83,11 +84,11 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
   int checkpointing_index = 0;
   while (true) {
     // checkpointing timing logic
-    if (checkpointing) { //TODO: test this
-      if (clock()-t2 > 30*60*CLOCKS_PER_SEC) {
+    if (checkpointing!=0) {
+      if (clock()-t2 > checkpointing*CLOCKS_PER_SEC) {
         t2 = clock();
         std::stringstream ss;
-        ss << "checkpoint_"<<checkpointing_index<<".txt";
+        ss << "checkpoint_"<<checkpointing_index<<".check";
         FILE* fp = fopen(ss.str().c_str(),"w");
         dump_checkpoint(fp);
         fclose(fp);
@@ -250,53 +251,86 @@ void Master::clear() {
 // dump all information to open writable file pointer
 // suitable for files subsequently loaded by load_checkpoint() method
 void Master::dump_checkpoint(FILE* fp) {
+  fprintf(fp,"%s\n",command_line_arguments.cnf_filename);
+  fprintf(fp,"%s\n",command_line_arguments.dag_filename);
   master->dump_checkpoint(fp);
   organiser->dump_checkpoint(fp);
+  fprintf(fp,"\n");
   fprintf(fp,"%i ",solutions.size());
   for (Message* m : solutions) {
     m->dump_to_file(fp);
   }
+  fprintf(fp,"\n");
   //dag_nodes_generated_solutions
   fprintf(fp,"%i ",dag_nodes_generated_solutions.size());
   for (int i : dag_nodes_generated_solutions) {
     fprintf(fp, "%i ",i);
   }
+  fprintf(fp,"\n");
   //dag_nodes_given_assignments
   fprintf(fp,"%i ",dag_nodes_given_assignments.size());
   for (int i : dag_nodes_given_assignments) {
     fprintf(fp, "%i ",i);
   }
+  fprintf(fp,"\n");
   //subgraph_finished
   fprintf(fp,"%i ",subgraph_finished.size());
   for (int i : subgraph_finished) {
     fprintf(fp, "%i ",i);
   }
+  fprintf(fp,"\n");
 }
 
 //load_checkpoint: (DRAFT) //TODO: check working
 // load all information from a readable file pointer
 // suitable for files written by dump_checkpoint() method
 void Master::load_checkpoint(FILE* fp) {
+  char string[10000];
+  fscanf(fp, "%s" , string );
+  if (strcmp(string,command_line_arguments.cnf_filename)!=0) {
+	throw BadParameterException("Checkpoint has incompatable CNF filename with command invocation");
+  }
+  fscanf(fp, "%s" , string );
+  if (strcmp(string,command_line_arguments.dag_filename)!=0) {
+	throw BadParameterException("Checkpoint has incompatable DAG filename with command invocation");
+  }
   master->load_checkpoint(fp);
   organiser->load_checkpoint(fp);
   int i;
+  int read;
   
-  fscanf(fp,"%i ", &i);
+  int no_messages;
+  read = fscanf(fp,"%i ", &no_messages);
+  assert(read==1);
+  Message* m;
+  for (int k=0; k<no_messages; k++) {
+    m = new Message();
+    m->read_from_file(fp);
+    solutions.push_back(m);
+  }
+  
+  read = fscanf(fp,"%i ", &i);
+  assert(read==1);
   for (int k=0; k<i; k++) {
     int ll = 0;
-    fscanf(fp,"%i ",&ll);
+    read = fscanf(fp,"%i ",&ll);
+    assert(read==1);
     dag_nodes_generated_solutions.insert(ll);
   }
-  fscanf(fp,"%i ", &i);
+  read = fscanf(fp,"%i ", &i);
+  assert(read==1);
   for (int k=0; k<i; k++) {
     int ll = 0;
-    fscanf(fp,"%i ",&ll);
+    read = fscanf(fp,"%i ",&ll);
+    assert(read==1);
     dag_nodes_given_assignments.insert(ll);
   }
-  fscanf(fp,"%i ", &i);
+  read = fscanf(fp,"%i ", &i);
+  assert(read==1);
   for (int k=0; k<i; k++) {
     int ll = 0;
-    fscanf(fp,"%i ",&ll);
+    read = fscanf(fp,"%i ",&ll);
+    assert(read==1);
     subgraph_finished.insert(ll);
   }
 }

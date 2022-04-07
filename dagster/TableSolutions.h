@@ -51,7 +51,7 @@ struct VectorHash {
 // a simple organiser of messages to/from/between nodes of a dag, stored as 'tables' of messages
 // wraps the SolutionsInterface to inherit some superfiscail pre-post processing
 class TableSolutions : public WrappedSolutionsInterface {
- private:
+ public:
   Cnf** additional_clauses; // stores the set of additional clauses for each node of the dag
   bool dumb_mode;
   Dag *dag;                                                // a reference to the appropriate DAG
@@ -60,7 +60,7 @@ class TableSolutions : public WrappedSolutionsInterface {
                                                                      // for each node, a set of messages (lists of literal assignments)
   bool _get_combination(int node, std::vector<int> &message_indexes, int reverse_connection_index);
 
- public:
+// public:
   TableSolutions(Dag *dag, bool dumb_mode); // creates a new master instance, passing the appropriate dag structure.
   virtual ~TableSolutions();
   virtual void add_message(Message* m); // add a message to the Master's memory, stored by message's to and from fields

@@ -45,7 +45,7 @@ class Master{
   int ENUMERATE_SOLUTIONS;
   bool BREADTH_FIRST_NODE_ALLOCATIONS;
   bool exiting;
-  bool checkpointing;
+  int checkpointing;
 
   // tracking unsat nodes
   set<int> dag_nodes_generated_solutions;
@@ -57,16 +57,28 @@ class Master{
   vector<Message*> solutions;
   set<int> subgraph_finished; // keep track of what subgraph indices are finished
 
+
+  Master(int comms_size, int no_nodes, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS) {
+    this->comms = NULL;
+    this->master = master;
+    this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
+    this->BREADTH_FIRST_NODE_ALLOCATIONS = BREADTH_FIRST_NODE_ALLOCATIONS;
+    this->exiting = true;
+    this->checkpointing = 0;
+    this->organiser = new MasterOrganiser(comms_size-1);
+    this->stats = new StatisticsModule(comms_size-1,no_nodes);
+    this->clear();
+  }
   Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS) {
     this->comms = comms;
     this->master = master;
     this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
     this->BREADTH_FIRST_NODE_ALLOCATIONS = BREADTH_FIRST_NODE_ALLOCATIONS;
     this->exiting = true;
-    this->checkpointing = false;
+    this->checkpointing = 0;
     this->organiser = new MasterOrganiser(comms->world_size-1);
     this->stats = new StatisticsModule(comms->world_size-1,cnf_holder->dag->no_nodes);
-    clear();
+    this->clear();
   }
   Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS,bool exiting) {
     this->comms = comms;
@@ -74,12 +86,12 @@ class Master{
     this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
     this->BREADTH_FIRST_NODE_ALLOCATIONS = BREADTH_FIRST_NODE_ALLOCATIONS;
     this->exiting = exiting;
-    this->checkpointing = false;
+    this->checkpointing = 0;
     this->organiser = new MasterOrganiser(comms->world_size-1);
     this->stats = new StatisticsModule(comms->world_size-1,cnf_holder->dag->no_nodes);
-    clear();
+    this->clear();
   }
-  Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS,bool exiting,bool checkpointing) {
+  Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS,bool exiting,int checkpointing) {
     this->comms = comms;
     this->master = master;
     this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
@@ -88,7 +100,7 @@ class Master{
     this->checkpointing = checkpointing;
     this->organiser = new MasterOrganiser(comms->world_size-1);
     this->stats = new StatisticsModule(comms->world_size-1,cnf_holder->dag->no_nodes);
-    clear();
+    this->clear();
   }
   ~Master() {
   	delete this->organiser;
@@ -97,12 +109,11 @@ class Master{
   vector<Message*> loop();
   vector<Message*> loop(const char* checkpoint_file);
   void send_exit();
-  
-  void dump_checkpoint(FILE* fp);
   void clear();
   
- private:
+  void dump_checkpoint(FILE* fp);
   void load_checkpoint(FILE* fp);
+  
 };
 
 

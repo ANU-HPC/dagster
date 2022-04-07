@@ -1,0 +1,11 @@
+___________
+__BBBB_____
+__B_AB_____
+__B_BB_____
+B_B________
+B_BBBBBBBBB
+______A___B
+_BBBBBBBB_B
+_BA_B___B_B
+_BB___B___B
+_BBBBBBBBBB

@@ -62,7 +62,7 @@ If not, see <http://www.gnu.org/licenses/>.
 Problem problem;
 
 int main(int argc, char** argv){
-  static char usage[] = "usage: -N [1..9]+[0..9]* (e.g. 5) (i.e. num vertices in clique) -M [1..9]+[0..9]* (e.g. 2) (i.e. num colours) -Z [0,N-2] (i.e. the number of edges in the 2nd node)\n";	
+  static char usage[] = "usage: -N [1..9]+[0..9]* (e.g. 5) (i.e. num vertices in clique) -M [1..9]+[0..9]* (e.g. 2) (i.e. num colours) -Z [0,N-2] (i.e. the number of edges in the 2nd node) - A [0,N-1] (the minimum number of each colour) - B [0,N-1] (the maximum number of each colour) \n";	
   if ( argc < 4 ){
     cerr<<usage<<endl;
     exit(-1);
@@ -70,9 +70,12 @@ int main(int argc, char** argv){
   
   // getopt related, string associated with the argument we just passed.
   extern char *optarg;
+  
+  int A=0;
+  int B=0;
 
   char c;
-  while((c = getopt(argc, argv, "N:M:Z:")) != -1){
+  while((c = getopt(argc, argv, "N:M:Z:A:B:")) != -1){
     switch(c){
     case 'N':
       PARSE_ARGUMENT(problem.N,"-N:dimension")
@@ -86,18 +89,25 @@ int main(int argc, char** argv){
       PARSE_ARGUMENT(problem.Z,"-Z:edges")
       assert( problem.Z >= 0);
       break;
+    case 'A':
+      PARSE_ARGUMENT(A,"-A:colours")
+      break;
+    case 'B':
+      PARSE_ARGUMENT(B,"-Z:colours")
+      break;
     default:
       cerr<<usage<<endl;
       exit(-1);
       break;
     }
   }// Parsing arguments
+  //assert( (A >= 0) && (A<problem.N));
+  //assert( (B >= 0) && (B<problem.N));
 
   
   problem.build_all_triangles();
   
   post__clique_edges_have_one_colour_each(problem.M, problem.N); // DONE
-  problem.levNc_end = problem.num_clauses;
   
   post__triad_at_vertex_implies_corresponding_triangle_at_vertex(problem.N, problem.triangles); // DONE
 
@@ -113,9 +123,17 @@ int main(int argc, char** argv){
   //post__simplified__symmetry_breaking_on_colours(problem.M, problem.N);
   
   post__symmetry_breaking_vertex_enumeration(problem.M, problem.N);
-  post__symmetry_breaking_on_colours_last_vertex(problem.M, problem.N);
+  //post__symmetry_breaking_on_colours_last_vertex(problem.M, problem.N);
   
-  //add_colour_quantifier_symmetry_breaking(problem.M, problem.N);
+  vector<vector<int>> unitary_variables;
+  add_colour_quantifier_symmetry_breaking(problem.M, problem.N, unitary_variables);
+  if (A>0) {
+    add_colour_at_least_for_each_vertex(problem.M, problem.N, unitary_variables, A);
+  }
+  if (B>0) {
+    add_colour_at_most_for_each_vertex(problem.M, problem.N, unitary_variables, B);
+  }
+  
   
   auto num_vars = problem.edge_colour__to__cnfvar.size() +
     problem.triangle_at_vertex__to__cnfvar.size() +

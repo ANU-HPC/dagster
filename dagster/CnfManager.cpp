@@ -70,8 +70,11 @@ CnfManager::CnfManager(Cnf* cnf){
 	// create litPool
 	int lc = 0;
 	for (int i=0; i<cnf->cc; i++)
-		lc += cnf->cl[i];
-	litPoolCapacity = (lc + cnf->cc) * 2;
+		//lc += cnf->cl[i];
+		if (cnf->cl[i]>lc)
+			lc = cnf->cl[i];
+	//litPoolCapacity = (lc + cnf->cc) * 2;
+	litPoolCapacity = (lc) * 2;
 	int *p;
     TEST_NOT_NULL(p = (int*)calloc(litPoolCapacity, sizeof(int)))
 	litPool = p;
@@ -103,13 +106,16 @@ CnfManager::CnfManager(Cnf* cnf){
 			vars[VAR(lit1)].activity[SIGN(lit1)]++; //** activity is how many times the literal is referenced in the calculus.
 		}else{
 			// set up watches
-			WATCHLIST(cnf->clauses[i][0]).push_back(p);	//** watchlist has positive and negative depending on the literal
-			WATCHLIST(cnf->clauses[i][1]).push_back(p);	//** loads the watchlist with the clause index in the litpool with which it is first or second member
+			WATCHLIST(cnf->clauses[i][0]).push_back(cnf->clauses[i]);	//** watchlist has positive and negative depending on the literal
+			WATCHLIST(cnf->clauses[i][1]).push_back(cnf->clauses[i]);	//** loads the watchlist with the clause index in the litpool with which it is first or second member
 
 			// copy literals to litPool
 			//** setting activities as you go.
-			for(j = 0; (*(p++) = cnf->clauses[i][j]); j++){
-				vars[VAR(*(p-1))].activity[SIGN(*(p-1))]++;
+			//for(j = 0; (*(p++) = cnf->clauses[i][j]); j++){
+			//	vars[VAR(*(p-1))].activity[SIGN(*(p-1))]++;
+			//}
+			for(j = 0; cnf->clauses[i][j]; j++){
+				vars[VAR(cnf->clauses[i][j])].activity[SIGN(cnf->clauses[i][j])]++;
 			}
 		}
 	}

@@ -19,10 +19,7 @@ You should have received a copy of the GNU General
 Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
-//
-//Originally extending from Tinisat
-// undder GPL, authored 2007 Jinbo Huang
-//
+
 
 #include "SatSolver.h"
 #include <algorithm>
@@ -176,27 +173,18 @@ int SatSolver::run() {
         nextClause = clauses.size() - 1;
         // restart at dLevel 1
         bool backtrack = false;
-
-
-	// Deprecated -- Please delete below comment after April 2022
-        // if ((nConflicts == nextRestart) && (command_line_arguments.tinisat_restarting==1)) {
-        //   nextRestart += luby.next() * lubyUnit;
-        //   backtrack = true;
-        // } else if (command_line_arguments.tinisat_restarting==2) {
-        //   backtrack = true;
-        // }
-
-	
-#ifdef GEOMETRIC_RESTARTING_SCHEME
+if (command_line_arguments.opportunity_modulo!=0) {
 	opportunity_counter++;
-	if (! (opportunity_counter % opportunity_modulo) ){ // CONSIDER RESTART
+	if (! (opportunity_counter % command_line_arguments.opportunity_modulo) ){ // CONSIDER RESTART
 	  
 	  if ( (rand() / (RAND_MAX + 1.)) >= probability_of_not_restarting ){
 	    backtrack = true;
+	    //for (auto ppp=0; ppp< 5 ; ppp++)std::cerr<<"*********************RESET   ";
 	  }
-	  probability_of_not_restarting *= discount_factor;
+	  probability_of_not_restarting *= command_line_arguments.discount_factor;
 	}
-#else
+	
+} else {
         if ( (command_line_arguments.tinisat_restarting==1)
 	     && (nConflicts == nextRestart)) {
           nextRestart += luby.next() * lubyUnit;
@@ -204,7 +192,7 @@ int SatSolver::run() {
         } else if (command_line_arguments.tinisat_restarting==2) {
           backtrack = true;
         }
-#endif
+}
         if (backtrack == true) {
           backtrack_func(1);
           if (dLevel != aLevel)
@@ -238,6 +226,9 @@ bool SatSolver::verifySolution() {
 
 // returning TRUE/FALSE, if current assignment actually satisfies whole CNF, and trims the litterals to only thoes satisfying the CNF
 bool SatSolver::verify_and_trim_Solution() {
+//#ifdef GEOMETRIC_RESTARTING_SCHEME
+  probability_of_not_restarting = 1.0; // reset probability if a solution is found...
+//#endif
   // initially mark all the variables false
   for (int i=1; i<=vc; i++)
     vars[i].mark2 = false;

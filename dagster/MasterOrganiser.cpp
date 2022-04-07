@@ -183,7 +183,10 @@ void MasterOrganiser::dump_checkpoint(FILE* fp) {
 }
 void MasterOrganiser::load_checkpoint(FILE* fp) {
   int no_messages;
-  fscanf(fp,"%i ", &no_messages);
+  int read;
+  read = fscanf(fp,"%i ", &no_messages);
+  if (read!=1)
+    throw BadParameterException("MasterOrganiser::load_checkpoint failed");
   Message* m;
   for (int k=0; k<no_messages; k++) {
     m = new Message();

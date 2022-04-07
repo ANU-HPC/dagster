@@ -23,17 +23,30 @@ PCOBJS     = $(addsuffix p,  $(COBJS))
 DCOBJS     = $(addsuffix d,  $(COBJS))
 RCOBJS     = $(addsuffix r,  $(COBJS))
 
+UNAME                           = $(shell uname -a)
+CRAY_PLATFORM_NAME              = nakuru
 
-#Default variables
-MPIXX      = mpicxx -c # Marshall Edit
-CXX       ?= mpicxx
-CFLAGS    ?= -Wall -Wno-parentheses
-LFLAGS    ?= -Wall
+ifeq (${CRAY_PLATFORM_NAME}, $(findstring ${CRAY_PLATFORM_NAME}, ${UNAME}))
+        #Variables for Nakuru Cray system
+        MPIXX                    = CC
+        CXX                      = CC
+        CFLAGS                  += -Wall -Wno-parentheses -I${MROOT} -I../ -I/sw/UNCLASSIFIED/glog-master/include \
+                                   -I/sw/UNCLASSIFIED/cudd-release/include -I/sw/UNCLASSIFIED/zlib-1.2.11/include \
+                                   -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS
+        LFLAGS                  += -Wall -L/sw/UNCLASSIFIED/glog-master/lib -L/sw/UNCLASSIFIED/zlib-1.2.11/lib -lz -lglog
+        COMPTIMIZE              ?= -O3
+else
+        #Default variables
+        MPIXX      = mpicxx -c # Marshall Edit
+        CXX       ?= mpicxx
+        CFLAGS    ?= -Wall -Wno-parentheses
+        LFLAGS    ?= -Wall
 
-COPTIMIZE ?= -O3 # -enable-libstdcxx-debug
+        COPTIMIZE ?= -O3 # -enable-libstdcxx-debug
 
-CFLAGS    += -I$(MROOT) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS
-LFLAGS    += -lz
+        CFLAGS    += -I$(MROOT) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS
+        LFLAGS    += -lz
+endif
 
 .PHONY : s p d r rs clean 
 

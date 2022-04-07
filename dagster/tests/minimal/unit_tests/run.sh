@@ -7,7 +7,7 @@ mpic++ -std=c++17 -o tests -ggdb tests.c -lgtest -lpthread -lglog -Wno-write-str
 g++ -std=c++17 -o after_test -g after_test.c -lgtest -lpthread -lstdc++fs -lcudd
 echo ""
 echo "RUNNING ALL TESTS"
-valgrind ./tests
+mpirun -n 1 valgrind ./tests
 echo ""
 ./after_test
 rm tests

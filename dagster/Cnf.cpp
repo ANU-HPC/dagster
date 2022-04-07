@@ -19,10 +19,6 @@ You should have received a copy of the GNU General
 Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
-//
-//Originally extending from Tinisat
-// undder GPL, authored 2007 Jinbo Huang
-//
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -332,6 +328,12 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
       else
         throw ParsingException(" Invalid CNF file\n");
     }
+  }
+  if (header_cc==0) {
+    clauses[cc] = NULL;
+    cl[cc] = NULL;
+    free(literals);
+    return;
   }
   // allocate original data buffers
   TEST_NOT_NULL(clauses = (int **) calloc(max_clause_count, sizeof(int *)))

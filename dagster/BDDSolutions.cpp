@@ -518,7 +518,7 @@ void BDDSolutions::print_communicated(FILE* fp, int node) {
 void BDDSolutions::dump_checkpoint(FILE* fp) {
 	#if __has_include("dddmp.h")
 	Dddmp_VarInfoType varoutinfo = DDDMP_VARIDS;
-	fprintf(fp,"%i %i", initial_messages.size(),this->dag->no_nodes);
+	fprintf(fp,"%i %i %i", initial_messages.size(),this->dag->no_nodes,this->vc);
 	for (auto it = initial_messages.begin(); it!=initial_messages.end(); it++) {
 		(*it)->dump_to_file(fp);
 	}
@@ -539,6 +539,7 @@ void BDDSolutions::dump_checkpoint(FILE* fp) {
 	}
 	#else
     LOG(ERROR) << "MASTER: Cannot load/save BDD checkpoint without dddmp, cudd sublibrary installed";
+    exit(1);
 	#endif
 }
 
@@ -558,9 +559,11 @@ void BDDSolutions::load_checkpoint(FILE* fp) {
 	}
 	int initial_message_size;
 	int dag_no_nodes;
-	int reads = fscanf(fp, "%i %i", &initial_message_size, &dag_no_nodes);
-	CHECK_EQ(reads,2);
+	int vvc;
+	int reads = fscanf(fp, "%i %i %i", &initial_message_size, &dag_no_nodes, &vvc);
+	CHECK_EQ(reads,3);
 	CHECK_EQ(dag_no_nodes, this->dag->no_nodes);
+	CHECK_EQ(vvc,this->vc);
 	for (int i=0; i<initial_message_size; i++) {
 		Message *m = new Message;
 		m->read_from_file(fp);
@@ -579,6 +582,7 @@ void BDDSolutions::load_checkpoint(FILE* fp) {
 	}
 	#else
     LOG(ERROR) << "MASTER: Cannot load/save BDD checkpoint without dddmp, cudd sublibrary installed";
+	exit(1);
 	#endif
 }
 

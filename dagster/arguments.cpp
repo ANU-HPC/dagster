@@ -59,6 +59,10 @@ Arguments::Arguments() { // all the default arguments
   gnovelty_solution_checking_time = 50;
   solution_trimming = 1;
   tinisat_restarting = 1;
+  checkpoint_filename = NULL;
+  checkpoint_frequency = 0;
+  opportunity_modulo = 0; //800
+  discount_factor = 0.95;
 }
 
 #ifdef VERSION
@@ -90,8 +94,12 @@ static struct argp_option options[] = {
   { "heuristic_rotation_scheme", 'r', "heuristic_rotation_scheme", 0, "gnovelty heuristic_rotation_scheme (only in gnovelty mode)"},
   { "suggestion_size", 's', "suggestion_size", 0, "gnovelty suggestion_size (only in gnovelty mode)"},
   { "solution trimming", 't', "solution_trimming", 0, "a 0/1 flag whether tinisat should attempt to verify and trim variables passing through"},
+  { "checkpoint filename", 'u', "checkpoint_filename", 0, "the checkpoint file to load on initialisation"},
+  { "checkpoint frequency", 'v', "checkpoint_frequency", 0, "the number of seconds between checkpoint dumps"},
   
   { "DLS", 'w', "DLS", 0, "'1' if gNovelty+ is to use clause weights"},
+  { "opportunity modulo", 'x', "opportunity_modulo", 0, "opportunity modulo in the geometric restarting scheme (0 is default, = off)"},
+  { "discount factor", 'y', "discount_factor", 0, "discount factor in the geometric restarting scheme (default is 0.95, only applied if opportunity_modulo is nonzero)"},
   { 0 } 
 };
 
@@ -169,8 +177,20 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
   case 't':
     PARSE_ARGUMENT(arguments->solution_trimming,"-t::solution_trimming");
     break;
+  case 'u':
+    arguments->checkpoint_filename = arg;
+    break;
+  case 'v':
+    PARSE_ARGUMENT(arguments->checkpoint_frequency,"-v::checkpoint_frequency");
+    break;
   case 'w':
     PARSE_ARGUMENT(arguments->dynamic_local_search,"-w::dynamic_local_search");
+    break;
+  case 'x':
+    PARSE_ARGUMENT(arguments->opportunity_modulo,"-x::opportunity_modulo");
+    break;
+  case 'y':
+    PARSE_ARGUMENT(arguments->discount_factor,"-y::discount_factor");
     break;
   case ARGP_KEY_END:
     if ( arguments->dag_filename == NULL || arguments->cnf_filename == NULL ) {

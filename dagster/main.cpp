@@ -83,8 +83,8 @@ vector<Message*> mode_0_execute(WrappedSolutionsInterface *master_implementation
   MPI_Comm_split(MPI_COMM_WORLD, 0, world_rank, &mastercommunicator);
   MPICommsInterface* comms = new MPICommsInterface(&mastercommunicator);
   if (world_rank == 0) { // enter the master loop if rank zero
-    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS);
-    solutions = master.loop();
+    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS,true,command_line_arguments.checkpoint_frequency);
+    solutions = master.loop(command_line_arguments.checkpoint_filename);
   } else { // enter the worker loop otherwise
     Worker* worker = new Worker(cnf_holder->dag, comms, NULL, NULL);
     worker->loop();
@@ -114,8 +114,8 @@ vector<Message*> mode_1_execute(WrappedSolutionsInterface *master_implementation
     MPI_Comm_split(MPI_COMM_WORLD, 0, 0, &mastercommunicator);
     //enter master loop
     MPICommsInterface* comms = new MPICommsInterface(&mastercommunicator);
-    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS);
-    solutions = master.loop();
+    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS,true,command_line_arguments.checkpoint_frequency);
+    solutions = master.loop(command_line_arguments.checkpoint_filename);
     delete comms;
   } else { // else we are a worker of some kind.
     int num_procs_per_hybrid_group = 1 + command_line_arguments.novelty_number;
@@ -164,8 +164,8 @@ vector<Message*> mode_2_execute(WrappedSolutionsInterface *master_implementation
     MPI_Comm_split(MPI_COMM_WORLD, MPI_UNDEFINED, 0, &subcommunicator_strengthener);
     //enter master loop
     MPICommsInterface* comms = new MPICommsInterface(&mastercommunicator);
-    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS);
-    solutions = master.loop();
+    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS,true,command_line_arguments.checkpoint_frequency);
+    solutions = master.loop(command_line_arguments.checkpoint_filename);
     delete comms;
   } else {
     // we are a worker of some kind
@@ -227,8 +227,8 @@ vector<Message*> mode_3_execute(WrappedSolutionsInterface *master_implementation
     MPI_Comm_split(MPI_COMM_WORLD, MPI_UNDEFINED, 0, &subcommunicator_strengthener);
     //enter master loop
     MPICommsInterface* comms = new MPICommsInterface(&mastercommunicator);
-    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS);
-    solutions = master.loop();
+    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS,true,command_line_arguments.checkpoint_frequency);
+    solutions = master.loop(command_line_arguments.checkpoint_filename);
     delete comms;
   } else {
     // we are a worker of some kind

@@ -132,7 +132,6 @@ void TableSolutions::register_message_completion(Message* m) {
 //   does this by setting up a search for comatable message combinations from incomming arcs in the dag
 //   recursive inner function is _get_combination(...)
 //   return either a new message, OR NULL for no new messages at this depth
-int jjj=0;
 Message *TableSolutions::get_new_message_combination(int depth) {
   if ((depth <0) || (depth>dag->max_depth))
     throw BadParameterException("master called get_new_message combination with bad depth");
@@ -236,7 +235,9 @@ next_message:;
 // dump all Table information to open writable file pointer
 // suitable for files subsequently loaded by load_checkpoint() method
 void TableSolutions::dump_checkpoint(FILE* fp) {
+	fprintf(fp,"92529 ");
 	fprintf(fp,"%i ", this->dag->no_nodes);
+	fprintf(fp,"%i ", this->dumb_mode);
 	
 	for (int i=0; i<this->dag->no_nodes; i++) {
 		for (int j=0; j<this->dag->no_nodes; j++) {
@@ -253,8 +254,11 @@ void TableSolutions::dump_checkpoint(FILE* fp) {
 	for (int i=0; i<this->dag->no_nodes; i++) {
 		fprintf(fp,"%i ",this->completed_combinations[i].size());
 		for (auto it = this->completed_combinations[i].begin(); it != this->completed_combinations[i].end(); it++) {
-			for (int a : *it) {
-				fprintf(fp,"%i ",a);
+			for (auto a = (*it).begin(); a!=(*it).end(); a++) {
+				fprintf(fp,"%i",*a);
+				if (a!=(*it).end()-1) {
+					fprintf(fp," ");
+				}
 			}
 			fprintf(fp,",");
 		}
@@ -266,10 +270,20 @@ void TableSolutions::dump_checkpoint(FILE* fp) {
 // load all Table information from a readable file pointer
 // suitable for files written by dump_checkpoint() method
 void TableSolutions::load_checkpoint(FILE* fp) {
+	//TODO: clean before loading
+	int identifier;
+	int reads;
+	reads = fscanf(fp, "%i ", &identifier);
+	CHECK_EQ(reads,1);
+	if (identifier != 92529) {
+		throw BadParameterException("Cannot load checkpoint not created using TableSolutions interface into TableSolutions interface class");
+	}
 	int dag_no_nodes;
-	int reads = fscanf(fp, "%i ", &dag_no_nodes);
+	reads = fscanf(fp, "%i ", &dag_no_nodes);
 	CHECK_EQ(reads,1);
 	CHECK_EQ(dag_no_nodes, this->dag->no_nodes);
+	reads = fscanf(fp, "%i ", &(this->dumb_mode));
+	CHECK_EQ(reads,1);
 	
 	for (int i=0; i<this->dag->no_nodes; i++) {
 		for (int j=0; j<this->dag->no_nodes; j++) {

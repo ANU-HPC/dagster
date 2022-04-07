@@ -38,6 +38,12 @@ struct Arguments {
 
   // the directory name where CNF partials will be stored, NULL if no directory, and storage is in memory
   char *cnf_directory;
+  
+  // Filename describing describing what checkpoint to load initially
+  char *checkpoint_filename;
+  
+  // integer of seconds between every checkpoint, 0=checkpoint_generation_disabled
+  int checkpoint_frequency;
 
   // Scheme the (dynamic) local search uses to communicate variable and value choices to the CDCL search.
   std::string advise_scheme;
@@ -98,6 +104,12 @@ struct Arguments {
   
   // flag to set if tinisat CDCL should do restarts or not
   int tinisat_restarting;
+
+  //opportunity modulo in the geometric restarting scheme (0 is default, = off)
+  int opportunity_modulo;
+  //discount factor in the geometric restarting scheme (default is 0.95, only applied if opportunity_modulo is nonzero)
+  double discount_factor;
+
 
   Arguments();
   

@@ -19,10 +19,7 @@ You should have received a copy of the GNU General
 Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
-//
-//Originally extending from Tinisat
-// undder GPL, authored 2007 Jinbo Huang
-//
+
 
 #ifndef _SAT_SOLVER
 #define _SAT_SOLVER
@@ -49,7 +46,6 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "Cnf.h"
 #include "message.h"
 
-#define GEOMETRIC_RESTARTING_SCHEME 1
 
 struct Luby {           // restart scheduler as proposed in
   vector<unsigned> seq; // Optimal Speedup of Las Vegas Algorithms
@@ -163,13 +159,10 @@ public:
   bool reset_solver();
   void printSolution(FILE *);
 
-
-#ifdef GEOMETRIC_RESTARTING_SCHEME
  private:
-  double discount_factor = 0.95;
   double probability_of_not_restarting = 1.0;
   int opportunity_counter = 0;
-  int opportunity_modulo = 800;//3600;
-#endif
+
+
 };
 #endif

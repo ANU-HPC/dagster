@@ -2,6 +2,7 @@ TARGET=sgen1
 
 UNAME                           = $(shell uname -a)
 ANU_PLATFORM_NAME               = dolphin
+CRAY_PLATFORM_NAME              = nakuru
 
 ifeq (${ANU_PLATFORM_NAME}, $(findstring ${ANU_PLATFORM_NAME}, ${UNAME}))
         #Variables for ANU dev system (dolphin?)
@@ -12,6 +13,17 @@ ifeq (${ANU_PLATFORM_NAME}, $(findstring ${ANU_PLATFORM_NAME}, ${UNAME}))
 	CPPFLAGS := -ggdb -pedantic -Wall $(OPTIMISE)
 	LDFLAGS  := # -lm -lpthread -lz -lglpk -lltdl -lClp -lCoinUtils
 	CXXFLAGS :=  # -march=native $(WARNINGS) $(OPTIMISE)
+
+else ifeq (${CRAY_PLATFORM_NAME}, $(findstring ${CRAY_PLATFORM_NAME}, ${UNAME}))
+        #Variables for Nakuru Cray system
+        MPIXX                    = CC
+        CXX                      = CC
+	CXXPREFIX		 =
+	OPTIMISE 		 = -O3 -DNDEBUG -march=native -ffast-math
+        CPPFLAGS                 = -ggdb -pedantic -Wall -Wextra $(OPTIMISE) -I../ -I/sw/UNCLASSIFIED/glog-master/include \
+                                   -I/sw/UNCLASSIFIED/cudd-release/include -I/sw/UNCLASSIFIED/zlib-1.2.11/include \
+                                   -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS
+        LDFLAGS                   = -Wall -L/sw/UNCLASSIFIED/glog-master/lib -L/sw/UNCLASSIFIED/zlib-1.2.11/lib -lz -lglog
 
 else
         #Default variables

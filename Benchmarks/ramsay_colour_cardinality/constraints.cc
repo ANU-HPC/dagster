@@ -155,11 +155,11 @@ void post__clique_edges_have_one_colour_each(int colours, int N){
   // modified for backwards
   for(int i = N-1; i >= 0; i--){
     for(int j =i-1 ; j >= 0; j--){
-      if ((i==N-1) && (j==i-1))
-        problem.levNa_begin = problem.num_clauses;
-      if ((i==N-2) && (j==i-1))
-        problem.levNa_end = problem.num_clauses;
+      if ((i==N-1) && (j==problem.Z-1))
+        problem.levNa_begin = problem.num_clauses+1;
       post__clique_edges_have_one_colour_each(colours, E(i,j));
+      if ((i==N-1) && (j==0))
+        problem.levNa_end = problem.num_clauses+1;
     }
   }
 }
@@ -267,9 +267,9 @@ problem.cnf<<"}:\n";*/
 
 
 // adding constraints where number of colour zero <= number of colour one <= number of colour two <= ... <= number of colour M-1
-void add_colour_quantifier_symmetry_breaking(int colours, int N) {
+void add_colour_quantifier_symmetry_breaking(int colours, int N, vector<vector<int>>& unitary_variables ) {
   vector<int> colour_buffer;
-  vector<vector<int>> unitary_variables;
+  //vector<vector<int>> unitary_variables;
   // considering all colours
   for(int c=0; c<colours; c++) {
     // load all the variables of that colour into colour buffer
@@ -288,6 +288,23 @@ void add_colour_quantifier_symmetry_breaking(int colours, int N) {
       problem.cnf<<unitary_variables[i][j]<<" -"<<unitary_variables[i+1][j]<<" 0\n"; //number of colour i must be more than colour i+1
 	  problem.num_clauses++;
     }
+  }
+}
+
+
+void add_colour_at_least_for_each_vertex(int colours, int N, vector<vector<int>>& unitary_variables, int atleast) {
+  for (int i=0; i<unitary_variables.size()-1; i++) {
+    assert( (atleast >= 0) && (atleast<unitary_variables[i].size()));
+    problem.cnf<<unitary_variables[i][atleast]<<" 0\n"; //number of colour i must be more than colour i+1
+	problem.num_clauses++;
+  }
+}
+
+void add_colour_at_most_for_each_vertex(int colours, int N, vector<vector<int>>& unitary_variables, int atmost) {
+  for (int i=0; i<unitary_variables.size()-1; i++) {
+    assert( (atmost >= 0) && (atmost<unitary_variables[i].size()));
+    problem.cnf<<"-"<<unitary_variables[i][atmost]<<" 0\n"; //number of colour i must be more than colour i+1
+	problem.num_clauses++;
   }
 }
 
@@ -455,7 +472,7 @@ void post__symmetry_breaking_vertex_enumeration(int colours, int N) {
 // constrains there to be more of (or equal to) a greater colour on the last vertex than a lesser colour
 // note: compatable with post__symmetry_breaking_vertex_enumeration
 void post__symmetry_breaking_on_colours_last_vertex(int colours, int N) {
-  problem.levNb_begin = problem.num_clauses;
+  //problem.levNb_begin = problem.num_clauses;
   for (int i=0; i<colours; i++) { // there must exist atleast one of each colour on final vertex
     for (int vertex1=0; vertex1<N-1; vertex1++)
       problem.cnf<<problem.cnfvar(EC(E(vertex1,N-1),i))<<" ";
@@ -491,7 +508,7 @@ void post__symmetry_breaking_on_colours_last_vertex(int colours, int N) {
       }
     }
   }
-  problem.levNb_end = problem.num_clauses;
+  //problem.levNb_end = problem.num_clauses;
 }
 
 

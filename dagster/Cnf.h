@@ -19,10 +19,7 @@ You should have received a copy of the GNU General
 Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
-//
-//Originally extending from Tinisat
-// undder GPL, authored 2007 Jinbo Huang
-//
+
 
 #ifndef _CNF
 #define _CNF

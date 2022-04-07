@@ -87,6 +87,8 @@ void post__symmetry_breaking_vertex_enumeration(int colours, int N);
 // colour/vertex enumeration on the final vertex
 void post__symmetry_breaking_on_colours_last_vertex(int colours, int N);
 // add symmetry breaking on number of colours in order
-void add_colour_quantifier_symmetry_breaking(int colours, int N);
+void add_colour_quantifier_symmetry_breaking(int colours, int N, vector<vector<int>>& unitary_variables );
 
+void add_colour_at_least_for_each_vertex(int colours, int N, vector<vector<int>>& unitary_constraints, int atleast);
+void add_colour_at_most_for_each_vertex(int colours, int N, vector<vector<int>>& unitary_variables, int atmost);
 #endif
