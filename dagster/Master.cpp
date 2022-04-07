@@ -72,12 +72,16 @@ vector<Message*> Master::loop() {
 vector<Message*> Master::loop(const char* checkpoint_file) {
   if (checkpoint_file == NULL) {
     clear();
-  } else { //TODO: test this
-    FILE* fp = fopen(checkpoint_file,"r");
+  } else {
+    VLOG(1) << "MASTER: Booting from checkpoint file: "<<checkpoint_file;
+    FILE* fp;
+    TEST_NOT_NULL(fp = fopen(checkpoint_file,"r"))
     load_checkpoint(fp);
     fclose(fp);
   }
   bool terminate_trigger = false;
+  
+  VLOG(1) << "MASTER: this->checkpointing = "<<checkpointing<<"  "<<command_line_arguments.opportunity_modulo;
   
   clock_t t = clock();
   clock_t t2 = clock();
@@ -89,6 +93,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
         t2 = clock();
         std::stringstream ss;
         ss << "checkpoint_"<<checkpointing_index<<".check";
+        VLOG(1) << "MASTER: dumping checkpoint file: "<<ss.str().c_str();
         FILE* fp = fopen(ss.str().c_str(),"w");
         dump_checkpoint(fp);
         fclose(fp);
@@ -176,7 +181,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       // everybody is done with the message
       if (organiser->workers[source_worker-1].assigned != NULL) {
         stats->register_finish(source_worker-1);
-        VLOG(1) << "MASTER: timing message for node " << organiser->workers[source_worker-1].assigned->to << " took " << (clock() - organiser->workers[source_worker-1].assigned->time_start)*1.0/CLOCKS_PER_SEC;
+        VLOG(4) << "MASTER: timing message for node " << organiser->workers[source_worker-1].assigned->to << " took " << (clock() - organiser->workers[source_worker-1].assigned->time_start)*1.0/CLOCKS_PER_SEC;
         delete organiser->workers[source_worker-1].assigned;
         organiser->remove_message(organiser->workers[source_worker-1].assigned);
       }
