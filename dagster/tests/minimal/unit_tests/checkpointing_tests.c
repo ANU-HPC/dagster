@@ -192,7 +192,102 @@ TEST(CheckpointingTests, TableMasterDumpLoadIdentity) {
 }
 
 
+
+
+
+
+vector<set<int>> get_cubes(DdManager* ddmgr, DdNode* tmp) {
+  int numvars = Cudd_ReadSize(ddmgr);
+  int* cube;
+  CUDD_VALUE_TYPE value;
+  DdGen* gen;
+  vector<set<int>> cubes;
+  Cudd_ForeachCube(ddmgr, tmp, gen, cube, value) {
+    set<int> s;
+    s.clear();
+    for (int i=1; i<numvars; i++) {
+      if (cube[i]==2) continue;
+      if (cube[i]==0)
+        s.insert(i);
+      else if (cube[i]==1)
+        s.insert(-i);
+    }
+    cubes.push_back(s);
+  }
+  return cubes;
+}
+
+bool equality_of_cubes(vector<set<int>>& cubes1,vector<set<int>>& cubes2) {
+  for (auto c1 : cubes1) {
+    bool continued = false;
+    for (auto c2 : cubes2) {
+      if (c1==c2) {
+        continued = true;
+        break;
+      }
+    }
+    if (continued==false)
+      return false;
+  }
+  return true;
+}
+
+
+
 //TODO: non trivial identity comparrison with BDDSolutions interface
+TEST(CheckpointingTests, BDDMasterDumpLoadIdentity) {
+  Dag* d = new Dag("./good/d1.txt");
+  BDDSolutions* master = new BDDSolutions(d,150);
+
+  Message* m = new Message();
+  m->to = 0;
+  m->from = 0;
+  m->assignments.push_back(43);
+  m->assignments.push_back(41);
+  master->add_message(m);
+  
+  Message* m2 = new Message();
+  m2->to = 4;
+  m2->from=3;
+  m2->assignments.push_back(102);
+  m2->assignments.push_back(132);
+  master->register_message_completion(m2);
+  
+  FILE* fout = fopen("zog2.tcnf","w");
+  master->dump_checkpoint(fout);
+  fclose(fout);
+  
+  BDDSolutions* master2 = new BDDSolutions(d,150);
+  FILE* fin = fopen("zog2.tcnf","r");
+  master2->load_checkpoint(fin);
+  fclose(fin);
+  
+  EXPECT_EQ(master->vc,master2->vc);
+  EXPECT_EQ(master->vc,master2->vc);
+  for (int i=0; i<d->no_nodes; i++) {
+    vector<set<int>> a1,a2;
+    a1 = get_cubes(master->ddmgr, master->completed[i]);
+    a2 = get_cubes(master2->ddmgr, master2->completed[i]);
+    EXPECT_EQ(equality_of_cubes(a1,a2),true);
+    a1 = get_cubes(master->ddmgr, master->communicated[i]);
+    a2 = get_cubes(master2->ddmgr, master2->communicated[i]);
+    EXPECT_EQ(equality_of_cubes(a1,a2),true);
+    for (int j=0; j<d->no_nodes; j++) {
+      a1 = get_cubes(master->ddmgr, master->bdds[i][j]);
+      a2 = get_cubes(master2->ddmgr, master2->bdds[i][j]);
+      EXPECT_EQ(equality_of_cubes(a1,a2),true);
+    }
+  }
+  EXPECT_EQ(master->initial_messages.size(), master2->initial_messages.size());
+  for (int i=0; i<master->initial_messages.size(); i++) {
+    EXPECT_EQ(master->initial_messages[i]->to, master2->initial_messages[i]->to );
+    EXPECT_EQ(master->initial_messages[i]->from, master2->initial_messages[i]->from );
+    EXPECT_EQ(master->initial_messages[i]->assignments.size(), master2->initial_messages[i]->assignments.size() );
+    for (int j=0; j<master->initial_messages[i]->assignments.size(); j++) {
+      EXPECT_EQ(master->initial_messages[i]->assignments[j],master2->initial_messages[i]->assignments[j]);
+    }
+  }
+}
 
 
 
