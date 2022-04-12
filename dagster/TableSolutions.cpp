@@ -270,7 +270,7 @@ void TableSolutions::dump_checkpoint(FILE* fp) {
 // load all Table information from a readable file pointer
 // suitable for files written by dump_checkpoint() method
 void TableSolutions::load_checkpoint(FILE* fp) {
-	//TODO: clean before loading
+	// loading checkpoint
 	int identifier;
 	int reads;
 	reads = fscanf(fp, "%i ", &identifier);
@@ -303,6 +303,7 @@ void TableSolutions::load_checkpoint(FILE* fp) {
 		additional_clauses[i]->load_DIMACS_Cnf(fp);
 	}
 	for (int i=0; i<this->dag->no_nodes; i++) {
+		this->completed_combinations[i].clear();
 		int no_combinations;
 		reads = fscanf(fp,"%i ",&no_combinations);
 		CHECK_EQ(reads,1);

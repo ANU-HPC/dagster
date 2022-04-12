@@ -517,6 +517,7 @@ void BDDSolutions::print_communicated(FILE* fp, int node) {
 // suitable for files subsequently loaded by load_checkpoint() method
 void BDDSolutions::dump_checkpoint(FILE* fp) {
 	#if __has_include("dddmp.h")
+	fprintf(fp,"124349 ");
 	Dddmp_VarInfoType varoutinfo = DDDMP_VARIDS;
 	fprintf(fp,"%i %i %i ", initial_messages.size(),this->dag->no_nodes,this->vc);
 	for (auto it = initial_messages.begin(); it!=initial_messages.end(); it++) {
@@ -548,6 +549,14 @@ void BDDSolutions::dump_checkpoint(FILE* fp) {
 // suitable for files written by dump_checkpoint() method
 void BDDSolutions::load_checkpoint(FILE* fp) {
 	#if __has_include("dddmp.h")
+	int identifier;
+	int reads;
+	reads = fscanf(fp, "%i ", &identifier);
+	CHECK_EQ(reads,1);
+	if (identifier != 124349) {
+		throw BadParameterException("Cannot load checkpoint not created using BDDSolutions interface into BDDSolutions interface class");
+	}
+	
 	Dddmp_VarMatchType varmatchtype = DDDMP_VAR_MATCHIDS;
 	initial_messages.clear();
 	for (int i=0; i<dag->no_nodes; i++) {
@@ -560,7 +569,7 @@ void BDDSolutions::load_checkpoint(FILE* fp) {
 	int initial_message_size;
 	int dag_no_nodes;
 	int vvc;
-	int reads = fscanf(fp, "%i %i %i ", &initial_message_size, &dag_no_nodes, &vvc);
+	reads = fscanf(fp, "%i %i %i ", &initial_message_size, &dag_no_nodes, &vvc);
 	CHECK_EQ(reads,3);
 	CHECK_EQ(dag_no_nodes, this->dag->no_nodes);
 	CHECK_EQ(vvc,this->vc);
