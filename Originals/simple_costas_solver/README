@@ -1,0 +1,4 @@
+execute run.sh to compile the simple costas solver and run it.
+by default it will generate all solutions to costas-13 and display them.
+
+to change the size of the costas array, you change the "n=13" value in the main.cpp head.
