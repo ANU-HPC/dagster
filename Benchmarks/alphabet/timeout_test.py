@@ -1,0 +1,132 @@
+
+
+
+modes = ["AllPOS2020",
+"AllPOS2020WL",
+"AllSAT2020",
+"Both",
+"BothPOS2020",
+"BothPOS2020WL",
+"BothPartialRoundingSatPOS2020",
+"BothPartialRoundingSatPOS2020WL",
+"BothRoundingSatPOS2020",
+"BothRoundingSatPOS2020WL",
+"BothStar",
+"CompetMinPBResLongWLMixedConstraintsObjectiveExpSimp",
+"CompetPBCPMixedConstraintsLongMaxObjective",
+"CompetPBCPMixedConstraintsLongMinObjective",
+"CompetPBCPMixedConstraintsMinObjective",
+"CompetPBCPMixedConstraintsObjective",
+"CompetPBCPMixedConstraintsObjectiveLearnJustClauses",
+"CompetPBCPRemoveSatisfiedMixedConstraintsLongMaxObjective",
+"CompetPBKillerClassic",
+"CompetPBKillerFixed",
+"CompetPBKillerRSAT",
+"CompetPBResHTMixedConstraintsObjectiveExpSimp",
+"CompetPBResLongHTMixedConstraintsObjectiveExpSimp",
+"CompetPBResLongWLMixedConstraintsObjectiveExpSimp",
+"CompetPBResMinHTMixedConstraintsObjective",
+"CompetPBResMinHTMixedConstraintsObjectiveExpSimp",
+"CompetPBResMixedConstraintsObjectiveExpSimp",
+"CompetPBResWLMixedConstraintsObjectiveExpSimp",
+"CuttingPlanes",
+"CuttingPlanesAggressiveCleanup",
+"CuttingPlanesPOS2020",
+"CuttingPlanesPOS2020WL",
+"CuttingPlanesReduceByGCD",
+"CuttingPlanesReduceByGCDSkip",
+"CuttingPlanesReduceByPowersOf2",
+"CuttingPlanesReduceByPowersOf2Skip",
+"CuttingPlanesStar",
+"CuttingPlanesStarCardLearning",
+"CuttingPlanesStarCardLearningSkip",
+"CuttingPlanesStarClauseLearning",
+"CuttingPlanesStarClauseLearningSkip",
+"CuttingPlanesStarDivideBy2",
+"CuttingPlanesStarDivideBy2Skip",
+"CuttingPlanesStarDivideByGCD",
+"CuttingPlanesStarDivideByGCDSkip",
+"CuttingPlanesStarReduceToCard",
+"CuttingPlanesStarReduceToCardSkip",
+"CuttingPlanesStarRounding",
+"CuttingPlanesStarRoundingSkip",
+"CuttingPlanesStarSkip",
+"CuttingPlanesWatched",
+"Default",
+"DefaultNonNormalized",
+"DefaultOptimizer",
+"DetectCards",
+"DetectCardsAndExit",
+"EclipseP2",
+"InprocDetectCards",
+"InprocDetectCardsSkip",
+"LazyInprocDetectCards",
+"LazyInprocDetectCardsSkip",
+"Light",
+"MiniLearningOPBClauseCardConstrMaxSpecificOrderIncrementalReductionToClause",
+"MiniOPBClauseAtLeastConstrMax",
+"MiniOPBClauseAtLeastMinPueblo",
+"MiniOPBClauseCardMin",
+"MiniOPBClauseCardMinPueblo",
+"OPBStringSolver",
+"PBCPAllPB",
+"PBCPAllPBWL",
+"PBCPAllPBWLPueblo",
+"PBCPMixedConstrainsImplied",
+"PBCPMixedConstraints",
+"PBCPMixedConstraintsCautious",
+"PBCPMixedConstraintsObjective",
+"PBCPMixedConstraintsObjectiveLearnJustClauses",
+"PBCPMixedConstraintsObjectiveNoLearning",
+"PBCPMixedConstraintsReduceToClause",
+"PBCPMixedConstraintsResCP",
+"PBKillerClassic",
+"PBKillerFixed",
+"PBKillerRSAT",
+"PBResAllPB",
+"PBResAllPBWL",
+"PBResAllPBWLPueblo",
+"PBResHTMixedConstraintsObjective",
+"PBResHTMixedConstraintsObjectiveExpSimp",
+"PBResMinHTMixedConstraintsObjective",
+"PBResMixedConstraintsObjective",
+"PartialRoundingSat",
+"PartialRoundingSatPOS2020",
+"PartialRoundingSatPOS2020WL",
+"Resolution",
+"ResolutionGlucose",
+"ResolutionGlucose21",
+"ResolutionGlucoseExpSimp",
+"ResolutionGlucoseSimpleSimp",
+"ResolutionMaxMemory",
+"ResolutionSimpleRestarts",
+"ResolutionWL",
+"RoundingSat",
+"RoundingSatPOS2020",
+"RoundingSatPOS2020WL",
+"SAT",
+"SATUNSAT",
+"SimpleSimplification",
+"SoberBoth",
+"UNSAT"]
+
+
+
+import os
+import time
+from tqdm import tqdm
+
+time_dict = {}
+for m in tqdm(modes):
+	t = time.time()
+	#os.system("ls > /dev/null")
+	os.system("timeout 10s ~/Downloads/sat4j-2_3_6/dist/CUSTOM/sat4j-pb.jar {} ./zog.opb > /dev/null".format(m))
+	time_dict[m] = time.time()-t
+
+print(time_dict)
+print("")
+times = list(time_dict.values())
+for i in range(10):
+	min_time = min(times)
+	print(min_time,[m for m,v in time_dict.items() if v==min_time])
+	times = [t for t in times if t!=min_time]
