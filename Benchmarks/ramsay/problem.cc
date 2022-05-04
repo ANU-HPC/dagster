@@ -175,7 +175,7 @@ void Problem::print__dag_file(string filename) {
   for (int i=0;i<N-1; i++)
     for (int c=0; c<M; c++) {
       dag_file << cnfvar(EC(E(i,N-1),c));
-      if ((i!=N-2) || (c!=M-1))
+      if ((i!=N-2)||(c!=M-1))
         dag_file << ",";
     }
   if (Z!=0)

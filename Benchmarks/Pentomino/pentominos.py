@@ -448,6 +448,8 @@ def complex_cubes2(cnf_file,map_file,dag_file,horisontal_line_iterator):
 
 
 
+
+
 @click.command()
 @click.argument('cnf_file')
 @click.argument('map_file')
@@ -489,6 +491,77 @@ def complex_cubes3(cnf_file,map_file,dag_file,horisontal_line_iterator):
 
 
 
+import pdb
+
+
+
+
+def get_relevent_forward_connection_literals_block(compiled_variables, from_x, to_x, from_y, to_y):
+	relevent_variables = []
+	for k in list(pentomino_keys): #+ ['x_link','y_link']:
+		for x_tile in compiled_variables[k].keys():
+			if (x_tile < to_x) and (x_tile >= from_x):
+				for y_tile in compiled_variables[k][x_tile].keys():
+					if (y_tile < to_y) and (y_tile >= from_y):
+						relevent_variables.append(compiled_variables[k][x_tile][y_tile])
+	return relevent_variables
+
+
+@click.command()
+@click.argument('cnf_file')
+@click.argument('map_file')
+@click.argument('dag_file')
+@click.argument('horisontal_line_iterator', type=click.INT)
+def complex_cubes4(cnf_file,map_file,dag_file,horisontal_line_iterator):
+	cnf = import_CNF(cnf_file)
+	CNF_variables, CNF_variable_indices = import_MAP(map_file)
+	max_variables = max(CNF_variables.values())
+	CNF_variable_keys = CNF_variables.keys()
+	compiled_variables = compiled_CNF_variables(CNF_variables)
+	xblocks = 0
+	while ("{}_0_F".format(xblocks*horisontal_line_iterator) in CNF_variable_keys):
+		xblocks += 1
+	yblocks = 0
+	while ("0_{}_F".format(yblocks*horisontal_line_iterator) in CNF_variable_keys):
+		yblocks += 1
+	node_index = lambda x,y:y*xblocks+x
+	f = open(dag_file,"w")
+	f.write("DAG-FILE\nNODES:{}\nGRAPH:\n".format(xblocks*yblocks+1))
+	print("writing graph links")
+	for i in tqdm(range(1,xblocks)):
+		for j in range(yblocks-1):
+			upper_sequence = get_relevent_forward_connection_literals_block(compiled_variables, 0, xblocks*horisontal_line_iterator, 0, (j)*horisontal_line_iterator)
+			f.write("{}->{}:{}\n".format(node_index(i,j),node_index(i-1,j+1),contract_sequence(get_relevent_forward_connection_literals_block(compiled_variables, i*horisontal_line_iterator, (i+1)*horisontal_line_iterator, j*horisontal_line_iterator, (j+1)*horisontal_line_iterator)+upper_sequence)   ))
+	for i in tqdm(range(xblocks)):
+		for j in range(yblocks-1):
+			upper_sequence = get_relevent_forward_connection_literals_block(compiled_variables, 0, xblocks*horisontal_line_iterator, 0, (j)*horisontal_line_iterator)
+			f.write("{}->{}:{}\n".format(node_index(i,j),node_index(i,j+1),contract_sequence(get_relevent_forward_connection_literals_block(compiled_variables, i*horisontal_line_iterator, (i+1)*horisontal_line_iterator, j*horisontal_line_iterator, (j+1)*horisontal_line_iterator)+upper_sequence)   ))
+	for i in tqdm(range(xblocks-1)):
+		for j in range(yblocks-1):
+			upper_sequence = get_relevent_forward_connection_literals_block(compiled_variables, 0, xblocks*horisontal_line_iterator, 0, (j)*horisontal_line_iterator)
+			f.write("{}->{}:{}\n".format(node_index(i,j),node_index(i+1,j+1),contract_sequence(get_relevent_forward_connection_literals_block(compiled_variables, i*horisontal_line_iterator, (i+1)*horisontal_line_iterator, j*horisontal_line_iterator, (j+1)*horisontal_line_iterator)+upper_sequence)   ))
+	for i in tqdm(range(xblocks)):
+		j = yblocks-1
+		#j = 1
+		upper_sequence = get_relevent_forward_connection_literals_block(compiled_variables, 0, xblocks*horisontal_line_iterator, 0, (j)*horisontal_line_iterator)
+		f.write("{}->{}:{}\n".format(node_index(i,j),node_index(0,yblocks),contract_sequence(get_relevent_forward_connection_literals_block(compiled_variables, i*horisontal_line_iterator, (i+1)*horisontal_line_iterator, j*horisontal_line_iterator, (j+1)*horisontal_line_iterator)+upper_sequence)   ))
+	f.write("CLAUSES:\n")
+	print("writing clause indices")
+	for i in tqdm(range(xblocks)):
+		for j in range(yblocks):
+			f.write("{}:{}\n".format(node_index(i,j),contract_sequence(
+				get_relevent_cnf_indices_from_indices_2D(CNF_variable_indices, compiled_variables,max(0,i*horisontal_line_iterator-1),(i+1)*horisontal_line_iterator,max(0,j*horisontal_line_iterator-1),(j+1)*horisontal_line_iterator)
+				)))
+	f.write("{}:{}\n".format(node_index(0,yblocks),contract_sequence(
+		get_relevent_cnf_indices_from_indices_2D(CNF_variable_indices, compiled_variables,0,(xblocks)*horisontal_line_iterator,0,(yblocks)*horisontal_line_iterator)
+		)))
+	f.write("REPORTING:\n")
+	f.write("{}-{}".format(1,max_variables))
+	f.write("\n")
+	f.close()
+
+
+
 @click.command()
 @click.argument('map_file')
 def check_multiply_soluble(map_file):
@@ -497,10 +570,30 @@ def check_multiply_soluble(map_file):
 	print(no_solutions)
 
 
+
+
+@click.command()
+@click.argument('map_file')
+@click.argument('solution_file')
+@click.argument('w', type=click.INT)
+@click.argument('h', type=click.INT)
+def view_solution(map_file,solution_file,w,h):
+	CNF_variables, CNF_variable_indices = import_MAP(map_file)
+	with open(solution_file,"r") as f:
+		solutions = [[int(fff) for fff in ff.strip().split(' ')] for ff in f.readlines()]
+	for solution in solutions:
+		processed_solution = processSolution(solution, CNF_variables, w, h)
+		printSolution(processed_solution)
+		print("")
+	
+
+
+
 dag_make.add_command(simple_cubes)
 dag_make.add_command(complex_cubes)
 dag_make.add_command(complex_cubes2)
 dag_make.add_command(complex_cubes3)
+dag_make.add_command(complex_cubes4)
 create.add_command(forward)
 create.add_command(backward)
 create.add_command(combination_1)
@@ -513,6 +606,7 @@ cli.add_command(display_tikz)
 cli.add_command(create)
 cli.add_command(dag_make)
 cli.add_command(check_multiply_soluble)
+cli.add_command(view_solution)
 
 if __name__ == '__main__':
 	cli()
