@@ -238,6 +238,7 @@ bool SatSolver::verify_and_trim_Solution() {
   for (int i=0; i<cnf->cc; i++) {
     bool satisfied = false;
     int min_satisfying_var = -1;
+    int min_satisfying_lit = -1;
     for (int j=0; j<cnf->cl[i]; j++) {
       int lit = cnf->clauses[i][j];
       if (SET(lit)) {
@@ -245,9 +246,13 @@ bool SatSolver::verify_and_trim_Solution() {
         int varlit = VAR(lit);
         if (vars[varlit].mark2 == true) {
           min_satisfying_var = varlit;
+          min_satisfying_lit = lit;
           break;
         }
-        if ((min_satisfying_var==-1)||(varlit<min_satisfying_var))
+        if ((min_satisfying_var==-1)||(
+        	((lit>0) && (min_satisfying_lit<0)) || // priority towards positive literals
+        	(varlit<min_satisfying_var)
+        	))
           min_satisfying_var = varlit;
       }
     }
@@ -260,6 +265,7 @@ bool SatSolver::verify_and_trim_Solution() {
     int clause_index = solution_conflict_indices[i];
     bool satisfied = false;
     int min_satisfying_var = -1;
+    int min_satisfying_lit = -1;
     for (int j=0; clauses[clause_index][j]!=0; j++) {
       int lit = clauses[clause_index][j];
       if (SET(lit)) {
@@ -267,9 +273,13 @@ bool SatSolver::verify_and_trim_Solution() {
         int varlit = VAR(lit);
         if (vars[varlit].mark2 == true) {
           min_satisfying_var = varlit;
+          min_satisfying_lit = lit;
           break;
         }
-        if ((min_satisfying_var==-1)||(varlit<min_satisfying_var))
+        if ((min_satisfying_var==-1)||(
+        	((lit>0) && (min_satisfying_lit<0)) || // priority towards positive literals
+        	(varlit<min_satisfying_var)
+        	))
           min_satisfying_var = varlit;
       }
     }
