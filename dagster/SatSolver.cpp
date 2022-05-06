@@ -206,7 +206,16 @@ if (command_line_arguments.opportunity_modulo!=0) {
   }
   if ((command_line_arguments.solution_trimming==1) && (!verify_and_trim_Solution()))
     throw ConsistencyException("SatSolver somehow generated bad SAT result");
+  if (command_line_arguments.solution_trimming==2)
+  	purge_negative_literals();
   return true;
+}
+
+// removes all negative literals from the solution (WARNING: possibly UNSAFE configuraiton)
+void SatSolver::purge_negative_literals() {
+  for (int i=1; i<=vc; i++)
+    if (vars[i].value == _NEGA)
+      vars[i].value = _FREE;
 }
 
 // returning TRUE/FALSE, if current assignment actually satisfies whole CNF

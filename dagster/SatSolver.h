@@ -82,6 +82,7 @@ private:
 
   bool verifySolution();
   bool verify_and_trim_Solution();
+  void purge_negative_literals();
 
   /** buffer for communication with reducer instance */
   MpiBuffer *mpi_buffer;
