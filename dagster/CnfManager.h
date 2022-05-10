@@ -108,6 +108,8 @@ public:
 	void load_into_message(Message* m, RangeSet &r);
 	void load_into_deque(deque<int> &d, RangeSet &r);
 	void load_into_deque(deque<int> &d);
+	void load_into_deque(deque<int> &d, RangeSet &r, bool positives_only);
+	void load_into_deque(deque<int> &d, bool positives_only);
 	void load_marked_into_message(Message* m);
     bool solver_unit_contradiction;
 };

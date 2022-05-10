@@ -46,7 +46,7 @@ public:
   Cnf* compile_Cnf_from_Message(Message* m); // takes a message and gets the respective Cnf of the 'to' field, adds unitary clauses for the assignments of the messages and appends additional clauses
   int max_vc; // the maximum variable count from any of the cnfs
   int split_CNF(char* cnf_filename, vector<RangeSet> &vec_indices);
-  int pseudo_split_CNF(char* cnf_filename, vector<RangeSet> &indices);
+  int pseudo_split_CNF(char* cnf_filename);
   Dag* dag;
 private:
   int from_files;

@@ -176,7 +176,6 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
   }
 
   int clause_index = 0;
-  int max_vc = 0;
   // for each line
   while((c=getc(ifp)) != EOF){
     if (isspace(c)) continue; else ungetc(c,ifp);
@@ -216,9 +215,6 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
           if (vc>variable_counts[i])
             variable_counts[i] = vc;
           clause_counts[i]++;
-          // update max variable encountered
-          if (vc > max_vc)
-            max_vc = vc;
         }
       }
       clause_index++;
@@ -237,8 +233,9 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
     fprintf(file_pointers[i],"p cnf %i %i",variable_counts[i], clause_counts[i]);
     fclose(file_pointers[i]);
   }
-  return max_vc;
+  return header_vc;
 }
+
 
 
 // int pseudo_split_CNF(cnf_filename, indices)
@@ -249,25 +246,14 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
 // returns the maximum variable index found in the process of splitting the files up (which is the primary purpose of the function)
 //
 // NOTE: potential bug, if header = 'p cnf 0 0'
-int CnfHolder::pseudo_split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
-  int nodes = indices.size();
-  vector<std::deque<std::pair<int,int>>::iterator> node_index_pairs;
-  node_index_pairs.resize(nodes);
-  
-  // load the CNF file pointer and begin consideration of node-index pairs for each pseudo split
+int CnfHolder::pseudo_split_CNF(char* cnf_filename) {
   FILE *ifp;
   TEST_NOT_NULL(ifp = fopen(cnf_filename, "r"));
-  for (int i=0; i<nodes; i++)
-    node_index_pairs[i] = indices[i].buffer.begin();
   
   // create a buffer to read in lines
   char line[100000];
   size_t len = 100000;
   char c;
-  
-  // create a buffer to parse read integers from the read lines
-  int max_clause_len = 1024, *literals;
-  TEST_NOT_NULL(literals = (int *) malloc(max_clause_len * sizeof(int)))
   
   // search for and read the header
   int header_vc, header_cc;
@@ -282,54 +268,11 @@ int CnfHolder::pseudo_split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
     }
   }
 
-  // for each line
-  int clause_index = 0;
-  int max_vc = 0;
-  while((c=getc(ifp)) != EOF){
-    if (isspace(c)) continue; else ungetc(c,ifp);
-    // search for the first non-whitespace character
-    if ((c=='-') || isdigit(c)) {
-      int literal_input;
-      int j=-1;
-      int vc = 0;
-      do { // scan the line into the literals buffer one character at a time, until the zero is scanned
-        j++;
-        int literal_input_count = fscanf(ifp, "%d", &literal_input);
-        if (literal_input_count == 0)
-              throw ParsingException("Invalid CNF file - cnf lines must involve digits and terminate with zero\n");
-        if (j == max_clause_len) { // extend integer buffer if nessisary
-          max_clause_len *= 2;
-          TEST_NOT_NULL(literals = (int *) realloc(literals, max_clause_len * sizeof(int)))
-        }
-        // store read integer in integer buffer
-        literals[j] = literal_input;
-        if (abs(literal_input) > vc) // updating max variable 'vc'
-          vc = abs(literal_input);
-      } while (literal_input != 0);
-      
-      for (int i=0; i<nodes; i++) {
-        // update the range pair [a,b] under consideration for each node such that the clause_index <= b
-        while ((node_index_pairs[i] != indices[i].buffer.end()) && 
-               (clause_index > (*(node_index_pairs[i])).second))
-          node_index_pairs[i]++;
-        // if not past the end of the respective indicies and for range pair [a,b] that clause_index >= a
-        if ((node_index_pairs[i] != indices[i].buffer.end()) &&
-            (clause_index >= (*(node_index_pairs[i])).first)) {
-          // update max variable encountered
-          if (vc > max_vc) {
-            max_vc = vc;
-          }
-        }
-      }
-      clause_index++;
-    }
-    // get a new line
-    fgets(line, len, ifp);
-  }
-  free(literals);
   fclose(ifp);
-  return max_vc;
+  return header_vc;
 }
+
+
 
 
 
@@ -368,7 +311,7 @@ void CnfHolder::generate_decomposition() {
 
 // same as generate_decomposition, except only sets max_vc
 void CnfHolder::generate_pseudo_decomposition() {
-  max_vc = pseudo_split_CNF(cnf_filename, dag->clause_indices_for_each_node);
+  max_vc = pseudo_split_CNF(cnf_filename);
 }
 
 
