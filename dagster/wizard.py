@@ -6,7 +6,6 @@ import sys
 
 
 from collections import defaultdict
-
 class Elements(object):
 	def __init__(self):
 		self.e = defaultdict(list)
@@ -18,7 +17,6 @@ class Elements(object):
 	def register(self,e,call):
 		self.call[call] = e
 		return e
-
 E = Elements()
 
 
@@ -46,15 +44,6 @@ def menu(title, choices):
     body = []
     body.extend(choices)
     return urwid.ListBox(urwid.SimpleFocusListWalker(body))
-
-def item_chosen(button):
-    response = urwid.Text([u'You chose ', button.label, u'\n'])
-    done = menu_button(u'Ok', exit_program)
-    zog = urwid.AttrMap(urwid.IntEdit(u'oogabooga: ',42), None, focus_map='reversed')
-    zog2 = urwid.AttrMap(urwid.RadioButton(radio_button_group,u'oogaboo: '), None, focus_map='reversed')
-    zog3 = urwid.AttrMap(urwid.RadioButton(radio_button_group,u'oogabga: '), None, focus_map='reversed')
-    zog4 = urwid.AttrMap(urwid.RadioButton(radio_button_group,u'oogooga: '), None, focus_map='reversed')
-    top.open_box(urwid.Filler(urwid.Pile([response, done, zog,zog2,zog3,zog4])),"zozoz")
 
 def exit_program(button):
     raise urwid.ExitMainLoop()
@@ -181,7 +170,7 @@ menu_top = menu(u'Main Menu', [
         urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ decision interval: ',30], 'd'), None, focus_map='reversed'),
         urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ solution checking time: ',30] ,'l'), None, focus_map='reversed'),
         urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ suggestion size: ',30], 's'), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.CheckBox, ["gNovelty+ clause weights: "], 'w'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.CheckBox, ["gNovelty+ clause weights "], 'w'), None, focus_map='reversed'),
         urwid.Divider(),
         urwid.Text("CDCL heuristic rotation scheme:"),
         urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic,u'slsfirst'], '@rslsfirst'), None, focus_map='reversed'),
@@ -267,16 +256,18 @@ top = CascadingBoxes(menu_top,"Main Menu")
 frame = urwid.Frame(body=top,footer=footer_txt, header=header_padding)
 
 
+
+
+# load input command file (if there is) into the gui
+if (len(sys.argv)>1):
+	print("inputting file {}".format(sys.argv[1]))
+
+
+
+# enter main loop, and exit if selected
 urwid.MainLoop(frame, palette).run()
-
-
 if not outputting_command:
 	sys.exit(1)
-
-
-#import os
-#os.system("clear")
-#os.system("echo 'mpirun -n 44 ../../dagster -e 0 -b 1 -c 4 -e 2 -g 2 -h /qfwfw/ -o output.txt my.dag my.cnf'")
 
 
 
@@ -354,10 +345,12 @@ for k in list(config_copy.keys()):
 gnovelty_present = '#1' in special.keys()
 strengthener_present = '#2' in special.keys()
 mode_number = 0
-if gnovelty_present:
-	mode_number += 1
-if strengthener_present:
-	mode_number += 2
+if gnovelty_present and strengthener_present:
+	mode_number = 2
+elif strengthener_present:
+	mode_number = 3
+elif gnovelty_present
+	mode_number = 1
 config_copy['m']=mode_number
 
 #format the command string
