@@ -1,6 +1,26 @@
 import urwid
-import cgitb
-cgitb.enable(format="")
+#import cgitb
+import sys
+#cgitb.enable(format="")
+
+
+
+from collections import defaultdict
+
+class Elements(object):
+	def __init__(self):
+		self.e = defaultdict(list)
+		self.call = {}
+	def __call__(self,element_type,args,char=''):
+		n = element_type(*args)
+		self.e[element_type].append([n,char])
+		return n
+	def register(self,e,call):
+		self.call[call] = e
+		return e
+
+E = Elements()
+
 
 
 header_txt = urwid.Text(u"-------------Dagster Startup Utility-------------")
@@ -41,8 +61,26 @@ def exit_program(button):
 
 outputting_command = False
 def exit_program_start(button):
-    outputting_command = True
-    raise urwid.ExitMainLoop()
+	global outputting_command
+	if len(E.call['executable'].edit_text)==0:
+		E.call['executable_attr'].set_attr_map({None:"focus line"})
+		return
+	else:
+		E.call['executable_attr'].set_attr_map({None:None})
+	
+	if len(E.call['processes'].edit_text)==0 or int(E.call['processes'].edit_text)<2:
+		E.call['processes_attr'].set_attr_map({None:"focus line"})
+		return
+	else:
+		E.call['processes_attr'].set_attr_map({None:None})
+		
+	if len(E.call['output'].edit_text)==0:
+		E.call['output_attr'].set_attr_map({None:"focus line"})
+		return
+	else:
+		E.call['output_attr'].set_attr_map({None:None})
+	outputting_command = True
+	raise urwid.ExitMainLoop()
 
 def back_callback(button):
     if top.box_level > 1:
@@ -85,94 +123,85 @@ gnovelty:
 
 '''
 
-from collections import defaultdict
-
 
 bdd_config = []
+bdd_mode = []
 sls_heuristic = []
 sls_heuristic_rotation_scheme = []
 tinisat_solution_trimming = []
 
-class Elements(object):
-	def __init__(self):
-		self.e = defaultdict(list)
-	def __call__(self,element_type,args,char="z"):
-		n = element_type(*args)
-		self.e[element_type].append([n,char])
-		return n
-
-E = Elements()
 
 menu_top = menu(u'Main Menu', [
-    urwid.AttrMap(E(urwid.Edit, [u'Dagster Executable Location: ']), None, focus_map='reversed'),
-    urwid.AttrMap(E(urwid.IntEdit, [u'number of MPI processes: ',1]), None, focus_map='reversed'),
-    urwid.AttrMap(E(urwid.Edit, [u'Output Filename: ']), None, focus_map='reversed'),
+    E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'Dagster Executable Location: '], '#d'), 'executable'), None, focus_map='reversed'), 'executable_attr'),
+    E.register(urwid.AttrMap(E.register(E(urwid.IntEdit, [u'number of MPI processes: ',1], '#0'), 'processes'), None, focus_map='reversed'), 'processes_attr'),
+    E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'Output Filename: '], 'o'), "output"), None, focus_map='reversed'), 'output_attr'),
     urwid.Divider(),
-    urwid.AttrMap(E(urwid.CheckBox, ["enumerating all solutions"]), None, focus_map='reversed'),
-    urwid.AttrMap(E(urwid.CheckBox, ["Using breadth-first search paradigm"]), None, focus_map='reversed'),
-    urwid.AttrMap(E(urwid.CheckBox, ["CNF file splitting"]), None, focus_map='reversed'),
-    urwid.AttrMap(E(urwid.Edit, [u'    |_ splitting directory: ']), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.CheckBox, ["enumerating all solutions"], 'e'), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.CheckBox, ["Using breadth-first search paradigm"], 'b'), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.CheckBox, ["CNF file splitting"], "!h"), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.Edit, [u'    |_ splitting directory: '], 'h'), None, focus_map='reversed'),
     urwid.Divider(),
     sub_menu(u'Checkpointing Configuration', [
-        urwid.AttrMap(E(urwid.CheckBox, ["Dumping Checkpoints"]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.Edit, [u'    |_ Checkpoint output Filename: ']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.IntEdit, [u'    |_ Checkpoint Frequency (seconds): ',1]), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.CheckBox, ["Dumping Checkpoints"], "!zv"), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.Edit, [u'    |_ Checkpoint output Filename: '],'z'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'    |_ Checkpoint Frequency (seconds): ',1],'v'), None, focus_map='reversed'),
         urwid.Divider(),
-        urwid.AttrMap(E(urwid.CheckBox, ["Loading a Checkpoint"]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.Edit, [u'    |_ Checkpoint Input Filename: ']), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.CheckBox, ["Loading a Checkpoint"], "!u"), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.Edit, [u'    |_ Checkpoint Input Filename: '],'u'), None, focus_map='reversed'),
         urwid.Divider(),
         menu_button(u'Back', back_callback),
     ]),
     urwid.Divider(),
     sub_menu(u'CDCL Tuning Options', [
-        urwid.AttrMap(E(urwid.CheckBox, ["TiniSat restarting"]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.CheckBox, ["TiniSat solution trimming"]), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.CheckBox, ["TiniSat restarting",True],'p'), None, focus_map='reversed'),
         urwid.Divider(),
         urwid.Text("TiniSat solution trimming:"),
-        urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'Off']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'On']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'Positive literals only']), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'Off'], '@t0'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'On'], '@t1'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'Positive literals only'], '@t2'), None, focus_map='reversed'),
         urwid.Divider(),
-        urwid.AttrMap(E(urwid.IntEdit, [u'SAT reporting time: ',40]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.IntEdit, [u'SAT solution interrupt: ',40]), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'SAT reporting time: ',40], 'j'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'SAT solution interrupt: ',40], 'i'), None, focus_map='reversed'),
         
         urwid.Divider(),
-        urwid.AttrMap(E(urwid.CheckBox, ["Geometric restarting"]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.IntEdit, [u'    |_ Opportunity modulo: ',40]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.Edit, [u'    |_ discount factor: ']), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.CheckBox, ["Geometric restarting"], '!xy'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'    |_ Opportunity modulo: ',40],'x'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.Edit, [u'    |_ discount factor: ','0.95'],'y'), None, focus_map='reversed'),
         urwid.Divider(),
         menu_button(u'Back', back_callback),
     ]),
     urwid.Divider(),
-    urwid.AttrMap(E(urwid.CheckBox, ["Using Strengthener"]), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.CheckBox, ["Using Strengthener"], '#2'), None, focus_map='reversed'),
+    urwid.Divider(),
+    urwid.Text("SLS Helpers:"),
+    urwid.AttrMap(E(urwid.CheckBox, ["Using gNovelty+ Helpers"], '!kdlswra #1'), None, focus_map='reversed'),
     sub_menu(u'gNovelty+ Configuration', [
-        urwid.AttrMap(E(urwid.CheckBox, ["Using gNovelty+"]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.IntEdit, [u'    |_ gNovelty+ per CDCL: ',1]), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ per CDCL: ',1], 'k'), None, focus_map='reversed'),
         urwid.Divider(),
-        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ decision interval: ',30]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ solution checking time: ',30]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ suggestion size: ',30]), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.CheckBox, ["gNovelty+ clause weights: "]), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ decision interval: ',30], 'd'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ solution checking time: ',30] ,'l'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ suggestion size: ',30], 's'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.CheckBox, ["gNovelty+ clause weights: "], 'w'), None, focus_map='reversed'),
         urwid.Divider(),
         urwid.Text("CDCL heuristic rotation scheme:"),
-        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic,u'slsfirst']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic,u'cdclfirst']), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic,u'slsfirst'], '@rslsfirst'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic,u'cdclfirst'], '@rcdclfirst'), None, focus_map='reversed'),
         urwid.Divider(),
         urwid.Text("SLS suggestion heuristic:"),
-        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic_rotation_scheme,u'most recent flip (ie `ghosts` mode)']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic_rotation_scheme,u'most relevent flip (non `ghosts` mode)']), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic_rotation_scheme,u'most recent flip (ie `ghosts` mode)'], '@aghosts'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [sls_heuristic_rotation_scheme,u'most relevent flip (non `ghosts` mode)'], '@anonghosts'), None, focus_map='reversed'),
         urwid.Divider(),
         menu_button(u'Back', back_callback),
     ]),
-    sub_menu(u'Master Configuration', [
-        urwid.AttrMap(E(urwid.CheckBox, ["Using BDD master"]), None, focus_map='reversed'),
-        urwid.Divider(),
-        urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD paths encoding']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD cubes encoding']), None, focus_map='reversed'),
-        urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD minisat encoding']), None, focus_map='reversed'),
-        urwid.Divider(),
-        urwid.AttrMap(E(urwid.CheckBox, ["Using Dumb Table master (WARNING: unsafe)"]), None, focus_map='reversed'),
-        urwid.Divider(),
+    urwid.Divider(),
+    urwid.Text("Solutions Handler:"),
+    urwid.AttrMap(E(urwid.RadioButton, [bdd_mode, u'Using Table Solutions Handler'], '@g0'), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.RadioButton, [bdd_mode, "Using Dumb Table Solutions Handler"], '@g2'), None, focus_map='reversed'),
+    urwid.AttrMap(E(urwid.RadioButton, [bdd_mode, "Using BDD Solutions Handler"], '@g1'), None, focus_map='reversed'),
+    sub_menu(u'BDD handler Configuration', [
+        urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD paths encoding'], '@cpaths'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD cubes encoding'], '@ccubes'), None, focus_map='reversed'),
+        urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD minisat encoding'], '@cminisat'), None, focus_map='reversed'),
         menu_button(u'Back', back_callback),
     ]),
     urwid.Divider(),
@@ -224,9 +253,6 @@ class CascadingBoxes(urwid.WidgetPlaceholder):
         else:
             return super(CascadingBoxes, self).keypress(size, key)
 
-
-
-
 palette = [
     (None,  'light gray', 'black'),
     ('heading', 'black', 'light gray'),
@@ -237,30 +263,110 @@ palette = [
     ('focus options', 'black', 'light gray'),
     ('selected', 'white', 'dark blue')]
 
-
-
-
 top = CascadingBoxes(menu_top,"Main Menu")
 frame = urwid.Frame(body=top,footer=footer_txt, header=header_padding)
 
-import os
 
 urwid.MainLoop(frame, palette).run()
-#if outputting_command:
-os.system("clear")
-os.system("echo 'mpirun -n 44 ../../dagster -e 0 -b 1 -c 4 -e 2 -g 2 -h /qfwfw/ -o output.txt my.dag my.cnf'")
+
+
+if not outputting_command:
+	sys.exit(1)
+
+
+#import os
+#os.system("clear")
+#os.system("echo 'mpirun -n 44 ../../dagster -e 0 -b 1 -c 4 -e 2 -g 2 -h /qfwfw/ -o output.txt my.dag my.cnf'")
+
+
+
+# load all the element values into a config dictionary
+config = {}
 for v in E.e[urwid.Edit]:
-	print(v[1], v[0].edit_text)
+	config[v[1]] = v[0].edit_text
 for v in E.e[urwid.IntEdit]:
-	print(v[1], v[0].edit_text)
+	config[v[1]] = v[0].edit_text
 for v in E.e[urwid.CheckBox]:
-	print(v[1], v[0]._state)
+	config[v[1]] = int(v[0]._state)
 for v in E.e[urwid.RadioButton]:
-	print(v[1], v[0]._state)
-print(bdd_config)
-print(sls_heuristic)
-print(sls_heuristic_rotation_scheme)
-print(tinisat_solution_trimming)
-#urwid.RadioButton
+	config[v[1]] = v[0]._state
+config_copy = config.copy() # mutable copy
+
+# process all elements with the @ and # characters
+# @XY means set X to Y if the element is true
+# #abracadabra is a special element that is set if true
+special = {}
+for k in list(config.keys()):
+	split_k = k.split(" ")
+	i = 0
+	while i<len(split_k):
+		kk= split_k[i]
+		if len(kk)==0:
+			i += 1
+			continue
+		elif kk[0]=='@':
+			assert len(kk)>1
+			if config[k]:
+				config_copy[kk[1]] = kk[2:]
+		elif kk[0]=='#':
+			if config[k]:
+				special[kk] = config[k]
+		else:
+			i += 1
+			continue
+		del split_k[i]
+	new_split_k = " ".join(split_k)
+	if new_split_k!=k:
+		config_copy[new_split_k] = config_copy[k]
+		del config_copy[k]
+
+# process all elements with the ! element
+# !abcd means delete all config elements a,b,c and d if the element is true
+for k in list(config_copy.keys()):
+	split_k = k.split(" ")
+	i = 0
+	while i<len(split_k):
+		kk= split_k[i]
+		if len(kk)==0:
+			i += 1
+			continue
+		elif kk[0]=='!':
+			if not config_copy[k]:
+				for kill_k in kk[1:]:
+					del config_copy[kill_k]
+		else:
+			i += 1
+			continue
+		del split_k[i]
+	new_split_k = " ".join(split_k)
+	if new_split_k!=k:
+		config_copy[new_split_k] = config_copy[k]
+		del config_copy[k]
+
+# remove redundant or defective config elements, eg. empty strings or labels
+for k in list(config_copy.keys()):
+	if isinstance(k,str) and len(k)==0:
+		del config_copy[k]
+	elif isinstance(config_copy[k],str) and len(config_copy[k])==0:
+		del config_copy[k]
+
+# special processing for mode flags
+gnovelty_present = '#1' in special.keys()
+strengthener_present = '#2' in special.keys()
+mode_number = 0
+if gnovelty_present:
+	mode_number += 1
+if strengthener_present:
+	mode_number += 2
+config_copy['m']=mode_number
+
+#format the command string
+config_keys = sorted(config_copy.keys())
+parameters = " ".join(["-{} {}".format(k,config_copy[k]) for k in config_keys])
+s = "mpirun -n {} {} {}".format(special['#0'],special['#d'], parameters)
+
+#output the command to be run
+import sys
+sys.stderr.write(s)
 
 
