@@ -99,7 +99,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       }
     }
     // timing and assignment message every 4 seconds
-    if (clock()-t > 4*CLOCKS_PER_SEC) {
+    if (clock()-t > 1*CLOCKS_PER_SEC) {
       t = clock();
       stats->print_stats();
       std::stringstream ss;
