@@ -26,9 +26,6 @@ footer_txt = urwid.Text(u"Press '?' for help on any item")
 header_padding = urwid.Padding(header_txt,'center','pack')
 header_padding = urwid.AttrMap(header_padding, 'selected')
 
-
-radio_button_group = []
-
 def menu_button(caption, callback):
     button = urwid.Button(caption)
     urwid.connect_signal(button, 'click', callback)
