@@ -220,7 +220,7 @@ def update_dag_node_data():
 		for w in workers:
 			if w is None:
 				continue
-			if w[0]==i:
+			if w==i:
 				nd['workers']+=1
 		dag_node_lines[i].set_text(u" {} {} | Workers: {} | in: {}, completed: {}, out: {} | av time: {}s, p.m {}% | SAT av time: {}s, pm{}% | UNSAT av time: {}s, pm{}%  |".format(d,' ' if nd['workers']==0 else u'🡸', nd['workers'],nd['in'],nd['completed'],nd['out'],nd['avtime'],nd['sdtime'],nd['savtime'],nd['ssdtime'],nd['uavtime'],nd['usdtime']))
 	s = []
@@ -398,6 +398,8 @@ def second_callback():
 				continue
 			if re.match(".+WORKER (\d+): waiting for assignment",line2):
 				continue
+			if re.match(".+WORKER (\d+): sending poll request due to solution",line2):
+				continue
 			if re.match(".+MASTER: receiving from workers",line2):
 				continue
 			if re.match(".+MASTER: polling worker",line2):
@@ -411,7 +413,8 @@ def second_callback():
 			if kill_signal_match:
 				worker = int(kill_signal_match.groups()[0])
 				workers[worker] = "Killed"
-				workers2[worker] = ("Killed",None)
+				if worker<len(workers2):
+					workers2[worker] = ("Killed",None)
 				continue
 			if re.match(".+MASTER: terminate trigger true",line2):
 				continue
