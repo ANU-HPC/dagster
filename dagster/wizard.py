@@ -346,7 +346,7 @@ if gnovelty_present and strengthener_present:
 	mode_number = 2
 elif strengthener_present:
 	mode_number = 3
-elif gnovelty_present
+elif gnovelty_present:
 	mode_number = 1
 config_copy['m']=mode_number
 
