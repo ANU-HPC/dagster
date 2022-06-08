@@ -87,6 +87,7 @@ public:
 	deque<int> conflictLits;	// stores conflict literals
 	deque<int> tmpConflictLits;	// ditto, temporary
 	int *conflictClause;		// points to learned clause in litPool 
+	unsigned num_set_literal;
 
 	void setLiteral(int lit, int *ante);	// set value, ante, level 
 	bool assertLiteral(int lit, int *ante);	// set literal and perform unit propagation

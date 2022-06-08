@@ -35,6 +35,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 CnfManager::CnfManager(Cnf* cnf){
+	num_set_literal = 0;
 	nextVar = 0;
 	dLevel = 1;
 	nConflicts = 0;
@@ -165,6 +166,7 @@ void CnfManager::setLiteral(int lit, int *ante){
 	vars[VAR(lit)].value = SIGN(lit);
 	vars[VAR(lit)].ante = ante;
 	vars[VAR(lit)].dLevel = dLevel;
+	num_set_literal++;
 }
 
 //** assert the value of the literal, and deal with all implications, adding them to the stack

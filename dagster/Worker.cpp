@@ -82,6 +82,7 @@ void Worker::loop() {
       solution_count = 0;
 generate_new_result:
       int result = solve_and_generate_message(m2);
+      VLOG(2) << "WORKER " << comms->world_rank << ": generated made " << solver->decisions << " decisions, including "<<solver->num_set_literal << " sets, and " << solver->nConflicts << " conflicts, generating result " << result << " for message " << m2->to;
       VLOG(4) << "WORKER " << comms->world_rank << ": generated solution " << result;
       if (result == 0) {
         VLOG(3) << "WORKER " << comms->world_rank << ": finished generating new solutions, sending assignment request";

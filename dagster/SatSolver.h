@@ -106,6 +106,8 @@ private:
 
 public:
 
+  int decisions;
+
   int run();
 
   void add_arbitrary_clause(int *inClauseArray, int inClauseLength, int inClauseLitPool, int inClauseLitPoolPos);
