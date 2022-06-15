@@ -47,6 +47,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "message.h"
 
 
+
 struct Luby {           // restart scheduler as proposed in
   vector<unsigned> seq; // Optimal Speedup of Las Vegas Algorithms
   unsigned index;       // Michael Luby et al, 1993

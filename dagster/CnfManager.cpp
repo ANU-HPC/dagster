@@ -521,3 +521,9 @@ void CnfManager::load_marked_into_message(Message* m) {
   }
 }
 
+bool CnfManager::is_solver_unit_contradiction() {
+  return solver_unit_contradiction;
+}
+
+
+
