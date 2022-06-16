@@ -15,7 +15,7 @@ ifeq (${CRAY_PLATFORM_NAME}, $(findstring ${CRAY_PLATFORM_NAME}, ${UNAME}))
 else
 	#Default variables
 	MPICXX                  = mpic++
-	CXXFLAGS                += -ggdb -O3 -std=c++17 -DVERSION=1.0.0 -DEMAIL=mark.burgess@anu.edu.au -I.
+	CXXFLAGS                += -ggdb -O3 -std=c++17 -DVERSION=1.0.0 -DEMAIL=mark.burgess@anu.edu.au -I. -Iminisat
 	LDFLAGS                 += -lglog -lstdc++fs -lcudd -lz
 endif
 #Profiling
