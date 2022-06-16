@@ -22,7 +22,7 @@ endif
 #       LDFLAGS                 += -L/usr/local/lib/openmpi -lmpiP -lm -lbfd -liberty -lunwind -L.. -ldummy_mpi1
 
 
-OBJS 				= Cnf.o CnfManager.o SatSolver.o Dag.o message.o TableSolutions.o BDDSolutions.o main.o Master.o Worker.o MPICommsInterface.o utilities.o arguments.o CnfHolder.o MasterOrganiser.o
+OBJS 				= Cnf.o CnfManager.o SatSolver.o Dag.o message.o TableSolutions.o BDDSolutions.o main.o Master.o Worker.o MPICommsInterface.o utilities.o arguments.o CnfHolder.o MasterOrganiser.o SatSolverInterface.o
 
 .PHONY: gnovelty
 
