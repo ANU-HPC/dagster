@@ -93,6 +93,7 @@ MinisatSolver::MinisatSolver(Cnf* cnf) {
     }
     //eliminate(true);
   }
+
 MinisatSolver::~MinisatSolver() {}
 
 int MinisatSolver::run() {return solve(false);}
@@ -113,7 +114,7 @@ void MinisatSolver::load_into_message(Message* m, RangeSet &r) {
     }
   };
 bool MinisatSolver::is_solver_unit_contradiction() {return false;};
-bool MinisatSolver::reset_solver() {}
+bool MinisatSolver::reset_solver() {return true;}
 void MinisatSolver::solver_add_conflict_clause(std::deque<int> d) {
     vec<Lit> lits;
     lits.clear();
