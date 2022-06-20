@@ -118,4 +118,40 @@ public:
     bool is_solver_unit_contradiction();
 };
 
+
+
+inline bool CnfManager::is_solver_unit_contradiction() {
+  return solver_unit_contradiction;
+}
+
+
+inline bool CnfManager::assertCL(){
+	return assertLiteral(*conflictClause, conflictClause + 1);
+}
+
+inline bool CnfManager::decide(int lit){
+	dLevel++;
+	return assertLiteral(lit, NULL);
+}
+
+inline void CnfManager::backtrack(unsigned bLevel){
+	for(unsigned var; vars[var = VAR(*(stackTop - 1))].dLevel > bLevel;){
+		if(vars[var].dLevel < dLevel) vars[var].phase = vars[var].value;
+		vars[var].value = _FREE;
+		if(varPosition[var] < nextVar) nextVar = varPosition[var];
+		stackTop--;
+	}
+	dLevel = bLevel;
+}
+
+inline void CnfManager::scoreDecay(){
+	// this may slightly disturb var order
+	// e.g., (7 + 7) => (3 + 3) whereas (6 + 8) => (3 + 4)
+	for(unsigned i = 1; i <= vc; i++){
+		vars[i].activity[0]>>=1;
+		vars[i].activity[1]>>=1;
+	}
+}
+
+
 #endif
