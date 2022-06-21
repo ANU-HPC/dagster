@@ -26,10 +26,11 @@ OBJS 				= Cnf.o CnfManager.o SatSolver.o Dag.o message.o TableSolutions.o BDDSo
 
 .PHONY: gnovelty
 
-dagster: $(OBJS) gnovelty/*.cc gnovelty/*.hh strengthener/*.cc strengthener/*.h
+dagster: $(OBJS) gnovelty/*.cc gnovelty/*.hh strengthener/*.cc strengthener/*.h minisat_solver/*.cc minisat_solver/*.h
 	$(MAKE) -C strengthener
 	$(MAKE) -C gnovelty
-	$(MPICXX) $(CPPFLAGS) $(CXXFLAGS) ./*.o gnovelty/*.o strengthener/*.o* minisat/*/*.o* $(LDFLAGS) -o dagster
+	$(MAKE) -C minisat_solver
+	$(MPICXX) $(CPPFLAGS) $(CXXFLAGS) ./*.o gnovelty/*.o strengthener/*.o* minisat/*/*.o* minisat_solver/*.o* $(LDFLAGS) -o dagster
 
 %.o: %.cpp %.h
 	$(MPICXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
@@ -37,5 +38,6 @@ dagster: $(OBJS) gnovelty/*.cc gnovelty/*.hh strengthener/*.cc strengthener/*.h
 clean:
 	$(MAKE) -C strengthener clean
 	$(MAKE) -C gnovelty clean
+	$(MAKE) -C minisat_solver clean
 	-rm dagster *.o
 	-rm ./dag_out.txt

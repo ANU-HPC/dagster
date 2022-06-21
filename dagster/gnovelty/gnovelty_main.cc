@@ -96,7 +96,7 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
 
   while (true) {
     // Get a new CNF file from SatHandler
-//    VLOG(3) << " gnovelty " << world_rank << " about to recieve CNF";
+    VLOG(3) << " gnovelty " << world_rank << " about to recieve CNF";
     int fname_length;
     MPI_Status mpi_status;
     MPI_Recv(&fname_length, 1 /*Number of ints*/, MPI_INT, 0 /*CDCL process ID*/, CNF_FILENAME_LENGTH_TAG, *communicator, &mpi_status);
@@ -127,11 +127,11 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
     // only variable to keep an eye on is \local{suggestions}.
     int *suggestions;
     MPI_Win window;
-//    VLOG(3) << " gnovelty " << world_rank << " about to win_allocate";
+    VLOG(3) << " gnovelty " << world_rank << " about to win_allocate";
     auto result = MPI_Win_allocate(suggestionSize * sizeof(int), sizeof(int), MPI_INFO_NULL, *communicator, &suggestions, &window);
     if (result != MPI_SUCCESS)
       cerr << "UNRECOVERABLE ERROR :: cannot allocate window from sls";
-//    VLOG(3) << " gnovelty " << world_rank << " success win_allocate";
+    VLOG(3) << " gnovelty " << world_rank << " success win_allocate";
     for (int i = 0; i < suggestionSize; i++) // Initially we have no heuristic information to share with the CDCL procedure.
       suggestions[i] = 0;
 
@@ -152,25 +152,26 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
     // assignment, or not.
     // -------------------------------------------------------------
     int steps = 0;
+//      VLOG(5) << " gnovelty " << world_rank << "prior stepping";
     while (true) {
-//      VLOG(3) << " gnovelty " << world_rank << "stepping";
+//      VLOG(5) << " gnovelty " << world_rank << "stepping";
       int found_solution = 0;
       while ((++steps % CHECK_PREFIX_STEPS) != 0 && !found_solution) {
         found_solution = gnovelty->step_newStyle(walkProb, adaptFlag);
       }
-//      VLOG(3) << " gnovelty " << world_rank << " done stepping";
+//      VLOG(5) << " gnovelty " << world_rank << " done stepping " << found_solution;
       if (using__ghost_suggestions)
         gnovelty->loadSuggestion_ghost(suggestions, suggestionSize);
       else
         gnovelty->loadSuggestion(suggestions, suggestionSize);
-//      VLOG(3) << " gnovelty " << world_rank << " done loading suggestion";
+//      VLOG(5) << " gnovelty " << world_rank << " done loading suggestion";
 
       // Communicate with CDCL procedure
       bool received_prefix = false;
       int incoming = 0;
       int prefix_length;
       MPI_Status prefixStatus;
-//      VLOG(3) << " gnovelty " << world_rank << " about to test";
+//      VLOG(5) << " gnovelty " << world_rank << " about to test";
       MPI_Test(&prefixRequest, &incoming, &prefixStatus); // test for a message telling us we need to change the "prefix". That is, change the set of fixed assignments that are locked in.
       // receive all incoming prefix messages and use only the most recent
       int dup = 0;
@@ -183,7 +184,7 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
         MPI_Start(&prefixRequest);
         MPI_Test(&prefixRequest, &incoming, &prefixStatus);
       }
-//      VLOG(3) << " gnovelty " << world_rank << " recieved prefix";
+//      VLOG(5) << " gnovelty " << world_rank << " recieved prefix " << received_prefix;
       if (received_prefix) { // New advice wrt assignment constraint has been communicated. We have a new, possibly different, prefix to think about.
         VLOG(3) << "received " << dup << " prefix messages, latest prefix_length = " << prefix_length;
         if (prefix_length == 0) // prefix length zero indicates reset to receive new CNF

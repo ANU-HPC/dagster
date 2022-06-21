@@ -161,7 +161,9 @@ int SatSolver::run() {
         return solution;
       }
     }
-    if (!decide(lit))
+    bool decision = decide(lit);
+    this->decisions++;
+    if (!decision)
       do { // decision/conflict
         // conflict has occurred in dLevel 1, unsat
         if (aLevel == 0)
@@ -423,6 +425,7 @@ SatSolver::SatSolver(
     int phase)
     : CnfManager(cnf) {
 this->phase = phase;
+this->decisions = 0;
   this->communicator_sls = communicator_sls;
   this->communicator_strengthener = communicator_strengthener;
   this->decision_interval = decision_interval;

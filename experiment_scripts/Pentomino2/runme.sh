@@ -22,7 +22,7 @@ export GLOG_v=3
 export GLOG_logtostderr=true
 export TINISAT_LOCATION=../../dagster/standalone_tinisat/tinisat
 export LINGELING_LOCATION=~/lingeling/lingeling
-export MINISAT_LOCATION=~/minisat
+export MINISAT_LOCATION=minisat
 pip install click
 pip install tqdm
 python runner.py

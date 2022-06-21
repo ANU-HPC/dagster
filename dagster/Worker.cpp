@@ -82,6 +82,7 @@ void Worker::loop() {
       solution_count = 0;
 generate_new_result:
       int result = solve_and_generate_message(m2);
+      //VLOG(2) << "WORKER " << comms->world_rank << ": generated made " << solver->decisions << " decisions, including "<<solver->num_set_literal << " sets, and " << solver->nConflicts << " conflicts, generating result " << result << " for message " << m2->to;
       VLOG(4) << "WORKER " << comms->world_rank << ": generated solution " << result;
       if (result == 0) {
         VLOG(3) << "WORKER " << comms->world_rank << ": finished generating new solutions, sending assignment request";
@@ -200,7 +201,7 @@ void Worker::initialise_solver_from_message(Message* m) {
 
   // generate new solver instance
   solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
-  if (solver->solver_unit_contradiction == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
+  if (solver->is_solver_unit_contradiction() == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
     VLOG(2) << " WORKER " << comms->world_rank << ": contradiction unit clauses" << std::endl;
   }
 }

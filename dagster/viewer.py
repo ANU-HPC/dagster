@@ -184,6 +184,11 @@ def format_dag(dag_nodes,left_nodes,right_nodes,dag_map_forward):
 
 dag_strings = format_dag(dag_nodes,left_nodes,right_nodes,dag_map_forward)
 
+node_data = [{"workers":0,"in":0,"completed":0,"out":0,"avtime":-1,"sdtime":-1,"savtime":-1,"ssdtime":-1,"uavtime":-1,"usdtime":-1} for i in range(len(dag_nodes))]
+workers = []
+workers2 = []
+kill_mode = False
+
 
 menu_array = [
 	urwid.Text('Dag FILE: {}      Stream input: {}'.format(sys.argv[1],sys.argv[2])),
@@ -191,27 +196,52 @@ menu_array = [
 ]
 
 dag_node_lines = []
+worker_line = urwid.Text("Workers:")
+worker_line2 = urwid.Text("Master Poll:")
+status_line = urwid.Text("Master Status:")
 for d in dag_strings:
-	dag_node_lines.append( urwid.Text(u" {} 🡸 | AWAITING DAGSTER STREAM...".format(d)) )
+	dag_node_lines.append( urwid.Text(u" {}   | AWAITING DAGSTER STREAM...".format(d)) )
 menu_array += dag_node_lines
 menu_array += [
+	urwid.Divider(),
+	worker_line,
+	worker_line2,
+	status_line,
 	urwid.Divider(),
 	menu_button(u'Exit', exit_program),
 ]
 menu_top = menu(menu_array)
 
 
-node_data = [{"workers":0,"in":0,"completed":0,"out":0,"avtime":-1,"sdtime":-1,"savtime":-1,"ssdtime":-1,"uavtime":-1,"usdtime":-1} for i in range(len(dag_nodes))]
-workers = []
-
 def update_dag_node_data():
 	for i,d in enumerate(dag_strings):
 		nd = node_data[i]
 		nd['workers'] = 0
 		for w in workers:
+			if w is None:
+				continue
 			if w==i:
 				nd['workers']+=1
 		dag_node_lines[i].set_text(u" {} {} | Workers: {} | in: {}, completed: {}, out: {} | av time: {}s, p.m {}% | SAT av time: {}s, pm{}% | UNSAT av time: {}s, pm{}%  |".format(d,' ' if nd['workers']==0 else u'🡸', nd['workers'],nd['in'],nd['completed'],nd['out'],nd['avtime'],nd['sdtime'],nd['savtime'],nd['ssdtime'],nd['uavtime'],nd['usdtime']))
+	s = []
+	for w in workers[1:]:
+		if w is None:
+			s.append("node ###")
+		else:
+			s.append("node {}".format(w))
+	worker_line.set_text("  Workers: \n{}".format("\n".join(s)))
+	s = []
+	for w in workers2[1:]:
+		if w is None:
+			s.append("node ### for ###s")
+		else:
+			if w[1] is None:
+				s.append("node {} for ###s".format(w[0]))
+			else:
+				s.append("node {} for {}s".format(w[0],w[1]))
+	worker_line2.set_text("M Workers: \n{}".format("\n".join(s)))
+	if kill_mode:
+		status_line.set_text("Master Status: In Kill Loop")
 
 
 class CascadingBoxes(urwid.WidgetPlaceholder):
@@ -273,7 +303,7 @@ console_text = urwid.Text("unparsed console messages")
 t2 = urwid.AttrMap(console_text, None, focus_map='reversed')
 #l = urwid.ListBox([div,t2])
 l = urwid.LineBox(urwid.ListBox([t2]),"Other Console output")
-pile = urwid.Pile([top,(WEIGHT,0.2,l)])
+pile = urwid.Pile([top,(WEIGHT,0.3,l)])
 frame = urwid.Frame(body=pile,footer=footer_txt, header=header_padding)
 
 
@@ -294,7 +324,8 @@ console_texts = []
 #j = 0
 def second_callback():
 	#global j
-	eventloop.alarm(1,second_callback)
+	global kill_mode
+	eventloop.alarm(0.3,second_callback)
 	#j += 1
 	#menu_array[-1].set_text("{} {}".format(j,time.time()))
 	
@@ -313,12 +344,13 @@ def second_callback():
 		parsed_lines = re.findall("^.+](.+)$",line)
 		for line2 in parsed_lines:
 			# if a worker reports free
-			worker_clear = re.match(".WORKER (\d+): waiting for assignment",line2)
+			worker_clear = re.match(".WORKER (\d+): finished generating new solutions, sending assignment request",line2)
 			if worker_clear:
 				worker = int(worker_clear.groups()[0])
 				while len(workers)<=worker:
 					workers.append(None)
 				workers[worker] = None
+				continue
 			# master sends worker an assignment
 			worker_assignment = re.match(".sending message to worker (\d+) message about node (\d+) assignments",line2)
 			if worker_assignment:
@@ -327,6 +359,7 @@ def second_callback():
 				while len(workers)<=worker:
 					workers.append(None)
 				workers[worker] = node_assigned
+				continue
 			# collect master timing information
 			'''
 			"MASTER: Timings -- 0:1,3:0.00spm0.00%,S0.00spm49.56%,U0.00spm0.00%, 1:3,5:0.00spm11.46%,S0.00spm36.31%,U0.00spm27.00%, 2:1,4:0.00spm0.00%,S0.00spm53.38%,U0.00spm0.00%, 3:4,5:0.00spm11.00%,S0.00spm31.83%,U0.00spm3.72%, 4:16,6:0.00spm21.54%,S0.00spm3.12%,U0.00spm27.14%, 5:1,2:0.00spm0.00%,S0.00spm50.00%,U0.00spm0.00%,"
@@ -345,8 +378,51 @@ def second_callback():
 					node_data[node]['ssdtime'] = match.groups()[6]
 					node_data[node]['uavtime'] = match.groups()[7]
 					node_data[node]['usdtime'] = match.groups()[8]
+				continue
+			# worker debug message
+			worker_allocations = re.match(".?MASTER: message buffer -- ",line2)
+			if worker_allocations:
+				pattern = re.compile(r"(\d+):(\d+),([\d.]+)")
+				for match in pattern.finditer(line2):
+					worker = int(match.groups()[0])
+					node = match.groups()[1]
+					time_taken = match.groups()[2]
+					while len(workers2)<=worker+1:
+						workers2.append(None)
+					workers2[worker+1] = (node,time_taken)
+				continue
 			# message does not match pattern
-			if not master_timings and not worker_assignment and not worker_clear:
+			if re.match(".+MASTER: generating new messages",line2):
+				continue
+			if re.match(".+MASTER: sending new reassignments",line2):
+				continue
+			if re.match(".+WORKER (\d+): waiting for assignment",line2):
+				continue
+			if re.match(".+WORKER (\d+): sending poll request due to solution",line2):
+				continue
+			if re.match(".+MASTER: receiving from workers",line2):
+				continue
+			if re.match(".+MASTER: polling worker",line2):
+				continue
+			if re.match(".+MASTER: received MPI_TAG",line2):
+				continue
+			if re.match(".+MASTER: poll exit loop",line2):
+				kill_mode = True
+				continue
+			kill_signal_match = re.match(".+WORKER (\d+): received kill signal",line2)
+			if kill_signal_match:
+				worker = int(kill_signal_match.groups()[0])
+				workers[worker] = "Killed"
+				if worker<len(workers2):
+					workers2[worker] = ("Killed",None)
+				continue
+			if re.match(".+MASTER: terminate trigger true",line2):
+				continue
+			if re.match(".+MASTER: sending kill signal to",line2):
+				continue
+			if re.match(".+SOLUTION: message about node",line2):
+				continue
+			if not master_timings and not worker_assignment and not worker_clear and not worker_allocations:
 				console_texts.append(line2)
 				console_text.set_text("\n".join(console_texts))
 		if len(parsed_lines)==0:

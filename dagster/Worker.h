@@ -28,6 +28,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "mpi_global.h"
 #include "MPICommsInterface.h"
 
+#include "SatSolverInterface.h"
 
 // Worker class:
 // holds data relevent to worker loop, and the worker loop itself.
@@ -35,7 +36,7 @@ class Worker {
 public:
   MPICommsInterface* comms; // the communicator the worker interfaces with the master on
   Dag* dag; // local reference to the dag structure
-  SatSolver* solver; // pointer to SAT solver
+  SatSolverInterface* solver; // pointer to SAT solver
   Cnf* generated_cnf; // pointer to CNF that the SAT solver is working on
   int phase; // phase counter, for each message the worker sends to the gnovelties/strengthener send a new 'phase' and disregard any messages that are from old phases
   

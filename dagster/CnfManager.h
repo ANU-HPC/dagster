@@ -46,6 +46,8 @@ using namespace std;
 #define WATCHLIST(lit) 	(vars[VAR(lit)].watch[SIGN(lit)]) //** return the watch-list of the literal
 #define SCORE(var)	(vars[(var)].activity[0]+vars[(var)].activity[1]) //** returns the score of the variable, the sum of its activities (which decay periodically) indicative of its prsence positive and negative. 
 
+#include "SatSolverInterface.h"
+
 struct Variable{
 	bool mark;			// used in 1-UIP derivation - in learnClause() function
 	bool mark2;			// used in detecting variable redundancy - in verify_and_trim_Solution() function
@@ -62,7 +64,7 @@ struct Variable{
 	};
 };
 
-class CnfManager{
+class CnfManager : public SatSolverInterface {
 public:
 	Cnf* cnf;
 
@@ -87,6 +89,7 @@ public:
 	deque<int> conflictLits;	// stores conflict literals
 	deque<int> tmpConflictLits;	// ditto, temporary
 	int *conflictClause;		// points to learned clause in litPool 
+	unsigned num_set_literal;
 
 	void setLiteral(int lit, int *ante);	// set value, ante, level 
 	bool assertLiteral(int lit, int *ante);	// set literal and perform unit propagation
@@ -112,6 +115,7 @@ public:
 	void load_into_deque(deque<int> &d, bool positives_only);
 	void load_marked_into_message(Message* m);
     bool solver_unit_contradiction;
+    bool is_solver_unit_contradiction();
 };
 
 inline bool CnfManager::assertCL(){

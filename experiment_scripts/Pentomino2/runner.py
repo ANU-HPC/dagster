@@ -85,20 +85,20 @@ with open("timing_data.txt","w") as f:
 	f.write("i,j,tinisat,lingeling,{}\n".format(",".join(["dagster{}".format(n) for n in n_range])))
 
 for i in range(50):
-	for j in range(1,5):
+	for j in range(1,16):
 		p = j + i*100
 		system_wrap("python ../../Benchmarks/Pentomino/pentominos.py create combination-3 15 15 {} {} problem{}".format(j,j,p))
 		system_wrap("python ../../Benchmarks/Pentomino/pentominos.py dag-make complex-cubes3 problem{}.cnf problem{}.map problem{}.dag 15".format(p,p,p))
-		tinisattime = timetinisat("./problem{}.cnf".format(p))
-		lingelingtime = timelingeling("./problem{}.cnf".format(p))
+		tinisattime = 0 #timetinisat("./problem{}.cnf".format(p))
+		lingelingtime = 0 #timelingeling("./problem{}.cnf".format(p))
 		dagstertimes = []
 		for n in n_range:
 			t = time.time()
-			system_wrap("mpirun -n {} ../../dagster/dagster -m 0 -e 0 -g 2 ./problem{}.dag ./problem{}.cnf".format(n+1,p,p))
+			#system_wrap("mpirun -n {} ../../dagster/dagster -m 0 -e 0 -g 2 ./problem{}.dag ./problem{}.cnf".format(n+1,p,p))
 			t = time.time() - t
 			dagstertimes.append(t)
 			t = time.time()
-			system_wrap("mpirun -n {} ../../dagster/dagster -m 3 -e 0 -g 2 ./problem{}.dag ./problem{}.cnf".format(n*2+1,p,p))
+			#system_wrap("mpirun -n {} ../../dagster/dagster -m 3 -e 0 -g 2 ./problem{}.dag ./problem{}.cnf".format(n*2+1,p,p))
 			t = time.time() - t
 			dagstertimes.append(t)
 		with open("timing_data.txt","a") as f:
