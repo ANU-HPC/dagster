@@ -64,7 +64,7 @@ libr:	lib$(LIB)_release.a
 ## Compile options
 %.$(OBJEXT):			CFLAGS +=$(COPTIMIZE) -ggdb -D DEBUG
 %.$(OBJEXT)p:			CFLAGS +=$(COPTIMIZE) -pg -ggdb -D NDEBUG
-%.$(OBJEXT)d:			CFLAGS +=-O0 -ggdb -D DEBUG
+%.$(OBJEXT)d:			CFLAGS +=-O3 -ggdb -D DEBUG
 %.$(OBJEXT)r:			CFLAGS +=$(COPTIMIZE) -ggdb -D NDEBUG
 
 ## Link options

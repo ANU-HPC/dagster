@@ -16,6 +16,8 @@
 #include "../../../SatSolver.cpp"
 //#include "../../SatHandler.cpp"
 //#include "../../SatHandlerInterface.cpp"
+#include "../../../SatSolverInterface.h"
+#include "../../../SatSolverInterface.cpp"
 #include "../../../BDDSolutions.cpp"
 #include "../../../TableSolutions.cpp"
 #include "../../../DisorderedArray.h"

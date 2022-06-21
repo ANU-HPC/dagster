@@ -40,7 +40,7 @@ class SatSolverInterface {
   virtual bool reset_solver()=0;
   virtual void solver_add_conflict_clause(std::deque<int>)=0;
   virtual void load_into_deque(deque<int> &d, RangeSet &r)=0;
-  virtual ~SatSolverInterface() {};
+  virtual ~SatSolverInterface()=0;
 };
 
 //SatSolverInterface::~SatSolverInterface() {}

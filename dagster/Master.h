@@ -58,40 +58,18 @@ class Master{
   set<int> subgraph_finished; // keep track of what subgraph indices are finished
 
 
-  Master(int comms_size, int no_nodes, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS) {
+  Master(int comms_size, int no_nodes, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS, bool exiting=true, int checkpointing=0) {
     this->comms = NULL;
     this->master = master;
     this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
     this->BREADTH_FIRST_NODE_ALLOCATIONS = BREADTH_FIRST_NODE_ALLOCATIONS;
-    this->exiting = true;
-    this->checkpointing = 0;
+    this->exiting = exiting;
+    this->checkpointing = checkpointing;
     this->organiser = new MasterOrganiser(comms_size-1);
     this->stats = new StatisticsModule(comms_size-1,no_nodes);
     this->clear();
   }
-  Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS) {
-    this->comms = comms;
-    this->master = master;
-    this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
-    this->BREADTH_FIRST_NODE_ALLOCATIONS = BREADTH_FIRST_NODE_ALLOCATIONS;
-    this->exiting = true;
-    this->checkpointing = 0;
-    this->organiser = new MasterOrganiser(comms->world_size-1);
-    this->stats = new StatisticsModule(comms->world_size-1,cnf_holder->dag->no_nodes);
-    this->clear();
-  }
-  Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS,bool exiting) {
-    this->comms = comms;
-    this->master = master;
-    this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;
-    this->BREADTH_FIRST_NODE_ALLOCATIONS = BREADTH_FIRST_NODE_ALLOCATIONS;
-    this->exiting = exiting;
-    this->checkpointing = 0;
-    this->organiser = new MasterOrganiser(comms->world_size-1);
-    this->stats = new StatisticsModule(comms->world_size-1,cnf_holder->dag->no_nodes);
-    this->clear();
-  }
-  Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS,bool exiting,int checkpointing) {
+  Master(MPICommsInterface* comms, SolutionsInterface *master, int ENUMERATE_SOLUTIONS, bool BREADTH_FIRST_NODE_ALLOCATIONS, bool exiting=true, int checkpointing=0) {
     this->comms = comms;
     this->master = master;
     this->ENUMERATE_SOLUTIONS = ENUMERATE_SOLUTIONS;

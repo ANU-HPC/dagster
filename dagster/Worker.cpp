@@ -39,6 +39,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "mpi_global.h"
 #include "CnfHolder.h"
 #include "exceptions.h"
+#include "minisat_solver/minisat_solver.h"
 
 extern CnfHolder* cnf_holder;
 extern Arguments command_line_arguments;
@@ -200,7 +201,11 @@ void Worker::initialise_solver_from_message(Message* m) {
   }
 
   // generate new solver instance
-  solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
+  if (minisat_mode) {
+    solver = new MinisatSolver(generated_cnf);
+  } else {
+    solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
+  }
   if (solver->is_solver_unit_contradiction() == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
     VLOG(2) << " WORKER " << comms->world_rank << ": contradiction unit clauses" << std::endl;
   }

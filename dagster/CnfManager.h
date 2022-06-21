@@ -96,7 +96,7 @@ public:
 	bool assertUnitClauses();		// assert initial unit clauses
 	bool decide(int lit);			// increment dLevel and call assertLitreal
 	void learnClause(int *firstLit);	// store learned clause in conflictLits and call addClause
-	virtual int addClause();			// add conflictLits to litPool and set up watches
+	virtual int addClause();		// add conflictLits to litPool and set up watches
 	bool assertCL();			// assert literal implied by conflict clause
 	void backtrack(unsigned level);		// undo assignments in levels > level 
 	void scoreDecay();			// divide scores by constant
@@ -117,6 +117,13 @@ public:
     bool solver_unit_contradiction;
     bool is_solver_unit_contradiction();
 };
+
+
+
+inline bool CnfManager::is_solver_unit_contradiction() {
+  return solver_unit_contradiction;
+}
+
 
 inline bool CnfManager::assertCL(){
 	return assertLiteral(*conflictClause, conflictClause + 1);
@@ -145,4 +152,6 @@ inline void CnfManager::scoreDecay(){
 		vars[i].activity[1]>>=1;
 	}
 }
+
+
 #endif

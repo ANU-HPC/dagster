@@ -1,5 +1,5 @@
 /*************************
-Copyright 2021 Marshall Cliffton
+Copyright 2021 Mark Burgess
 
 This file is part of Dagster.
 
@@ -20,6 +20,11 @@ Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
 
+
+#ifndef MINISATSOLVER_WORKER_H
+#define MINISATSOLVER_WORKER_H
+
+
 #include <mpi.h>
 #include <errno.h>
 
@@ -28,6 +33,28 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "../Cnf.h"
 #include "../CnfHolder.h"
 
+#include "../SatSolverInterface.h"
+#include "SimpSolver.h"
 
-int minisat_surrogate_main(MPI_Comm* communicator, CnfHolder* cnf_holder);
-int minisat_run_strengthener(MPI_Comm* communicator, int phase, MPI_Request* kill_req, Cnf* cnf);
+
+using namespace Minisat;
+
+
+class MinisatSolver : public SatSolverInterface, public SimpSolver {
+  public:
+  Cnf* cnf;
+  bool* mark2; // array used to mark variables relevent to the solution being processed, decided by function
+  
+  bool prune_solution();
+  
+  MinisatSolver(Cnf* cnf);
+  int run();
+  void load_into_message(Message* m, RangeSet &r);
+  bool is_solver_unit_contradiction();
+  bool reset_solver(); // dont need to do anything, since minisat is incremental anyways??
+  void solver_add_conflict_clause(std::deque<int> d);
+  void load_into_deque(deque<int> &d, RangeSet &r);
+  ~MinisatSolver();
+};
+
+#endif

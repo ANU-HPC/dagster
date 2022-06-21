@@ -131,6 +131,11 @@ Var Solver::newVar(bool sign, bool dvar)
 
 bool Solver::addClause_(vec<Lit>& ps)
 {
+DB(printf("adding clause: ");
+for (int kk=0; kk<ps.size(); kk++) {
+printf("%i ",toSignInt(ps[kk]));
+}
+printf("\n");)
     assert(decisionLevel() == 0);
     if (!ok) return false;
 
@@ -138,11 +143,18 @@ bool Solver::addClause_(vec<Lit>& ps)
     sort(ps);
     Lit p; int i, j;
     for (i = j = 0, p = lit_Undef; i < ps.size(); i++)
-        if (value(ps[i]) == l_True || ps[i] == ~p)
+        if (value(ps[i]) == l_True || ps[i] == ~p) {
+        DB(printf("adding clause already satsified\n");)
             return true;
-        else if (value(ps[i]) != l_False && ps[i] != p)
+        } else if (value(ps[i]) != l_False && ps[i] != p)
             ps[j++] = p = ps[i];
     ps.shrink(i - j);
+
+DB(printf("reduced adding clause: ");
+for (int kk=0; kk<ps.size(); kk++) {
+printf("%i ",toSignInt(ps[kk]));
+}
+printf("\n");)
 
     if (ps.size() == 0)
         return ok = false;
@@ -239,7 +251,6 @@ Lit Solver::pickBranchLit()
             break;
         }else
             next = order_heap.removeMin();
-
     return next == var_Undef ? lit_Undef : mkLit(next, rnd_pol ? drand(random_seed) < 0.5 : polarity[next]);
 }
 
@@ -353,6 +364,11 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
     }
 
     for (int j = 0; j < analyze_toclear.size(); j++) seen[var(analyze_toclear[j])] = 0;    // ('seen[]' is now cleared)
+DB(printf("learning clause: ");
+for (int kk=0; kk<out_learnt.size(); kk++) {
+printf("%i ",toSignInt(out_learnt[kk]));
+}
+printf("\n");)
 }
 
 
@@ -451,18 +467,24 @@ CRef Solver::propagate()
     CRef    confl     = CRef_Undef;
     int     num_props = 0;
     watches.cleanAll();
-
+DB(printf("beginning propagation\n");)
     while (qhead < trail.size()){
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watcher>&  ws  = watches[p];
         Watcher        *i, *j, *end;
         num_props++;
-
+DB(printf("propagating %i\n",toSignInt(p));)
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
+DB(int zog = ca[i->cref].size();
+printf("considering watched clause: %i : ",zog);
+for (int kk=0; kk<zog; kk++) {
+  printf("%i ",toSignInt(ca[i->cref][kk]));
+}
+printf("\n");)
             // Try to avoid inspecting the clause:
             Lit blocker = i->blocker;
             if (value(blocker) == l_True){
-                *j++ = *i++; continue; }
+                *j++ = *i++; DB(printf("watch clause blocked\n");) continue; }
 
             // Make sure the false literal is data[1]:
             CRef     cr        = i->cref;
@@ -477,25 +499,25 @@ CRef Solver::propagate()
             Lit     first = c[0];
             Watcher w     = Watcher(cr, first);
             if (first != blocker && value(first) == l_True){
-                *j++ = w; continue; }
+                *j++ = w; DB(printf("watch clause satisfied\n");) continue; }
 
             // Look for new watch:
             for (int k = 2; k < c.size(); k++)
                 if (value(c[k]) != l_False){
                     c[1] = c[k]; c[k] = false_lit;
-                    watches[~c[1]].push(w);
+                    watches[~c[1]].push(w); DB(printf("watch clause reserved\n");)
                     goto NextClause; }
 
             // Did not find watch -- clause is unit under assignment:
             *j++ = w;
-            if (value(first) == l_False){
+            if (value(first) == l_False){ DB(printf("watch clause conflict\n");)
                 confl = cr;
                 qhead = trail.size();
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-            }else
-                uncheckedEnqueue(first, cr);
+            }else {
+                uncheckedEnqueue(first, cr); DB(printf("watch clause propagation %i\n", toSignInt(first));)}
 
         NextClause:;
         }
@@ -692,6 +714,7 @@ lbool Solver::search(int nof_conflicts)
                 // New variable decision:
                 decisions++;
                 next = pickBranchLit();
+DB(printf("adding %i\n",toSignInt(next));)
 
                 if (next == lit_Undef)
                     // Model found:
@@ -751,7 +774,7 @@ static double luby(double y, int x){
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
-  printf("Starting Solver solve_");
+  DB(printf("Starting Solver solve_\n");)
     model.clear();
     conflict.clear();
     if (!ok) return l_False;

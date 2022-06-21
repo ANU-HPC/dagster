@@ -86,13 +86,14 @@ vector<Message*> mode_0_execute(WrappedSolutionsInterface *master_implementation
     auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS,true,command_line_arguments.checkpoint_frequency);
     solutions = master.loop(command_line_arguments.checkpoint_filename);
   } else { // enter the worker loop otherwise
-    Worker* worker = new Worker(cnf_holder->dag, comms, NULL, NULL);
+    Worker* worker = new Worker(cnf_holder->dag, comms, NULL, NULL, false);
     worker->loop();
     delete worker;
   }
   delete comms;
   return solutions;
 }
+
 
 // if mode 1, make partitions and subcommunicators to glue together gnovelties with HybridSAT solvers
 // need to do some index juggling to figure out which processes should be gnovelties and linked with tinisats
@@ -254,6 +255,32 @@ vector<Message*> mode_3_execute(WrappedSolutionsInterface *master_implementation
 
 
 
+
+// if mode 0, we dont need to worry about any gnovelty or strengthener stuff
+// and we can proceed with a tested vanilla TinySAT structure, where there is one master and the rest are tinisats.
+vector<Message*> mode_4_execute(WrappedSolutionsInterface *master_implementation) {
+  MPI_Comm mastercommunicator; //  = MPI_COMM_WORLD;
+  vector<Message*> solutions;
+  // We are assuming at least 2 processes for this task
+  if (world_size < 2) {
+    LOG(ERROR) << "World size must be greater than 1";
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+  MPI_Comm_split(MPI_COMM_WORLD, 0, world_rank, &mastercommunicator);
+  MPICommsInterface* comms = new MPICommsInterface(&mastercommunicator);
+  if (world_rank == 0) { // enter the master loop if rank zero
+    auto master = Master(comms,master_implementation,command_line_arguments.ENUMERATE_SOLUTIONS,command_line_arguments.BREADTH_FIRST_NODE_ALLOCATIONS,true,command_line_arguments.checkpoint_frequency);
+    solutions = master.loop(command_line_arguments.checkpoint_filename);
+  } else { // enter the worker loop otherwise
+    Worker* worker = new Worker(cnf_holder->dag, comms, NULL, NULL, true);
+    worker->loop();
+    delete worker;
+  }
+  delete comms;
+  return solutions;
+}
+
+
 int main(int argc, char **argv) {
   // initialise google logging and load command line arguments
   google::InitGoogleLogging(argv[0]);
@@ -315,6 +342,8 @@ int main(int argc, char **argv) {
     solutions = mode_2_execute(master_implementation);
   } else if (command_line_arguments.mode == 3) {
     solutions = mode_3_execute(master_implementation);
+  } else if (command_line_arguments.mode == 4) {
+    solutions = mode_4_execute(master_implementation);
   } else {
     throw BadParameterException("Dagster called with non existant mode");
   }
