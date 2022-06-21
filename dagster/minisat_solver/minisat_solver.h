@@ -1,5 +1,5 @@
 /*************************
-Copyright 2021 Marshall Cliffton
+Copyright 2021 Mark Burgess
 
 This file is part of Dagster.
 
@@ -39,10 +39,13 @@ If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Minisat;
 
-int minisat_surrogate_main(MPI_Comm* communicator, CnfHolder* cnf_holder);
 
 class MinisatSolver : public SatSolverInterface, public SimpSolver {
   public:
+  Cnf* cnf;
+  bool* mark2; // array used to mark variables relevent to the solution being processed, decided by function
+  
+  bool prune_solution();
   
   MinisatSolver(Cnf* cnf);
   int run();

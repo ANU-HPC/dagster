@@ -27,6 +27,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "utils/Options.h"
 #include "core/SolverTypes.h"
 
+#ifndef DB
+#ifdef UPDEBUG 
+	#define DB(x) x
+#else 
+	#define DB(x) 
+#endif
+#endif
 
 namespace Minisat {
 

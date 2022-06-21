@@ -39,7 +39,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "mpi_global.h"
 #include "CnfHolder.h"
 #include "exceptions.h"
-#include "minisat_solver/StrengthenerInterface.h"
+#include "minisat_solver/minisat_solver.h"
 
 extern CnfHolder* cnf_holder;
 extern Arguments command_line_arguments;
@@ -154,15 +154,7 @@ bool Worker::reset_solver_for_next_solution(int node) {
   VLOG(4) << "WORKER " << comms->world_rank << ": adding SAT conflict clause: " << conflicts;
   if (conflicts.size() == 0)
     return false; // if the solver has passed-on an empty message, then adding the negation of the empty clause is senseless and we are done.
-    
-    
-  printf("\nadding conflict: ");
-    for (auto it = conflicts.begin(); it!=conflicts.end(); it++) {
-      printf("%i ",*it);
-    }
-  printf("\n");
   solver->solver_add_conflict_clause(conflicts);
-  printf("\ndone adding conflict\n");
   return solver->reset_solver();
 }
 
@@ -209,8 +201,11 @@ void Worker::initialise_solver_from_message(Message* m) {
   }
 
   // generate new solver instance
-  solver = new MinisatSolver(generated_cnf);
-  //solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
+  if (minisat_mode) {
+    solver = new MinisatSolver(generated_cnf);
+  } else {
+    solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
+  }
   if (solver->is_solver_unit_contradiction() == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
     VLOG(2) << " WORKER " << comms->world_rank << ": contradiction unit clauses" << std::endl;
   }

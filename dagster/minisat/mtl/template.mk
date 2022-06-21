@@ -43,7 +43,7 @@ libr:	lib$(LIB)_release.a
 ## Compile options
 %.o:			CFLAGS +=$(COPTIMIZE) -g -D DEBUG
 %.op:			CFLAGS +=$(COPTIMIZE) -pg -g -D NDEBUG
-%.od:			CFLAGS +=-O0 -g -D DEBUG
+%.od:			CFLAGS +=-O3 -g -D DEBUG
 %.or:			CFLAGS +=$(COPTIMIZE) -g -D NDEBUG
 
 ## Link options

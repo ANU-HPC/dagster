@@ -66,6 +66,8 @@ inline  int  toInt     (Var v)              { return v; }
 inline  int  toInt     (Lit p)              { return p.x; } 
 inline  Lit  toLit     (int i)              { Lit p; p.x = i; return p; } 
 
+inline int toSignInt(Lit p) {return (var(p)+1)*(-2*sign(p)+1);}
+
 //const Lit lit_Undef = mkLit(var_Undef, false);  // }- Useful special constants.
 //const Lit lit_Error = mkLit(var_Undef, true );  // }
 

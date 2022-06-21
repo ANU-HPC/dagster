@@ -39,15 +39,17 @@ public:
   SatSolverInterface* solver; // pointer to SAT solver
   Cnf* generated_cnf; // pointer to CNF that the SAT solver is working on
   int phase; // phase counter, for each message the worker sends to the gnovelties/strengthener send a new 'phase' and disregard any messages that are from old phases
+  bool minisat_mode; // flag to set minisat instead of tinisat CDCL
   
   MPI_Comm *communicator_sls; // communicator for talking to the gnovelties
   MPI_Comm *communicator_strengthener; // communicator for talking to the strengthener
 
-  Worker(Dag* dag, MPICommsInterface* comms, MPI_Comm* communicator_sls, MPI_Comm* communicator_strengthener) {
+  Worker(Dag* dag, MPICommsInterface* comms, MPI_Comm* communicator_sls, MPI_Comm* communicator_strengthener, bool minisat_mode=false) {
     this->dag = dag;
     this->comms = comms;
     this->communicator_sls = communicator_sls;
     this->communicator_strengthener = communicator_strengthener;
+    this->minisat_mode = minisat_mode;
     solver = NULL;
     phase = 0;
     generated_cnf = NULL;
