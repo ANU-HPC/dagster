@@ -46,8 +46,9 @@ class MinisatSolver : public SatSolverInterface, public SimpSolver {
   bool* mark2; // array used to mark variables relevent to the solution being processed, decided by function
   
   bool prune_solution();
+  void add_cnf(Cnf* cnf_appendage);
   
-  MinisatSolver(Cnf* cnf);
+  MinisatSolver(Cnf* cnf, int node);
   int run();
   void load_into_message(Message* m, RangeSet &r);
   bool is_solver_unit_contradiction();

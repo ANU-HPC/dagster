@@ -39,6 +39,7 @@ public:
   Message* to_be_assigned;  // the message that the worker will be given to process when it polls for a new assignment
   bool polled; // boolean flag indicating the worker wants a response
   bool needs_refresh; // a boolean flag indicating that the message that this one is working on has updated additional clauses
+  int previous_node; // an integer storing the integer that the worker was previously assigned to
 
   MasterUnit();
 };
@@ -62,6 +63,9 @@ public:
   // get information about what messages will have the max/min number of workers on them
   // after all allocations have been completed
   std::tuple<int,Message*,int,Message*> get_min_max_count();
+  
+  // move a worker's message from to_be_assigned to being assigned
+  void dispatch(int worker);
 
   // for all workers, issue allocations so that they balance between the messages
   // NOTE: this method is not very efficient, but if we are talking small numbers of workers (ie. < 1000) then meh.

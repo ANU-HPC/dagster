@@ -35,29 +35,40 @@ If not, see <http://www.gnu.org/licenses/>.
 using namespace Minisat;
 
 
-MinisatSolver::MinisatSolver(Cnf* cnf) {
+MinisatSolver::MinisatSolver(Cnf* cnf, int node) {
 DB(printf("adding CNF to minisatsolver\n");
 cnf->print();)
 	this->cnf = cnf;
-	this->mark2 = (bool*)calloc(sizeof(bool),cnf->vc+1);
+	this->node = node;
     verbosity=0;
-    while (cnf->vc > nVars()) newVar();
-    vec<Lit> lits;
-    int var;
-    for (int i=0; i<cnf->cc; i++) {
-      lits.clear();
-      for (int j=0; j<cnf->cl[i]; j++) {
-        var = abs(cnf->clauses[i][j])-1;
-        while (var >= nVars()) newVar(); // just to be sure
-        lits.push((cnf->clauses[i][j] > 0) ? mkLit(var) : ~mkLit(var));
-      }
-      addClause_(lits);
-    }
+    this->mark2 = NULL;
+    add_cnf(cnf);
     //eliminate(true);
   }
 
 MinisatSolver::~MinisatSolver() {
   free(this->mark2);
+}
+
+
+void MinisatSolver::add_cnf(Cnf* cnf_appendage) {
+	int max_vc = cnf_appendage->vc;
+	if (this->cnf != NULL)
+	  if (max_vc < this->cnf->vc)
+	    max_vc = this->cnf->vc;
+	this->mark2 = (bool*)realloc(this->mark2,sizeof(bool)*(max_vc+1));
+    while (max_vc > nVars()) newVar();
+    vec<Lit> lits;
+    int var;
+    for (int i=0; i<cnf_appendage->cc; i++) {
+      lits.clear();
+      for (int j=0; j<cnf_appendage->cl[i]; j++) {
+        var = abs(cnf_appendage->clauses[i][j])-1;
+        while (var >= nVars()) newVar(); // just to be sure
+        lits.push((cnf_appendage->clauses[i][j] > 0) ? mkLit(var) : ~mkLit(var));
+      }
+      addClause_(lits);
+    }
 }
 
 

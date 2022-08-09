@@ -58,7 +58,7 @@ public:
 
   void loop();  // the Worker master loop
   void initialise_solver_from_message(Message* m); // given an initial message for a node of dag d, create all the infastructure to compute resulting messages
-  int solve_and_generate_message(Message* m); // for an object message m load in the values of a solution (if there is one) and return true, if no solution return false
+  int solve_and_generate_message(Message* m, Message* reference_message); // for an object message m load in the values of a solution (if there is one) and return true, if no solution return false
   bool reset_solver_for_next_solution(int node); // after a solution is loaded into a message, call this method to reset the solver for the processing of an additional message
 };
 

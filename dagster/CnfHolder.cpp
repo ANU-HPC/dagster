@@ -315,15 +315,19 @@ void CnfHolder::generate_pseudo_decomposition() {
 }
 
 
+Cnf* CnfHolder::compile_Cnf_from_Message(Message* m) {
+  compile_Cnf_from_Message(m, true);
+}
 // takes a message and gets the respective Cnf of the 'to' field, adds unitary clauses for the assignments of the messages and appends additional clauses
 // note the returned Cnf must be deleted for memory safety
-Cnf* CnfHolder::compile_Cnf_from_Message(Message* m) {
+Cnf* CnfHolder::compile_Cnf_from_Message(Message* m, bool add_unitary) {
   if (m==NULL)
     throw ConsistencyException("cannot compile CNF from null message");
   Cnf* cnf = new Cnf(get_Cnf(m->to));
   // as well as loading a whole bunch of unitary clauses, from the message given to this node
-  for (int i = 0; i < m->assignments.size(); i++)
-    cnf->add_unitary_clause(m->assignments[i]);
+  if (add_unitary)
+    for (int i = 0; i < m->assignments.size(); i++)
+      cnf->add_unitary_clause(m->assignments[i]);
   // and adding all the additional clauses into the cnf
   if (m->additional_clauses != NULL)
     cnf->join(m->additional_clauses);

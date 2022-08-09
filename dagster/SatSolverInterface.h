@@ -34,6 +34,7 @@ If not, see <http://www.gnu.org/licenses/>.
 // a minimal virtual class of functions that will be the outward presenting face of any class that handles and processes any CDCL procedure
 class SatSolverInterface {
   public:
+  int node; // integer storing what node of the dag is being worked on
   virtual int run()=0;
   virtual void load_into_message(Message* m, RangeSet &r)=0;
   virtual bool is_solver_unit_contradiction()=0;

@@ -62,6 +62,7 @@ extern Arguments command_line_arguments;
 void Worker::loop() {
   int solution_count = 0;
   Message* m2 = new Message();
+  Message* reference_message = new Message();
   while (true) {
     VLOG(3) << "WORKER " << comms->world_rank << ": waiting for assignment";
     auto [master_rank,message_tag, m] = comms->receive_message();
@@ -70,6 +71,7 @@ void Worker::loop() {
       VLOG(4) << "WORKER " << comms->world_rank << ": received new assignment";
       if (m==NULL)
         throw ConsistencyException("master threw worker new assignment tage with empty message");
+      reference_message->set(m);
       m->from = m->to; // shift the 'to' to the 'from' - as the destination of the message is now the originator
       m2->from = m->to;
       m2->to = m->to;
@@ -82,7 +84,7 @@ void Worker::loop() {
       VLOG(4) << "WORKER " << comms->world_rank << ": generating new solution";
       solution_count = 0;
 generate_new_result:
-      int result = solve_and_generate_message(m2);
+      int result = solve_and_generate_message(m2,reference_message);
       //VLOG(2) << "WORKER " << comms->world_rank << ": generated made " << solver->decisions << " decisions, including "<<solver->num_set_literal << " sets, and " << solver->nConflicts << " conflicts, generating result " << result << " for message " << m2->to;
       VLOG(4) << "WORKER " << comms->world_rank << ": generated solution " << result;
       if (result == 0) {
@@ -163,14 +165,6 @@ bool Worker::reset_solver_for_next_solution(int node) {
 // boot up a TinySAT instance, and load forward and reverse mappings between the variables of the TinySAT instance and the master problem
 // with additional clauses,
 void Worker::initialise_solver_from_message(Message* m) {
-  if (solver != NULL) { // kill existing instance
-    delete solver;
-    if (generated_cnf!=NULL)
-      delete generated_cnf;
-  }
-  generated_cnf = cnf_holder->compile_Cnf_from_Message(m); // from the given message compile a new cnf for the Tinisat to run
-  if (VLOG_IS_ON(5)) { VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl; generated_cnf->print(); }
-
   // if there are gnovelties or strengthender then dehydrate the message, append the phase and send it to them
   if ((communicator_sls != NULL) || (communicator_strengthener != NULL)) {
     int dehydrated_size = m->get_dehydrated_size();
@@ -200,10 +194,35 @@ void Worker::initialise_solver_from_message(Message* m) {
     free(dehydrated_message);
   }
 
-  // generate new solver instance
+  // in minisat mode we must append the new additional_clauses if possible
+  // otherwise blast away the old instance to create a new one
   if (minisat_mode) {
-    solver = new MinisatSolver(generated_cnf);
-  } else {
+    if ((solver != NULL) && (m->to == solver->node)) {
+      if (m->additional_clauses != NULL) {
+        ((MinisatSolver*)solver)->add_cnf(m->additional_clauses);
+      }
+      if (VLOG_IS_ON(5)) { VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF APPENDED " << std::endl; m->additional_clauses->print(); }
+    } else if (solver == NULL) {
+      generated_cnf = cnf_holder->compile_Cnf_from_Message(m); // from the given message compile a new cnf for the Tinisat to run
+      solver = new MinisatSolver(generated_cnf,m->to);
+      if (VLOG_IS_ON(5)) { VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl; generated_cnf->print(); }
+    } else if (m->to != solver->node) {
+      delete solver; // kill existing instance
+      if (generated_cnf!=NULL)
+        delete generated_cnf;
+      generated_cnf = cnf_holder->compile_Cnf_from_Message(m); // from the given message compile a new cnf for the Tinisat to run
+      solver = new MinisatSolver(generated_cnf,m->to);
+      if (VLOG_IS_ON(5)) { VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl; generated_cnf->print(); }
+    }
+  // otherwise if we are in tinisat mode, then we just blast away the old instance to create a fresh new one
+  } else {  // generate new solver instance
+    if (solver != NULL) { // kill existing instance
+      delete solver;
+      if (generated_cnf!=NULL)
+        delete generated_cnf;
+    }
+    generated_cnf = cnf_holder->compile_Cnf_from_Message(m); // from the given message compile a new cnf for the Tinisat to run
+    if (VLOG_IS_ON(5)) { VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl; generated_cnf->print(); }
     solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
   }
   if (solver->is_solver_unit_contradiction() == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
@@ -214,10 +233,23 @@ void Worker::initialise_solver_from_message(Message* m) {
 
 // for the loaded solver, attempt to solver, returning 0 if UNSAT, 1 if SAT, 2 if paused
 // if SAT, load the solution into message *m
-int Worker::solve_and_generate_message(Message* m) {
+int Worker::solve_and_generate_message(Message* m, Message* reference_message) {
   if ((solver == NULL) || (m==NULL))
     throw ConsistencyException("solve_and_generate_message method called with NULL solver or message");
-  int result = solver->run();
+  int result;
+  if (minisat_mode) { // create assumption array before passing into the solver
+    vec<Lit> lits;
+    lits.clear();
+    for (auto it = reference_message->assignments.begin(); it != reference_message->assignments.end(); it++) {
+      int lit = *it;
+      int abs_lit = abs(lit)-1;
+      while (abs_lit>=((MinisatSolver*)solver)->nVars()) ((MinisatSolver*)solver)->newVar();
+      lits.push((lit > 0) ? mkLit(abs_lit) : ~mkLit(abs_lit));
+    }
+    result = ((MinisatSolver*)solver)->solve(lits);
+  } else {
+    result = solver->run();
+  }
   if (result == true) {
     if (dag->amalgamated_forward_connection_literals[m->to].size() > 0) { // filter the relevent forward connection literals
       solver->load_into_message(m,dag->amalgamated_forward_connection_literals[m->to]);

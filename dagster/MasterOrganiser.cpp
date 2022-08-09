@@ -46,6 +46,7 @@ MasterUnit::MasterUnit() {
   to_be_assigned = NULL;
   polled = true;
   needs_refresh = false;
+  previous_node = -1;
 }
 
 
@@ -71,6 +72,14 @@ void MasterOrganiser::remove_message(Message* m) {
       workers[i].to_be_assigned = NULL;
   }
   message_buffer.remove(m);
+}
+
+// move a worker's message from to_be_assigned to being assigned
+void MasterOrganiser::dispatch(int worker) {
+  workers[worker].assigned = workers[worker].to_be_assigned;
+  workers[worker].previous_node = workers[worker].to_be_assigned->to;
+  workers[worker].to_be_assigned = NULL;
+  workers[worker].needs_refresh = false;
 }
 
 // get information about what messages will have the max/min number of workers on them
@@ -99,7 +108,10 @@ std::tuple<int,Message*,int,Message*> MasterOrganiser::get_min_max_count() {
   return {min_count,min_message,max_count,max_message};
 }
 
-// for all workers, issue allocations so that they balance between the messages
+
+
+
+/*// for all workers, issue allocations so that they balance between the messages
 // NOTE: this method is not very efficient, but if we are talking small numbers of workers (ie. < 1000) then meh.
 void MasterOrganiser::allocate_assignments() {
   // dish out work to idle workers
@@ -131,7 +143,43 @@ void MasterOrganiser::allocate_assignments() {
     } else
       break;
   }
+}*/
+
+
+/// NEW METHOD: biases work towards workers which have worked on identical DAG nodes in the past
+void MasterOrganiser::allocate_assignments() {
+  // dish out work to idle workers
+  for (int i=0; i<num_workers; i++)
+    if ((workers[i].assigned == NULL) && (workers[i].to_be_assigned == NULL)) { // IDLE worker
+      auto [min_count,min_message,max_count,max_message] = get_min_max_count();
+      workers[i].to_be_assigned = min_message;
+    }
+  // reallocate to_be_assigned to balance
+  while (true) {
+    auto [min_count,min_message,max_count,max_message] = get_min_max_count();
+    if (max_count - min_count >= 2) { // if after the assignments are done, there are messages with difference of more than one worker on it
+      int i;
+      for (i=0; i<num_workers; i++) { // try to take one from the to_be_assigned and re-assign it
+        if (workers[i].to_be_assigned == max_message) {
+          workers[i].to_be_assigned = min_message;
+          break;
+        }
+      }
+      if (i==num_workers) { // otherwise truly deallocate a worker
+        for (i=0; i<num_workers; i++) {
+          if ((workers[i].assigned == max_message) &&
+              (workers[i].to_be_assigned == NULL)) {
+            workers[i].to_be_assigned = min_message;
+            break;
+          }
+        }
+      }
+    } else
+      break;
+  }
 }
+
+
 
 // for all workers working on a message m, set their needs_refresh to be true
 void MasterOrganiser::refresh_except(Message* m, int worker) {

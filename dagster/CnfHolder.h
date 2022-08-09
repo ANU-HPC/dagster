@@ -43,7 +43,8 @@ public:
   ~CnfHolder();  // destructor
   Cnf* get_Cnf(int node); // general accessor, returns a reference to respective node CNF, CNF does not need to be freed.
   char* get_Cnf_filename(int node);
-  Cnf* compile_Cnf_from_Message(Message* m); // takes a message and gets the respective Cnf of the 'to' field, adds unitary clauses for the assignments of the messages and appends additional clauses
+  Cnf* compile_Cnf_from_Message(Message* m);
+  Cnf* compile_Cnf_from_Message(Message* m, bool add_unitary); // takes a message and gets the respective Cnf of the 'to' field, adds unitary clauses for the assignments of the messages and appends additional clauses
   int max_vc; // the maximum variable count from any of the cnfs
   int split_CNF(char* cnf_filename, vector<RangeSet> &vec_indices);
   int pseudo_split_CNF(char* cnf_filename);

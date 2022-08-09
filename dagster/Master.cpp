@@ -160,9 +160,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
               free(*clause);
             free(additional_clauses);
           }
-          organiser->workers[i].assigned = organiser->workers[i].to_be_assigned;
-          organiser->workers[i].to_be_assigned = NULL;
-          organiser->workers[i].needs_refresh = false;
+          organiser->dispatch(i);
         } else {
           VLOG(3) << "MASTER: polling worker " << i+1;
           comms->send_tag(i+1, MPI_TAG_POLL_FOR_REASSIGNMENT);
@@ -196,9 +194,9 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
         if (ENUMERATE_SOLUTIONS==2) { // if ENUMERATE_SOLUTIONS mode 2, then destroy all messages on the same subgraph
           if (organiser->workers[source_worker-1].assigned != NULL) {
             subgraph_finished.insert(cnf_holder->dag->subgraph_index[m->to]);
-            int i=0;
             delete organiser->workers[source_worker-1].assigned;
             organiser->remove_message(organiser->workers[source_worker-1].assigned);
+            int i=0;
             while (i<organiser->message_buffer.length) {
               if (cnf_holder->dag->subgraph_index[organiser->message_buffer[i]->to] == cnf_holder->dag->subgraph_index[m->to]) {
                 delete organiser->message_buffer[i];
@@ -250,7 +248,7 @@ void Master::clear() {
   solutions.clear();
 }
 
-//dump_checkpoint: (DRAFT) //TODO: check working
+//dump_checkpoint: (DRAFT)
 // dump all information to open writable file pointer
 // suitable for files subsequently loaded by load_checkpoint() method
 void Master::dump_checkpoint(FILE* fp) {
@@ -284,7 +282,7 @@ void Master::dump_checkpoint(FILE* fp) {
   fprintf(fp,"\n");
 }
 
-//load_checkpoint: (DRAFT) //TODO: check working
+//load_checkpoint: (DRAFT)
 // load all information from a readable file pointer
 // suitable for files written by dump_checkpoint() method
 void Master::load_checkpoint(FILE* fp) {
