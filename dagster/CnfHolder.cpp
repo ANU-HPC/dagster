@@ -316,7 +316,7 @@ void CnfHolder::generate_pseudo_decomposition() {
 
 
 Cnf* CnfHolder::compile_Cnf_from_Message(Message* m) {
-  compile_Cnf_from_Message(m, true);
+  return compile_Cnf_from_Message(m, true);
 }
 // takes a message and gets the respective Cnf of the 'to' field, adds unitary clauses for the assignments of the messages and appends additional clauses
 // note the returned Cnf must be deleted for memory safety
