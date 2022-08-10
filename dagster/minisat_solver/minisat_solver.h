@@ -28,6 +28,15 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <mpi.h>
 #include <errno.h>
 
+
+#include <time.h>
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <math.h>
+#include <glog/logging.h>
+
 #include <signal.h>
 #include <zlib.h>
 #include "../Cnf.h"

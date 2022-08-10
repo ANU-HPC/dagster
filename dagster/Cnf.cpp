@@ -834,6 +834,19 @@ void Cnf::add_unitary_clause(int unit) {
 }
 
 
+
+// add a clause to the CNF, as from a deque
+// function clears all occurance and neighbor buffer information
+// so these might need to be recomputed.
+void Cnf::add_clause(std::deque<int>& d) {
+  int* temp = (int*)calloc(sizeof(int),d.size()+1);
+  for (int i=0; i<d.size(); i++) {
+    temp[i] = d[i];
+  }
+  add_clause(temp);
+  free(temp);
+}
+
 // add a clause to the CNF, the input clause must be zero terminated.
 // function clears all occurance and neighbor buffer information
 // so these might need to be recomputed.

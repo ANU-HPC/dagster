@@ -61,6 +61,7 @@ public:
 
   void add_unitary_clause(int unit); // add a unitary clause into the CNF (note, destroys occurence and neighborhood info)
   void add_clause(int* clause); // add a clause into the CNF (note, destroys occurence and neighborhood info)
+  void add_clause(std::deque<int>& d); // add a clause into the CNF (note, destroys occurence and neighborhood info)
   void join(Cnf* c);  // join another CNF to this one (note, destroys occurence and neighborhood info)
 
   //=== data structures holding information about CNF which is loaded in (these can be NULL)

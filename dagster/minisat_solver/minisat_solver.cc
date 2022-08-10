@@ -38,6 +38,8 @@ using namespace Minisat;
 MinisatSolver::MinisatSolver(Cnf* cnf, int node) {
 DB(printf("adding CNF to minisatsolver\n");
 cnf->print();)
+	this->use_elim = false;
+	this->use_rcheck = false;
 	this->cnf = cnf;
 	this->node = node;
     verbosity=0;
@@ -112,8 +114,29 @@ int MinisatSolver::run() {
   return ret;
 }
 void MinisatSolver::load_into_message(Message* m, RangeSet &r) {
+  if (VLOG_IS_ON(4)) {
+    std::stringstream ss;
+    for (int v = 0; v<nVars(); v++) {
+      if (model[v]==l_True)
+       ss << (v+1) << " ";
+      if (model[v]==l_False)
+       ss << -(v+1) << " ";
+    }
+    VLOG(4) << "MINISAT_SOLVER -- solution prior to trimming " << ss.str();
+  }
   if (!prune_solution()) {
     throw ConsistencyException("Minisat returned false solution\n");
+  }
+  if (VLOG_IS_ON(4)) {
+    std::stringstream ss;
+    for (int v = 0; v<nVars(); v++) {
+      if (mark2[v+1]) {
+        ss << (v+1) << " ";
+      } else {
+        ss << -(v+1) << " ";
+      }
+    }
+    VLOG(4) << "MINISAT_SOLVER -- marked variables " << ss.str();
   }
   m->assignments.clear();
   for (auto var = r.buffer.begin(); var != r.buffer.end(); var++) {
@@ -131,6 +154,7 @@ void MinisatSolver::load_into_message(Message* m, RangeSet &r) {
       }
     }
   }
+  VLOG(4) << "MINISAT_SOLVER -- solution post trimming " << *m;
 }
 bool MinisatSolver::is_solver_unit_contradiction() {
   return false;
@@ -141,6 +165,7 @@ bool MinisatSolver::reset_solver() {
   return true;
 }
 void MinisatSolver::solver_add_conflict_clause(std::deque<int> d) {
+  cnf->add_clause(d);
   vec<Lit> lits;
   lits.clear();
   for (auto it = d.begin(); it!=d.end(); it++) {
