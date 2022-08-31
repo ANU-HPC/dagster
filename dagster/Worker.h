@@ -43,6 +43,8 @@ public:
   
   MPI_Comm *communicator_sls; // communicator for talking to the gnovelties
   MPI_Comm *communicator_strengthener; // communicator for talking to the strengthener
+  
+  int message_index; // the index of the message that the worker has/is working on
 
   Worker(Dag* dag, MPICommsInterface* comms, MPI_Comm* communicator_sls, MPI_Comm* communicator_strengthener, bool minisat_mode=false) {
     this->dag = dag;
@@ -53,6 +55,7 @@ public:
     solver = NULL;
     phase = 0;
     generated_cnf = NULL;
+    message_index = 0;
   }
   ~Worker();
 

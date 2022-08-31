@@ -11,6 +11,8 @@ Subproblems are solved in parallel by solving units, which communicate using mes
 - mode 0: each solving unit consists of a single process running a CDCL (conflict-driven clause learning) SAT solving procedure; 
 - mode 1: each solving unit consists of a CDCL procedure assisted by one or more stochastic local search (SLS) processes;
 - mode 2: each solving unit consists of a CDCL process, one or more SLS processes, and a separate CDCL procedure for clause minimization.
+- mode 3: each solving unit consists of a CDCL process, and a separate CDCL procedure for clause minimization.
+- mode 4: each solving unit consists of a single process running a CDCL (conflict-driven clause learning) SAT solving procedure - specifically the MiniSAT procedure; 
 
 ## Dependencies:
 
@@ -120,12 +122,24 @@ The solutions to the problem in `dag_out.txt` should be:
 
 where each line identifies a possible solution to the original SAT problem, for instance, the first line reads that variables 1,2,3,6 being true, and variables 4,5 being false is one possible solution to the SAT problem.
 
+The logging and log level of the Dagster run can be set using the following environment variables
+
+```
+export OMPI_MCA_btl=self,tcp
+export GLOG_v=5 # verbose glog logging at level 5 (0 is least verbose)
+export GLOG_logtostderr=true # otherwise all logging goes to /tmp/appname.hostname.username.log.INFO.date.pid
+```
+
+These environment variables configure the Google logging library about where/which logs to direct where.
+
 ## Dagster Options
 
 The command-line invocation of Dagster has a number of options, the most important of which is the **mode** (`m`) option.
  - `-m 0` (default): solving units consist of a single process running a CDCL SAT solving procedure.
  - `-m 1` : solving units consist of a CDCL procedure assisted by one or more SLS (stochastic local search) processes (this number is specified by the `k` parameter).
  - `-m 2` : solving units consist of a CDCL process, one or more SLS processes (given by `k` parameter), and a separate CDCL procedure for clause minimization.
+ - `-m 3` : solving units consist of a CDCL process, and a separate CDCL procedure for clause minimization.
+ - `-m 4` : solving units consist of a single process running a CDCL SAT solving procedure - specifically the MiniSAT procedure.
 
 An example invocation with these options is:
 
@@ -140,8 +154,8 @@ The `k` parameter and the `m` parameter are the most important options which can
 The following commands determine the behaviour of the stochastic local search:
 
  - `-w` determines if we are using clause weights or not. `1` means yes, `0` means no. 
- 
- CHARLES TBD -- -a ghosts -r cdclfirst
+ - `-a ghosts` determines whether the SLS is using `ghosts` mode, specifically if it is sending suggestions as stored in a buffer in a re-writing round-robin fashion.
+ - `-r cdclfirst` determines the order in which the CDCL sat solver is recieving suggestoins from the SLS, particuarly if the conflict clause variable selection should be precedent over SLS suggestions or not.
 
 The following performance-turning options affect the relationship between the CDCL process and the SLS processes:
 
@@ -151,10 +165,49 @@ The following performance-turning options affect the relationship between the CD
 
 The following experimental options affect the behaviour of the Master node:
 
- - `-b` is the configuration option whether the master node will allocate multiple solving units to a given subproblem at at time = {`1`,`0`} = 'on', 'off'
+ - `-b` is the configuration option whether the master node will allocate solving units across the DAG in `breadth first`, alternatively going `depth first' = {`1`,`0`} = 'on', 'off'
  - `-g` is the master mode = {`1`,`0`} if using BDD assistance to compile solutions between subproblems
  - `-c` is the BDD compilation mode if using BDD assistance = {`cubes`,`minisat`,`paths`}
+ - `-e` is whether the master should attempt to enumerate all solutions the the problem `= {`1`,`0`} = 'on', 'off'
+ - `-h` is the directory name where dagster will dump segmented parts of the DAG for each node (note: this enabled file loading of CNF parts, otherwise in memory mode) 
+ - `-o` is the filename where all problem solutions will be output to (default = 'dag_out.txt')
 
+The following options affect the timing of various parts within the Dagster system:
+ - `-i` is the number of solutions that a CDCL will report before asking master for a possible reassignment
+ - `-j` is the number of decisions that the CDCL will make before asking master for a possible reassignment
+ - `-l` is the number of decisions that ehe CDCL will make before checking for a solution from the associated SLS processes
+
+The following change the behavior of the CDCL processes:
+ - `-p` is a flag that sets if the CDCL should do restarting at all in its solution process.
+ - `-t` is a flag controlling how the CDCL should trim any solutions that it generates `= {`0`,`1`,`2`}` = `off`, `on`, `trim all negative literals`
+ - `-x` is the number of decisions that the CDCL should make before reducing the restarting probability by the geometric discounting factor (0 = off)
+ - `-y` s the discount factor in the geometric discounting scheme, the factor that reduces the probability or restart every opportunity modulo decisions
+
+The following options affects (enables/disables) the checkpointing functionality within Dagster: 
+ - `-u` gives the full name of the checkpoint to load on initialisation, specified if there is one
+ - `-v` gives the number of seconds between dumping a checkpoint in runtime
+ - `-z` the filename prefix controlling where to dump the checkpoints as the runtime progresses (if enabled by specifying checkpoint_frequency -v)
+ 
+ 
+## Python Text User Interfaces -- Wizard
+
+The options that serve to configure Dagster can be overwhelming and confusing, and to assist the user make appropriate choices a Text User Interface Wizard was programmed in Python.
+the python script `dagster/wizard.py` will load a dynamic interface where different configuration options are presetned and configured, and apon exiting, will give the full dagster invocation.
+this python script is to be run from a Python environment where:
+
+* Python version >3.0
+* UrWid python library is installed
+
+## Python Text User Interfaces -- Viewer
+
+During the run of a Dagster process, the log files contain all the nessisary information to determine the state and progress of a Dagster run, however the log files are not particularly easy to
+interpret.
+To interpret the log files in a more user friendly way, a Text User Interface was coded, to ingest the log files as they are generated and interpret the results in a graphical fashion.
+The python script `dagster/wizard.py` was coded to provide this interpertation, particularly an argument as input the log file that dagster is generating (particularly anticipating log level 3)
+and displays the results graphically for inspection.
+
+* Python version >3.0
+* UrWid python library is installed
 
 ## Generating DAG files for CNFs
 

@@ -43,7 +43,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 extern CnfHolder* cnf_holder;
 extern Arguments command_line_arguments;
-
+extern int world_rank;
 
 // Worker main loop:
 // infinite loop process of:
@@ -75,6 +75,7 @@ void Worker::loop() {
       m2->to = m->to;
       VLOG(4) << "WORKER " << comms->world_rank << ": loading into SAT; node " << m->from;
       VLOG(4) << "I HAVE RECIEVED MESSAGE: " << *m;
+      message_index++;
       initialise_solver_from_message(m);
     }
     
@@ -169,7 +170,14 @@ void Worker::initialise_solver_from_message(Message* m) {
       delete generated_cnf;
   }
   generated_cnf = cnf_holder->compile_Cnf_from_Message(m); // from the given message compile a new cnf for the Tinisat to run
-  if (VLOG_IS_ON(5)) { VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl; generated_cnf->print(); }
+  if (VLOG_IS_ON(5)) {
+    VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl;
+    
+    std::stringstream ss;
+    ss << "worker_" << world_rank << "_cnf_" << message_index << ".txt";
+    generated_cnf->output_dimacs(ss.str().c_str());
+    //generated_cnf->print();
+  }
 
   // if there are gnovelties or strengthender then dehydrate the message, append the phase and send it to them
   if ((communicator_sls != NULL) || (communicator_strengthener != NULL)) {

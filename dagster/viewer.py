@@ -5,22 +5,6 @@ import time
 import re
 from collections import defaultdict
 
-'''
-k = 0
-try:
-    buff = ''
-    while True:
-        buff += streamin.read(1)
-        if buff.endswith('\n'):
-            print(buff[:-1])
-            buff = ''
-            k = k + 1
-except KeyboardInterrupt:
-   sys.stdout.flush()
-   pass
-print(k)
-'''
-
 assert len(sys.argv)==3, "must supply <DAG_FILENAME>, and <STREAM FILE>"
 
 import urwid
