@@ -62,10 +62,15 @@ extern int world_rank;
 void Worker::loop() {
   int solution_count = 0;
   Message* m2 = new Message();
+  Message* working_message = NULL;
   while (true) {
     VLOG(3) << "WORKER " << comms->world_rank << ": waiting for assignment";
     auto [master_rank,message_tag, m] = comms->receive_message();
-    
+    if (m!=NULL) {
+      if (working_message!=NULL)
+        delete working_message;
+      working_message = m;
+    }
     if (message_tag == MPI_TAG_NEW_ASSIGNMENT) { // new assignment, load up a new SAT solver and proceed to solving
       VLOG(4) << "WORKER " << comms->world_rank << ": received new assignment";
       if (m==NULL)
@@ -83,7 +88,7 @@ void Worker::loop() {
       VLOG(4) << "WORKER " << comms->world_rank << ": generating new solution";
       solution_count = 0;
 generate_new_result:
-      int result = solve_and_generate_message(m2);
+      int result = solve_and_generate_message(m2, working_message);
       //VLOG(2) << "WORKER " << comms->world_rank << ": generated made " << solver->decisions << " decisions, including "<<solver->num_set_literal << " sets, and " << solver->nConflicts << " conflicts, generating result " << result << " for message " << m2->to;
       VLOG(4) << "WORKER " << comms->world_rank << ": generated solution " << result;
       if (result == 0) {
@@ -97,7 +102,7 @@ generate_new_result:
         comms->send_message(0, MPI_TAG_SOLUTION, m2); // send the full solution to master
         solution_count++;
         VLOG(4) << "WORKER " << comms->world_rank << ": resetting sathandler";
-        if ((!reset_solver_for_next_solution(m2->to)) || (command_line_arguments.ENUMERATE_SOLUTIONS==3)) { // request for assignment if finished, or if enumerate_solutions mode 3 - assuming only one solution to each dag node message
+        if ((!reset_solver_for_next_solution(m2)) || (command_line_arguments.ENUMERATE_SOLUTIONS==3)) { // request for assignment if finished, or if enumerate_solutions mode 3 - assuming only one solution to each dag node message
           VLOG(3) << "WORKER " << comms->world_rank << ": finished generating new solutions, sending assignment request";
           comms->send_tag(0, MPI_TAG_REQUEST_FOR_ASSIGNMENT);
         } else if (solution_count >= command_line_arguments.sat_solution_interrupt) {
@@ -112,16 +117,19 @@ generate_new_result:
       break;
     } else
       LOG(ERROR) << "WORKER " << comms->world_rank << ": received a message with unknown tag: " << message_tag;
-    if (m!=NULL)
-      delete m;
   }
   delete m2;
+  if (working_message!=NULL)
+    delete working_message;
 }
 
 
 // destructor, also sends kill signals to all associated gnovelties and strengthener
 Worker::~Worker() {
-  if (solver != NULL) delete solver;
+  for (int i=0; i<this->dag->no_nodes; i++)
+    if (this->solvers[i]!=NULL)
+      delete this->solvers[i];
+  free(this->solvers);
   if (generated_cnf != NULL) delete generated_cnf;
   int kill_signal = -1;
   if (communicator_sls != NULL) {
@@ -136,27 +144,21 @@ Worker::~Worker() {
 
 
 // After solving with SATsolver instance, reset to beginning with an additional clause that is negative the previous solution.
-bool Worker::reset_solver_for_next_solution(int node) {
-  if (solver == NULL)
+bool Worker::reset_solver_for_next_solution(Message* m) {
+  if (solvers[solver_index] == NULL)
     throw ConsistencyException("reset_solver_for_next_solution method called with NULL solver");
   // clear and load a new conflict clause, from the negation solver's satisfying variables that are also in the amalgamated_forward_connection_literals
   // or if amalgamated_forward_connection_literals are empty, then the node is a terminal node, and add all the literals to a conflict clause that are in dag reporting
   // to avoid repetition relevent solutions.
   std::deque<int> conflicts;
   conflicts.clear();
-  if (dag->amalgamated_forward_connection_literals[node].size() > 0) { // only need to worry about literals that are relevent to forward connections 
-    solver->load_into_deque(conflicts, dag->amalgamated_forward_connection_literals[node]);
-  } else { // if terminal node then negate literals that are reported and add as a clause
-    solver->load_into_deque(conflicts, dag->reporting);
-  }
-  for (int i=0; i<conflicts.size(); i++) {
-    conflicts[i] *= -1;
-  }
+  if (m!=NULL)
+    for (auto it = m->assignments.begin(); it!=m->assignments.end(); it++)
+      conflicts.push_back(-*it);
   VLOG(4) << "WORKER " << comms->world_rank << ": adding SAT conflict clause: " << conflicts;
   if (conflicts.size() == 0)
     return false; // if the solver has passed-on an empty message, then adding the negation of the empty clause is senseless and we are done.
-  solver->solver_add_conflict_clause(conflicts);
-  return solver->reset_solver();
+  return solvers[solver_index]->solver_add_conflict_clause(conflicts) && solvers[solver_index]->reset_solver();
 }
 
 
@@ -164,12 +166,26 @@ bool Worker::reset_solver_for_next_solution(int node) {
 // boot up a TinySAT instance, and load forward and reverse mappings between the variables of the TinySAT instance and the master problem
 // with additional clauses,
 void Worker::initialise_solver_from_message(Message* m) {
-  if (solver != NULL) { // kill existing instance
-    delete solver;
-    if (generated_cnf!=NULL)
-      delete generated_cnf;
-  }
+  if (generated_cnf!=NULL)
+    delete generated_cnf;
   generated_cnf = cnf_holder->compile_Cnf_from_Message(m); // from the given message compile a new cnf for the Tinisat to run
+  
+  // delete solver instance
+  if (minisat_mode) {
+    /*if (solver_index != m->to) {
+      if (solvers[solver_index] != NULL) {
+        delete solvers[solver_index];
+        solvers[solver_index] = NULL;
+      }
+    }*/
+    /*if (solvers[solver_index] != NULL) // kill existing instance
+      delete solvers[solver_index];
+    solvers[solver_index] = new MinisatSolver(generated_cnf);*/
+  } else {
+    if (solvers[solver_index] != NULL) // kill existing instance
+      delete solvers[solver_index];
+  }
+  
   if (VLOG_IS_ON(5)) {
     VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl;
     
@@ -207,14 +223,19 @@ void Worker::initialise_solver_from_message(Message* m) {
     }
     free(dehydrated_message);
   }
-
-  // generate new solver instance
+  
   if (minisat_mode) {
-    solver = new MinisatSolver(generated_cnf);
+    solver_index = m->to;
+    if (solvers[solver_index] == NULL) {
+      solvers[solver_index] = new MinisatSolver(cnf_holder->get_Cnf(m->to));
+    }
+    if (m->additional_clauses != NULL) {
+      solvers[solver_index]->append_cnf(m->additional_clauses);
+    }
   } else {
-    solver = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
+    solvers[solver_index] = new SatSolver(generated_cnf, command_line_arguments.decision_interval, command_line_arguments.suggestion_size, communicator_sls, communicator_strengthener, false, false, command_line_arguments.heuristic_rotation_scheme, phase++);
   }
-  if (solver->is_solver_unit_contradiction() == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
+  if (solvers[solver_index]->is_solver_unit_contradiction() == true) { // contradiciton in unit clauses detected, error flag is set, output warning here.
     VLOG(2) << " WORKER " << comms->world_rank << ": contradiction unit clauses" << std::endl;
   }
 }
@@ -222,15 +243,15 @@ void Worker::initialise_solver_from_message(Message* m) {
 
 // for the loaded solver, attempt to solver, returning 0 if UNSAT, 1 if SAT, 2 if paused
 // if SAT, load the solution into message *m
-int Worker::solve_and_generate_message(Message* m) {
-  if ((solver == NULL) || (m==NULL))
+int Worker::solve_and_generate_message(Message* m, Message* reference_message) {
+  if ((solvers[solver_index] == NULL) || (m==NULL))
     throw ConsistencyException("solve_and_generate_message method called with NULL solver or message");
-  int result = solver->run();
+  int result = solvers[solver_index]->run(reference_message);
   if (result == true) {
     if (dag->amalgamated_forward_connection_literals[m->to].size() > 0) { // filter the relevent forward connection literals
-      solver->load_into_message(m,dag->amalgamated_forward_connection_literals[m->to]);
+      solvers[solver_index]->load_into_message(m,dag->amalgamated_forward_connection_literals[m->to], reference_message);
     } else { // else terminal node, filter by dag reporting literals
-      solver->load_into_message(m,dag->reporting);
+      solvers[solver_index]->load_into_message(m,dag->reporting, reference_message);
     }
   }
   return result;

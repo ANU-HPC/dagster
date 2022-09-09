@@ -149,6 +149,10 @@ CnfManager::~CnfManager(){
 	free(varOrder); free(varPosition); delete [] vars;
 }
 
+bool CnfManager::append_cnf(Cnf* cnf) {
+  throw ConsistencyException("CnfManager is not incremental as yet");
+}
+
 bool CnfManager::assertUnitClauses(){
 	for(int *p = stackTop - 1; *p; p--){
 		int lit = *p;
@@ -458,7 +462,7 @@ void CnfManager::load_into_message(Message* m) {
   }
 }
 
-void CnfManager::load_into_message(Message* m, RangeSet &r) {
+void CnfManager::load_into_message(Message* m, RangeSet &r, Message* reference_message) {
   m->assignments.clear();
   for (auto var = r.buffer.begin(); var != r.buffer.end(); var++) {
     for (int variable = (*var).first; variable <= (*var).second; variable++) {
@@ -472,42 +476,6 @@ void CnfManager::load_into_message(Message* m, RangeSet &r) {
     }
   }
 }
-
-void CnfManager::load_into_deque(deque<int> &d, RangeSet &r) {
-  load_into_deque(d,r,false);
-}
-void CnfManager::load_into_deque(deque<int> &d, RangeSet &r, bool positives_only) {
-  d.clear();
-  for (auto var = r.buffer.begin(); var != r.buffer.end(); var++) {
-    for (int variable = (*var).first; variable <= (*var).second; variable++) {
-      if (variable <= vc) {
-        if ((vars[variable].value == _POSI) && (!positives_only)) {
-          d.push_back(variable);
-        } else if (vars[variable].value == _NEGA) {
-          d.push_back(-variable);
-        }
-      }
-    }
-  }
-}
-
-
-void CnfManager::load_into_deque(deque<int> &d) {
-  load_into_deque(d,false);
-}
-void CnfManager::load_into_deque(deque<int> &d, bool positives_only) {
-  d.clear();
-  for (int variable = 1; variable <= vc; variable++) {
-    if (variable <= vc) {
-      if ((vars[variable].value == _POSI) && (!positives_only)) {
-        d.push_back(variable);
-      } else if (vars[variable].value == _NEGA) {
-        d.push_back(-variable);
-      }
-    }
-  }
-}
-
 
 void CnfManager::load_marked_into_message(Message* m) {
   m->assignments.clear();

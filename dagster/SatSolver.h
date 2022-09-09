@@ -109,7 +109,7 @@ public:
 
   int decisions;
 
-  int run();
+  int run(Message* m);
 
   void add_arbitrary_clause(int *inClauseArray, int inClauseLength, int inClauseLitPool, int inClauseLitPoolPos);
 
@@ -159,7 +159,7 @@ public:
   MPI_Win window;
   MPI_Win solution_window;
 
-  void solver_add_conflict_clause(std::deque<int>);
+  bool solver_add_conflict_clause(std::deque<int>);
   bool reset_solver();
   void printSolution(FILE *);
 

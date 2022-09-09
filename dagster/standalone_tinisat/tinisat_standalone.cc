@@ -28,6 +28,10 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <cerrno>
 #include <time.h>
 
+#include "../message.h"
+#include "../message.cpp"
+#include "../SatSolverInterface.h"
+#include "../SatSolverInterface.cpp"
 #include "../Cnf.h"
 #include "../Cnf.cpp"
 #include "../CnfManager.h"
@@ -71,6 +75,7 @@ int main(int argc,char *argv[]) {
   SatSolver* solver = new SatSolver(cnf, 5, 5, NULL, NULL, true, false, str, 0);
   
   int ret_code;
+  Message* m = new Message();
   std::deque<int> conflicts;
   int solutions = 0;
   FILE *ofp;
@@ -84,7 +89,7 @@ int main(int argc,char *argv[]) {
   do {
     // run the solver while it is returning status code 2 (ie. continuing)
     ret_code = 2;
-    while (ret_code==2) {ret_code=solver->run();}
+    while (ret_code==2) {ret_code=solver->run(NULL);}
     
     // if solution
     if (ret_code==1) {
@@ -105,9 +110,9 @@ int main(int argc,char *argv[]) {
       
       // add the negation of the solution to the solver and refresh it
       conflicts.clear();
-      solver->load_into_deque(conflicts);
-      for (int i=0; i<conflicts.size(); i++)
-        conflicts[i] *= -1;
+      solver->load_into_message(m);
+      for (auto it = m->assignments.begin(); it!=m->assignments.end(); it++)
+        conflicts.push_back(-*it);
       solver->solver_add_conflict_clause(conflicts);
       ret_code = solver->reset_solver();
     }
@@ -116,6 +121,7 @@ int main(int argc,char *argv[]) {
   if ((argc<=2) && (solutions==0))
     printf("s UNSATISFIABLE\n");
   
+  delete m;
   delete solver;
   delete cnf;
   printf("\nTime taken: %.5fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);

@@ -36,7 +36,8 @@ class Worker {
 public:
   MPICommsInterface* comms; // the communicator the worker interfaces with the master on
   Dag* dag; // local reference to the dag structure
-  SatSolverInterface* solver; // pointer to SAT solver
+  int solver_index; // pointer to SAT solver
+  SatSolverInterface** solvers;
   Cnf* generated_cnf; // pointer to CNF that the SAT solver is working on
   int phase; // phase counter, for each message the worker sends to the gnovelties/strengthener send a new 'phase' and disregard any messages that are from old phases
   bool minisat_mode; // flag to set minisat instead of tinisat CDCL
@@ -52,17 +53,18 @@ public:
     this->communicator_sls = communicator_sls;
     this->communicator_strengthener = communicator_strengthener;
     this->minisat_mode = minisat_mode;
-    solver = NULL;
-    phase = 0;
-    generated_cnf = NULL;
-    message_index = 0;
+    this->solver_index = 0;
+    this->phase = 0;
+    this->generated_cnf = NULL;
+    this->message_index = 0;
+    this->solvers = (SatSolverInterface**)calloc(sizeof(SatSolverInterface*),dag->no_nodes);
   }
   ~Worker();
 
   void loop();  // the Worker master loop
   void initialise_solver_from_message(Message* m); // given an initial message for a node of dag d, create all the infastructure to compute resulting messages
-  int solve_and_generate_message(Message* m); // for an object message m load in the values of a solution (if there is one) and return true, if no solution return false
-  bool reset_solver_for_next_solution(int node); // after a solution is loaded into a message, call this method to reset the solver for the processing of an additional message
+  int solve_and_generate_message(Message* m, Message* reference_message); // for an object message m load in the values of a solution (if there is one) and return true, if no solution return false
+  bool reset_solver_for_next_solution(Message* m); // after a solution is loaded into a message, call this method to reset the solver for the processing of an additional message
 };
 
 #endif

@@ -34,12 +34,12 @@ If not, see <http://www.gnu.org/licenses/>.
 // a minimal virtual class of functions that will be the outward presenting face of any class that handles and processes any CDCL procedure
 class SatSolverInterface {
   public:
-  virtual int run()=0;
-  virtual void load_into_message(Message* m, RangeSet &r)=0;
+  virtual int run(Message* m)=0;
+  virtual void load_into_message(Message* m, RangeSet &r, Message* reference_message)=0;
   virtual bool is_solver_unit_contradiction()=0;
   virtual bool reset_solver()=0;
-  virtual void solver_add_conflict_clause(std::deque<int>)=0;
-  virtual void load_into_deque(deque<int> &d, RangeSet &r)=0;
+  virtual bool solver_add_conflict_clause(std::deque<int>)=0;
+  virtual bool append_cnf(Cnf* cnf)=0;
   virtual ~SatSolverInterface()=0;
 };
 

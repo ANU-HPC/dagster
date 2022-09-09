@@ -44,17 +44,20 @@ class MinisatSolver : public SatSolverInterface, public SimpSolver {
   public:
   Cnf* cnf;
   bool* mark2; // array used to mark variables relevent to the solution being processed, decided by function
+  bool solver_unit_contradiction;
+  vec<Lit> unit_assignments;
   
-  bool prune_solution();
+  bool prune_solution(Message* reference_message);
   
   MinisatSolver(Cnf* cnf);
-  int run();
-  void load_into_message(Message* m, RangeSet &r);
+  bool append_cnf(Cnf* cnf);
+  int run(Message* m);
+  void load_into_message(Message* m, RangeSet &r, Message* reference_message);
   bool is_solver_unit_contradiction();
   bool reset_solver(); // dont need to do anything, since minisat is incremental anyways??
-  void solver_add_conflict_clause(std::deque<int> d);
-  void load_into_deque(deque<int> &d, RangeSet &r);
+  bool solver_add_conflict_clause(std::deque<int> d);
   ~MinisatSolver();
 };
+
 
 #endif

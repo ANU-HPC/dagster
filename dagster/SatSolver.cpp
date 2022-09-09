@@ -136,7 +136,7 @@ int SatSolver::selectLiteral__vsids() {
 
 // int run()
 //   The primary loop of the CDCL (SAT solving) process, returning 0 if contradiction detected, 1 if SAT, or 2 if paused
-int SatSolver::run() {
+int SatSolver::run(Message* m) {
   if (solver_unit_contradiction == true) // if unit clause conflict detected return immediate UNSAT
     return false;
   if (dLevel == 0)
@@ -717,7 +717,7 @@ int SatSolver::get_suggestion() {
 
 // add the conflicts as a clause to solver, return false if contradiction
 // need to pass unit_conflicts by reference since we want to add to them
-void SatSolver::solver_add_conflict_clause(std::deque<int> conflicts) {
+bool SatSolver::solver_add_conflict_clause(std::deque<int> conflicts) {
   conflictLits = conflicts;
 
   if (communicator_strengthener != NULL)
@@ -734,6 +734,7 @@ void SatSolver::solver_add_conflict_clause(std::deque<int> conflicts) {
     solution_conflict_indices.push_back(clause_index);
   }
   conflictLits.clear();
+  return true;
 }
 
 // full, hard clear of the solver's state
