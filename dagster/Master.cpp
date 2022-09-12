@@ -20,25 +20,26 @@ Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
 
-
-#include "Master.h"
-#include "Cnf.h"
-#include "message.h"
-#include "utilities.h"
-#include <algorithm>
-#include <argp.h>
-#include <cstdio>
-#include <cstdlib>
-#include <glog/logging.h>
 #include <iostream>
 #include <mpi.h>
 #include <stack>
 #include <set>
-#include "arguments.h"
-#include "mpi_global.h"
-#include "DisorderedArray.h"
+#include <algorithm>
+#include <argp.h>
+#include <cstdio>
+#include <cstdlib>
 #include <cassert>
 #include <ctime>
+
+#include <glog/logging.h>
+
+#include "Master.h"
+#include "Cnf.h"
+#include "Message.h"
+#include "utilities.h"
+#include "Arguments.h"
+#include "mpi_global.h"
+#include "DisorderedArray.h"
 
 using namespace std;
 
@@ -250,7 +251,7 @@ void Master::clear() {
   solutions.clear();
 }
 
-//dump_checkpoint: (DRAFT) //TODO: check working
+//dump_checkpoint:
 // dump all information to open writable file pointer
 // suitable for files subsequently loaded by load_checkpoint() method
 void Master::dump_checkpoint(FILE* fp) {

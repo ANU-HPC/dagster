@@ -38,7 +38,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include "utilities.h"
 #include "exceptions.h"
-#include "arguments.h"
+#include "Arguments.h"
 #include "CnfHolder.h"
 
 extern Arguments command_line_arguments;

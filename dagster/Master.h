@@ -25,11 +25,11 @@ If not, see <http://www.gnu.org/licenses/>.
 #define _MASTER_H
 
 #include <vector>
-#include "arguments.h"
+#include "Arguments.h"
 #include "mpi_global.h"
 #include "MPICommsInterface.h"
 #include "SolutionsInterface.h"
-#include "message.h"
+#include "Message.h"
 #include "MasterOrganiser.h"
 #include "StatisticsModule.h"
 #include "CnfHolder.h"

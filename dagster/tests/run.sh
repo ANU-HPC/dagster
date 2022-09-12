@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
-(cd "./comprehensive/" && bash run.sh -H)
+(cd ./minimal/ && bash run.sh -H)
 echo "DONE"

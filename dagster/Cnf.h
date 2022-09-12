@@ -30,10 +30,10 @@ using namespace std;
 
 class Cnf {
 public:
-  unsigned vc;	// var count
-  unsigned cc;	// clause count
+  int vc;	// var count
+  int cc;	// clause count
   int **clauses;	// 2-dim. array with entries same as in cnf file
-  unsigned *cl;	// clause length
+  int *cl;	// clause length
   bool dereferenced;
 
   Cnf();

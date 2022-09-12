@@ -22,7 +22,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#include "message.h"
+#include "Message.h"
 #include "BDDSolutions.h"
 
 #include <algorithm>

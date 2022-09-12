@@ -25,7 +25,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #define SATSOLVER_INTERFACE_H_
 
 #include "exceptions.h"
-#include "message.h"
+#include "Message.h"
 #include "Dag.h"
 #include <algorithm>
 #include <vector>

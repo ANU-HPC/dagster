@@ -26,7 +26,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 #include "Cnf.h"
 #include "Dag.h"
-#include "message.h"
+#include "Message.h"
 
 // A class that holds accessors to Cnfs for each node
 // initialised by a referenced Dag.

@@ -21,7 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 *************************/
 
 
-#include "message.h"
+#include "Message.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -82,7 +82,7 @@ int Message::dehydrate(int *data) {
   data[upto++] = from;
   data[upto++] = (additional_clauses != NULL);
   data[upto++] = assignments.size();
-  for (int i = 0; i < assignments.size(); i++)
+  for (long unsigned int i = 0; i < assignments.size(); i++)
     data[upto++] = assignments[i];
   int size = upto;
   if (additional_clauses != NULL)
@@ -111,7 +111,7 @@ void Message::set(Message *m) {
   to = m->to;
   from = m->from;
   assignments.resize(m->assignments.size());
-  for (int i = 0; i < assignments.size(); i++)
+  for (long unsigned int i = 0; i < assignments.size(); i++)
     assignments[i] = m->assignments[i];
   if (additional_clauses != NULL)
     delete additional_clauses;

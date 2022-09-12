@@ -27,7 +27,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <argp.h>
 #include <glog/logging.h>
-#include "arguments.h"
+#include "Arguments.h"
 #include "utilities.h"
 
 
@@ -67,12 +67,6 @@ Arguments::Arguments() { // all the default arguments
   minisat_incrementality_mode = 0;
 }
 
-#ifdef VERSION
-const char *argp_program_version = XSTR(VERSION);
-#endif
-#ifdef EMAIL
-const char *argp_program_bug_address = XSTR(EMAIL);
-#endif
 static char doc[] = "Uses MPI to spawn SAT solvers working on different parts of a problem\nneed to specify a CNF file and associated DAG structure\nsee documenation for specifications.";
 static char args_doc[] = "DAG_FILE CNF_FILE";
 static struct argp_option options[] = { 

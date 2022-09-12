@@ -24,7 +24,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #ifndef MPI_COMMS_INTERFACE_H_
 #define MPI_COMMS_INTERFACE_H_
 
-#include "message.h"
+#include "Message.h"
 #include <tuple>
 #include "mpi.h"
 #include "exceptions.h"

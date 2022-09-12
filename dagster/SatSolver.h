@@ -44,7 +44,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <deque>
 #include "Dag.h"
 #include "Cnf.h"
-#include "message.h"
+#include "Message.h"
 
 
 

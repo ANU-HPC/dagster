@@ -45,7 +45,7 @@ Cnf::Cnf() {
   cc = 0;
   vc = 0;
   TEST_NOT_NULL(clauses = (int**)calloc(sizeof(int*),1))
-  TEST_NOT_NULL(cl = (unsigned int*)calloc(sizeof(int*),1))
+  TEST_NOT_NULL(cl = (int*)calloc(sizeof(int*),1))
   occurence = NULL;
   numOccurence = NULL;
   neighbourVar = NULL;
@@ -123,7 +123,7 @@ Cnf::Cnf(const char *fname, RangeSet &indices) {
 Cnf::Cnf(Cnf* cnf) {
   vc = cnf->vc;
   cc = cnf->cc;
-  TEST_NOT_NULL(cl = (unsigned*)calloc(sizeof(unsigned),cc+1))
+  TEST_NOT_NULL(cl = (int*)calloc(sizeof(int),cc+1))
   for (int i=0; i<cc; i++)
     cl[i] = cnf->cl[i];
   TEST_NOT_NULL(clauses = (int**)calloc(sizeof(int*),cc+1))
@@ -173,7 +173,7 @@ Cnf::Cnf(Cnf* cnf, RangeSet &set_indices) {
 // standard destructor, free all data structures
 Cnf::~Cnf(){
   if(clauses){
-    if (this->dereferenced) {for(unsigned i = 0; i < cc; i++) free(clauses[i]);}
+    if (this->dereferenced) {for(int i = 0; i < cc; i++) free(clauses[i]);}
       free(clauses);
   }
   if (cl)
@@ -276,7 +276,7 @@ void Cnf::hydrate(int* input_data) {
     throw BadParameterException("CNF cannot hydrate NULL");
   free_occurence_and_neighborhood_buffers();
   int upto = 0;
-  int size = input_data[upto++];
+  upto++;
   int cc = input_data[upto++];
   TEST_NOT_NULL(clauses = (int**)calloc(sizeof(int*),cc+1))
   for (int i=0; i<cc; i++)
@@ -338,7 +338,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
   }
   // allocate original data buffers
   TEST_NOT_NULL(clauses = (int **) calloc(max_clause_count, sizeof(int *)))
-  TEST_NOT_NULL(cl = (unsigned *) calloc(max_clause_count, sizeof(unsigned)))
+  TEST_NOT_NULL(cl = (int *) calloc(max_clause_count, sizeof(int)))
 
   // for each line
   while((c=getc(ifp)) != EOF){
@@ -380,7 +380,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
       if(cc+1 >= max_clause_count) {
         max_clause_count *= 2;
         TEST_NOT_NULL(clauses = (int **)realloc(clauses, max_clause_count * sizeof(int *)))
-        TEST_NOT_NULL(cl = (unsigned *) realloc(cl,max_clause_count * sizeof(unsigned)))
+        TEST_NOT_NULL(cl = (int *) realloc(cl,max_clause_count * sizeof(int)))
       }
     }
     if (cc==header_cc) {
@@ -435,7 +435,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
   }
   // allocate original data buffers
   TEST_NOT_NULL(clauses = (int **) calloc(max_clause_count, sizeof(int *)))
-  TEST_NOT_NULL(cl = (unsigned *) calloc(max_clause_count, sizeof(unsigned)))
+  TEST_NOT_NULL(cl = (int *) calloc(max_clause_count, sizeof(int)))
   
   int max_index = 0;
   int min_index = INT_MAX;
@@ -504,7 +504,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
       if(cc+1 >= max_clause_count) {
         max_clause_count *= 2;
         TEST_NOT_NULL(clauses = (int **)realloc(clauses, max_clause_count * sizeof(int *)))
-        TEST_NOT_NULL(cl = (unsigned *) realloc(cl,max_clause_count * sizeof(unsigned)))
+        TEST_NOT_NULL(cl = (int *) realloc(cl,max_clause_count * sizeof(int)))
       }
     }
     // get a new line
@@ -557,7 +557,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
   }
   // allocate original data buffers
   TEST_NOT_NULL(clauses = (int **) calloc(max_clause_count, sizeof(int *)))
-  TEST_NOT_NULL(cl = (unsigned *) calloc(max_clause_count, sizeof(unsigned)))
+  TEST_NOT_NULL(cl = (int *) calloc(max_clause_count, sizeof(int)))
   
   // for each line
   int clause_index = -1;
@@ -610,7 +610,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
       if(cc+1 >= max_clause_count) {
         max_clause_count *= 2;
         TEST_NOT_NULL(clauses = (int **)realloc(clauses, max_clause_count * sizeof(int *)))
-        TEST_NOT_NULL(cl = (unsigned *) realloc(cl,max_clause_count * sizeof(unsigned)))
+        TEST_NOT_NULL(cl = (int *) realloc(cl,max_clause_count * sizeof(int)))
       }
     }
     // get a new line
@@ -820,7 +820,7 @@ void Cnf::add_unitary_clause(int unit) {
   cc++;
   TEST_NOT_NULL(clauses = (int**)realloc(clauses, sizeof(int*)*(cc+1)))
   clauses[cc]=0;
-  TEST_NOT_NULL(cl = (unsigned int*)realloc(cl, sizeof(int)*(cc+1)))
+  TEST_NOT_NULL(cl = (int*)realloc(cl, sizeof(int)*(cc+1)))
   cl[cc]=0;
   cl[cc-1] = 1;
   TEST_NOT_NULL(clauses[cc-1] = (int*)calloc(sizeof(int),2))
@@ -855,7 +855,7 @@ void Cnf::add_clause(int* clause) {
   cc++;
   TEST_NOT_NULL(clauses = (int**)realloc(clauses, sizeof(int*)*(cc+1)))
   clauses[cc]=0;
-  TEST_NOT_NULL(cl = (unsigned int*)realloc(cl, sizeof(int)*(cc+1)))
+  TEST_NOT_NULL(cl = (int*)realloc(cl, sizeof(int)*(cc+1)))
   cl[cc]=0;
   cl[cc-1] = size;
   TEST_NOT_NULL(clauses[cc-1] = (int*)calloc(sizeof(int),size+1))
@@ -909,7 +909,7 @@ void Cnf::add_clause(int* clause) {
       // resize and add new elements to neighborhood
       neighbourVar[v1] = (int*)realloc(neighbourVar[v1],sizeof(int)*(neighborhood_size+pushes_for_i.size()+1));
       neighbourVar[v1][neighborhood_size+pushes_for_i.size()]=0;
-      for (int l=0; l<pushes_for_i.size(); l++) {
+      for (long unsigned int l=0; l<pushes_for_i.size(); l++) {
         neighbourVar[v1][neighborhood_size+l] = pushes_for_i[l];
       }
     }
@@ -924,7 +924,7 @@ void Cnf::join(Cnf* c) {
   int old_cc = cc;
   cc = cc + c->cc;
   TEST_NOT_NULL(clauses = (int**)realloc(clauses, sizeof(int*)*(cc + 1)))
-  TEST_NOT_NULL(cl = (unsigned int*)realloc(cl, sizeof(int)*(cc + 1)))
+  TEST_NOT_NULL(cl = (int*)realloc(cl, sizeof(int)*(cc + 1)))
   clauses[cc]=0;
   cl[cc]=0;
   for (int i=0; i<c->cc; i++) {
@@ -1021,7 +1021,7 @@ void Cnf::populate_from_clauses() {
   for (int i=0; clauses[i]!=NULL; i++)
     length++;
   cc = length;
-  TEST_NOT_NULL(cl = (unsigned int*)calloc(sizeof(unsigned int),cc+1))
+  TEST_NOT_NULL(cl = (int*)calloc(sizeof(int),cc+1))
   vc = 0;
   for (int i=0; clauses[i]!=NULL; i++) {
     int j=0;

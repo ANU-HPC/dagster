@@ -15,14 +15,14 @@ ifeq (${CRAY_PLATFORM_NAME}, $(findstring ${CRAY_PLATFORM_NAME}, ${UNAME}))
 else
 	#Default variables
 	MPICXX                  = mpic++
-	CXXFLAGS                += -ggdb -O3 -std=c++17 -DVERSION=1.0.0 -DEMAIL=mark.burgess@anu.edu.au -I. -Iminisat
+	CXXFLAGS                += -ggdb -O3 -std=c++17 -I. -Iminisat
 	LDFLAGS                 += -lglog -lstdc++fs -lcudd -lz
 endif
 #Profiling
 #       LDFLAGS                 += -L/usr/local/lib/openmpi -lmpiP -lm -lbfd -liberty -lunwind -L.. -ldummy_mpi1
 
 
-OBJS 				= Cnf.o CnfManager.o SatSolver.o Dag.o message.o TableSolutions.o BDDSolutions.o main.o Master.o Worker.o MPICommsInterface.o utilities.o arguments.o CnfHolder.o MasterOrganiser.o SatSolverInterface.o
+OBJS 				= Cnf.o CnfManager.o SatSolver.o Dag.o Message.o TableSolutions.o BDDSolutions.o main.o Master.o Worker.o MPICommsInterface.o utilities.o Arguments.o CnfHolder.o MasterOrganiser.o SatSolverInterface.o
 
 .PHONY: gnovelty
 

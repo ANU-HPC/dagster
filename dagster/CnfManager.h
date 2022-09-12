@@ -27,7 +27,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <cstddef>
 #include "math.h"
 #include "Cnf.h"
-#include "message.h"
+#include "Message.h"
 using namespace std;
 
 #define _NEGA 0		// variable values are negative

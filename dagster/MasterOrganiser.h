@@ -25,7 +25,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #define _MASTER_ORGANISER_H
 
 #include <vector>
-#include "message.h"
+#include "Message.h"
 #include "DisorderedArray.h"
 
 using namespace std;

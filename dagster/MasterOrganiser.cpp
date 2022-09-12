@@ -23,7 +23,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 #include "Master.h"
 #include "Cnf.h"
-#include "message.h"
+#include "Message.h"
 #include "utilities.h"
 #include <algorithm>
 #include <argp.h>
@@ -33,7 +33,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <mpi.h>
 #include <stack>
-#include "arguments.h"
+#include "Arguments.h"
 #include "mpi_global.h"
 #include "DisorderedArray.h"
 #include "MasterOrganiser.h"

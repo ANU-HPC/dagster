@@ -25,7 +25,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "Cnf.h"
 #include "Dag.h"
 #include "SatSolver.h"
-#include "message.h"
+#include "Message.h"
 #include "utilities.h"
 #include <algorithm>
 #include <argp.h>
@@ -35,7 +35,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <mpi.h>
 #include <stack>
-#include "arguments.h"
+#include "Arguments.h"
 #include "mpi_global.h"
 #include "CnfHolder.h"
 #include "exceptions.h"

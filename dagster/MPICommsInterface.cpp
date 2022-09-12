@@ -22,7 +22,6 @@ If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "MPICommsInterface.h"
-#include "message.h"
 #include <tuple>
 #include "mpi_global.h"
 

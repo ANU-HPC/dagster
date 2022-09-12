@@ -28,8 +28,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <cerrno>
 #include <time.h>
 
-#include "../message.h"
-#include "../message.cpp"
+#include "../Message.h"
+#include "../Message.cpp"
 #include "../SatSolverInterface.h"
 #include "../SatSolverInterface.cpp"
 #include "../Cnf.h"
@@ -48,8 +48,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "../strengthener/MpiBuffer.cc"
 #include "../ReversableIntegerMap.h"
 #include "../ReversableIntegerMap.cc"
-#include "../arguments.h"
-#include "../arguments.cpp"
+#include "../Arguments.h"
+#include "../Arguments.cpp"
 
 using namespace std;
 
