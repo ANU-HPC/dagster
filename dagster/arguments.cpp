@@ -64,6 +64,7 @@ Arguments::Arguments() { // all the default arguments
   opportunity_modulo = 0; //800
   discount_factor = 0.95;
   checkpoint_file_prefix = "checkpoint";
+  minisat_incrementality_mode = 0;
 }
 
 #ifdef VERSION
@@ -91,7 +92,7 @@ static struct argp_option options[] = {
   
   { "OUTPUT_FILE", 'o', "OUTPUT_FILE", 0, "the filename to be outputted to"},
   { "tinisat restarting", 'p', "tinisat_restarting", 0, "a flag that is set if tinisat is to do restarts in its decision process."},
-  
+  { "minist incrementality mode", 'q', "minisat_incrementality_mode", 0, "A mode number that controls how Minisat manages to store learned clauses on the workers between messages, 0=no storage inrementality, 1=only store clauses if the message node does not change, 2=store incremental information of all nodes"},
   { "heuristic_rotation_scheme", 'r', "heuristic_rotation_scheme", 0, "gnovelty heuristic_rotation_scheme (only in gnovelty mode)"},
   { "suggestion_size", 's', "suggestion_size", 0, "gnovelty suggestion_size (only in gnovelty mode)"},
   { "solution trimming", 't', "solution_trimming", 0, "a 0/1 flag whether tinisat should attempt to verify and trim variables passing through, 2 two for trimming all but positive literals"},
@@ -167,7 +168,10 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
     arguments->output_filename = arg;
     break;
   case 'p':
-    PARSE_ARGUMENT(arguments->tinisat_restarting,"-t::tinisat_restarting");
+    PARSE_ARGUMENT(arguments->tinisat_restarting,"-p::tinisat_restarting");
+    break;
+  case 'q':
+    PARSE_ARGUMENT(arguments->minisat_incrementality_mode,"-q::minisat_incrementality_mode");
     break;
   case 'r':
     PARSE_ARGUMENT(arguments->heuristic_rotation_scheme,"-r::heuristic_rotation_scheme");

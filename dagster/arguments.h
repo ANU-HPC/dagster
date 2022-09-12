@@ -113,6 +113,8 @@ struct Arguments {
   // the filename prefix controlling where to dump the checkpointing files (if enabled by checkpoint_frequency)
   std::string checkpoint_file_prefix;
 
+  // A mode number that controls how Minisat manages to store learned clauses on the workers between messages, 0=no storage inrementality, 1=only store clauses if the message node does not change, 2=store incremental information of all nodes
+  int minisat_incrementality_mode;
 
   Arguments();
   

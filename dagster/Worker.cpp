@@ -172,15 +172,21 @@ void Worker::initialise_solver_from_message(Message* m) {
   
   // delete solver instance
   if (minisat_mode) {
-    /*if (solver_index != m->to) {
-      if (solvers[solver_index] != NULL) {
+    if (command_line_arguments.minisat_incrementality_mode==1) {
+      if (solver_index != m->to) {
+        if (solvers[solver_index] != NULL) {
+          delete solvers[solver_index];
+          solvers[solver_index] = NULL;
+        }
+      }
+      solver_index = m->to;
+    } else if (command_line_arguments.minisat_incrementality_mode==0) {
+      if (solvers[solver_index] != NULL) {// kill existing instance
         delete solvers[solver_index];
         solvers[solver_index] = NULL;
       }
-    }*/
-    /*if (solvers[solver_index] != NULL) // kill existing instance
-      delete solvers[solver_index];
-    solvers[solver_index] = new MinisatSolver(generated_cnf);*/
+      solver_index = m->to;
+    }
   } else {
     if (solvers[solver_index] != NULL) // kill existing instance
       delete solvers[solver_index];
@@ -188,7 +194,6 @@ void Worker::initialise_solver_from_message(Message* m) {
   
   if (VLOG_IS_ON(5)) {
     VLOG(5) << " WORKER " << comms->world_rank << ":" << " from " << *m << ": CNF LOADED " << std::endl;
-    
     std::stringstream ss;
     ss << "worker_" << world_rank << "_cnf_" << message_index << ".txt";
     generated_cnf->output_dimacs(ss.str().c_str());
@@ -225,7 +230,6 @@ void Worker::initialise_solver_from_message(Message* m) {
   }
   
   if (minisat_mode) {
-    solver_index = m->to;
     if (solvers[solver_index] == NULL) {
       solvers[solver_index] = new MinisatSolver(cnf_holder->get_Cnf(m->to));
     }

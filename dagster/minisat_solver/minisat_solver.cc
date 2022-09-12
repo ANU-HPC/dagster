@@ -80,7 +80,12 @@ bool MinisatSolver::append_cnf(Cnf* cnf) {
       solver_unit_contradiction = true;
     }
     if (lits.size()==1) {
-      this->unit_assignments.push(lits[0]);
+      bool absent = true;
+      for (int i=0; i<this->unit_assignments.size(); i++)
+        if (lits[0]==this->unit_assignments[i])
+          absent = false;
+      if (absent)
+        this->unit_assignments.push(lits[0]);
     }
   }
   return true;
@@ -132,15 +137,25 @@ int MinisatSolver::run(Message *m) {
   lits.clear();
   for (int j=0; j<m->assignments.size(); j++) {
     int var = abs(m->assignments[j])-1;
+    while (var+1 > nVars()) newVar();
     lits.push((m->assignments[j] > 0) ? mkLit(var) : ~mkLit(var));
   }
   for (int i=0; i<this->unit_assignments.size(); i++) {
-    lits.push(this->unit_assignments[i]);
+    bool absent = true;
+    for (int j=0; j<lits.size(); j++)
+      if (this->unit_assignments[i]==lits[j])
+        absent = false;
+    if (absent)
+      lits.push(this->unit_assignments[i]);
   }
   bool ret = solve(lits, false, false);
   DB(printf("returning %i\n",ret);)
   return ret;
 }
+
+
+
+
 void MinisatSolver::load_into_message(Message* m, RangeSet &r, Message* reference_message) {
   if (!prune_solution(reference_message)) {
     throw ConsistencyException("Minisat returned false solution\n");
@@ -191,7 +206,12 @@ bool MinisatSolver::solver_add_conflict_clause(std::deque<int> d) {
     lits.push((lit > 0) ? mkLit(abs_lit) : ~mkLit(abs_lit));
   }
   if (lits.size()==1) {
-    this->unit_assignments.push(lits[0]);
+    bool absent = true;
+    for (int i=0; i<this->unit_assignments.size(); i++)
+      if (lits[0]==this->unit_assignments[i])
+        absent = false;
+    if (absent)
+      this->unit_assignments.push(lits[0]);
   }
   return addClause(lits);
 }
