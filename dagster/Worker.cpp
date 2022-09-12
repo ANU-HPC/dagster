@@ -179,14 +179,13 @@ void Worker::initialise_solver_from_message(Message* m) {
           solvers[solver_index] = NULL;
         }
       }
-      solver_index = m->to;
     } else if (command_line_arguments.minisat_incrementality_mode==0) {
       if (solvers[solver_index] != NULL) {// kill existing instance
         delete solvers[solver_index];
         solvers[solver_index] = NULL;
       }
-      solver_index = m->to;
     }
+    solver_index = m->to;
   } else {
     if (solvers[solver_index] != NULL) // kill existing instance
       delete solvers[solver_index];
