@@ -126,7 +126,7 @@ int** copy_2D_int_array(int** a) {
 	if (b==NULL) return NULL;
 	for (int i=0; i<outer_size; i++) {
 		int inner_size = 0;
-		while (a[i][inner_size]!=NULL) inner_size++;
+		while (a[i][inner_size]!=0) inner_size++;
 		b[i] = (int*)calloc(sizeof(int),inner_size+1);
 		if (b[i]==NULL) {
 			for (int j=0; j<i; j++) {
@@ -151,7 +151,7 @@ int** copy_2D_int_array_abs(int** a) {
 	if (b==NULL) return NULL;
 	for (int i=0; i<outer_size; i++) {
 		int inner_size = 0;
-		while (a[i][inner_size]!=NULL) inner_size++;
+		while (a[i][inner_size]!=0) inner_size++;
 		b[i] = (int*)calloc(sizeof(int),inner_size+1);
 		if (b[i]==NULL) {
 			for (int j=0; j<i; j++) {
@@ -176,7 +176,7 @@ int** copy_2D_int_array(int** a, int outer_size) {
 	for (int i=0; i<outer_size; i++) {
 		if (a[i]==NULL) continue;
 		int inner_size = 0;
-		while (a[i][inner_size]!=NULL) inner_size++;
+		while (a[i][inner_size]!=0) inner_size++;
 		b[i] = (int*)calloc(sizeof(int),inner_size+1);
 		if (b[i]==NULL) {
 			for (int j=0; j<i; j++) {
@@ -221,7 +221,7 @@ int** copy_2D_int_array(int** a, int* a_size, int outer_size) {
 int* copy_1D_int_array(int* a) {
 	int* b;
 	int outer_size = 0;
-	while (a[outer_size]!=NULL) outer_size++;
+	while (a[outer_size]!=0) outer_size++;
 	b = (int*)calloc(sizeof(int),outer_size+1);
 	if (b==NULL) return NULL;
 	for (int j=0; j<outer_size; j++) {

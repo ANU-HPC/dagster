@@ -57,7 +57,8 @@ Dag::Dag(const char *fname) {
   if ((f = fopen(fname, "r")) == NULL)
     throw FileFailedException(fname);
   // check valid header
-  fgets(line, len, f);
+  if (fgets(line, len, f)==NULL)
+    throw ParsingException(" Invalid Dag-file HEADER line read\n");
   if (strcmp(line, "DAG-FILE\n") != 0) 
     throw ParsingException(" Invalid Dag-file HEADER\n");
   // load the node number, and resize dag vectors appropriately
@@ -74,7 +75,8 @@ Dag::Dag(const char *fname) {
     forward_connection_literals[i].resize(no_nodes);
 
   // checks Graph subheader
-  fgets(line, len, f);
+  if (fgets(line, len, f)==NULL)
+    throw ParsingException(" Invalid Dag-file GRAPH_SUB_HEADER line read\n");
   if (strcmp(line, "GRAPH:\n") != 0)
     throw ParsingException(" Invalid Dag-file GRAPH_SUB_HEADER\n");
   // load all the connections (forward and reverse) in the directed graph
@@ -113,7 +115,8 @@ Dag::Dag(const char *fname) {
   }
 
   // checks the Clause subheader
-  fgets(line, len, f);
+  if (fgets(line, len, f)==NULL)
+    throw ParsingException(" Invalid Dag-file CLAUSES_SUB_HEADER line read\n");
   if (strcmp(line, "CLAUSES:\n") != 0)
     throw ParsingException(" Invalid Dag-file CLAUSES_SUB_HEADER\n");
   // iteratively read what clauses are attached to each node
@@ -143,7 +146,8 @@ Dag::Dag(const char *fname) {
     }
   }
   // check the Reporting subheader
-  fgets(line, len, f);
+  if (fgets(line, len, f) == NULL)
+    throw ParsingException("Invalid Dag-file REPORTING_SUBHEADER line read\n");
   if (strcmp(line, "REPORTING:\n") != 0)
     throw ParsingException("Invalid Dag-file REPORTING_SUBHEADER\n");
   while ((c = getc(f)) != EOF) {
@@ -475,41 +479,49 @@ void Dag::print() {
   }
   printf("\n");
   printf("forward connections:\n");
-  for (auto it = forward_connections.begin();it!=forward_connections.end(); it++) {
-    printf("%i: ",it-forward_connections.begin());
+  int i;
+  i = 0;
+  for (auto it = forward_connections.begin();it!=forward_connections.end(); it++,i++) {
+    printf("%i: ",i);
     for (auto it2 = (*it).begin(); it2 != (*it).end(); it2++) {
       printf("%i ",*(it2));
     }
     printf("\n");
   }
   printf("reverse connections:\n");
-  for (auto it = reverse_connections.begin();it!=reverse_connections.end(); it++) {
-    printf("%i: ",it-reverse_connections.begin());
+  i = 0;
+  for (auto it = reverse_connections.begin();it!=reverse_connections.end(); it++,i++) {
+    printf("%i: ",i);
     for (auto it2 = (*it).begin(); it2 != (*it).end(); it2++) {
       printf("%i ",*(it2));
     }
     printf("\n");
   }
   printf("forward connection literals:\n");
-  for (auto it = forward_connection_literals.begin();it!=forward_connection_literals.end(); it++) {
-    for (auto it2 = (*it).begin(); it2 != (*it).end(); it2++) {
-      printf("%i->%i: ",it-forward_connection_literals.begin(),it2-(*it).begin());
+  i = 0;
+  for (auto it = forward_connection_literals.begin();it!=forward_connection_literals.end(); it++,i++) {
+    int j = 0;
+    for (auto it2 = (*it).begin(); it2 != (*it).end(); it2++,j++) {
+      printf("%i->%i: ",i,j);
       (*it2).print();
     }
   }
   printf("amalgamated forward connection literals:\n");
-  for (auto it = amalgamated_forward_connection_literals.begin();it!=amalgamated_forward_connection_literals.end(); it++) {
-    printf("%i: ",it-amalgamated_forward_connection_literals.begin());
+  i = 0;
+  for (auto it = amalgamated_forward_connection_literals.begin();it!=amalgamated_forward_connection_literals.end(); it++,i++) {
+    printf("%i: ",i);
     (*it).print();
   }
   printf("clause_indices_for_each_node:\n");
-  for (auto it = clause_indices_for_each_node.begin();it!=clause_indices_for_each_node.end(); it++) {
-    printf("%i: ",it-clause_indices_for_each_node.begin());
+  i = 0;
+  for (auto it = clause_indices_for_each_node.begin();it!=clause_indices_for_each_node.end(); it++,i++) {
+    printf("%i: ",i);
     (*it).print();
   }
   printf("depth for each node:\n");
-  for (auto it = depth_for_each_node.begin(); it!=depth_for_each_node.end(); it++) {
-    printf("%i:%i\n",it-depth_for_each_node.begin(), *it);
+  i = 0;
+  for (auto it = depth_for_each_node.begin(); it!=depth_for_each_node.end(); it++,i++) {
+    printf("%i:%i\n",i, *it);
   }
   printf("Reporting:\n");
   reporting.print();

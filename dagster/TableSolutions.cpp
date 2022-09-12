@@ -235,13 +235,13 @@ next_message:;
 // dump all Table information to open writable file pointer
 // suitable for files subsequently loaded by load_checkpoint() method
 void TableSolutions::dump_checkpoint(FILE* fp) {
-	fprintf(fp,"92529 ");
+	fprintf(fp,"92529 "); // small randomish code to identify files created by TableSolutions
 	fprintf(fp,"%i ", this->dag->no_nodes);
 	fprintf(fp,"%i ", this->dumb_mode);
 	
 	for (int i=0; i<this->dag->no_nodes; i++) {
 		for (int j=0; j<this->dag->no_nodes; j++) {
-			fprintf(fp,"%i ", this->messages[i][j].size());
+			fprintf(fp,"%lu ", this->messages[i][j].size());
 			for (int k=0; k<this->messages[i][j].size(); k++) {
 				this->messages[i][j][k].dump_to_file(fp);
 			}
@@ -252,7 +252,7 @@ void TableSolutions::dump_checkpoint(FILE* fp) {
 		additional_clauses[i]->output_dimacs(fp);
 	}
 	for (int i=0; i<this->dag->no_nodes; i++) {
-		fprintf(fp,"%i ",this->completed_combinations[i].size());
+		fprintf(fp,"%lu ",this->completed_combinations[i].size());
 		for (auto it = this->completed_combinations[i].begin(); it != this->completed_combinations[i].end(); it++) {
 			for (auto a = (*it).begin(); a!=(*it).end(); a++) {
 				fprintf(fp,"%i",*a);
@@ -282,14 +282,17 @@ void TableSolutions::load_checkpoint(FILE* fp) {
 	reads = fscanf(fp, "%i ", &dag_no_nodes);
 	CHECK_EQ(reads,1);
 	CHECK_EQ(dag_no_nodes, this->dag->no_nodes);
-	reads = fscanf(fp, "%i ", &(this->dumb_mode));
+	int input_dumb_mode;
+	reads = fscanf(fp, "%i ", &input_dumb_mode);
+	this->dumb_mode = (input_dumb_mode!=0);
 	CHECK_EQ(reads,1);
 	
 	for (int i=0; i<this->dag->no_nodes; i++) {
 		for (int j=0; j<this->dag->no_nodes; j++) {
 			this->messages[i][j].clear();
 			int no_messages;
-			fscanf(fp,"%i ", &no_messages);
+			if (fscanf(fp,"%i ", &no_messages) != 1)
+		      throw BadParameterException(" TableSolutions file corruption");
 			for (int k=0; k<no_messages; k++) {
 				Message m;
 				m.read_from_file(fp);

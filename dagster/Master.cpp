@@ -259,41 +259,43 @@ void Master::dump_checkpoint(FILE* fp) {
   master->dump_checkpoint(fp);
   organiser->dump_checkpoint(fp);
   fprintf(fp,"\n");
-  fprintf(fp,"%i ",solutions.size());
+  fprintf(fp,"%lu ",solutions.size());
   for (Message* m : solutions) {
     m->dump_to_file(fp);
   }
   fprintf(fp,"\n");
   //dag_nodes_generated_solutions
-  fprintf(fp,"%i ",dag_nodes_generated_solutions.size());
+  fprintf(fp,"%lu ",dag_nodes_generated_solutions.size());
   for (int i : dag_nodes_generated_solutions) {
     fprintf(fp, "%i ",i);
   }
   fprintf(fp,"\n");
   //dag_nodes_given_assignments
-  fprintf(fp,"%i ",dag_nodes_given_assignments.size());
+  fprintf(fp,"%lu ",dag_nodes_given_assignments.size());
   for (int i : dag_nodes_given_assignments) {
     fprintf(fp, "%i ",i);
   }
   fprintf(fp,"\n");
   //subgraph_finished
-  fprintf(fp,"%i ",subgraph_finished.size());
+  fprintf(fp,"%lu ",subgraph_finished.size());
   for (int i : subgraph_finished) {
     fprintf(fp, "%i ",i);
   }
   fprintf(fp,"\n");
 }
 
-//load_checkpoint: (DRAFT) //TODO: check working
+//load_checkpoint:
 // load all information from a readable file pointer
 // suitable for files written by dump_checkpoint() method
 void Master::load_checkpoint(FILE* fp) {
   char string[10000];
-  fscanf(fp, "%s" , string );
+  if (fscanf(fp, "%s" , string ) != 1)
+	throw BadParameterException("Checkpoint has bad CNF filename specification");
   if (strcmp(string,command_line_arguments.cnf_filename)!=0) {
 	throw BadParameterException("Checkpoint has incompatable CNF filename with command invocation");
   }
-  fscanf(fp, "%s" , string );
+  if (fscanf(fp, "%s" , string ) != 1)
+	throw BadParameterException("Checkpoint has bad DAG filename specification");
   if (strcmp(string,command_line_arguments.dag_filename)!=0) {
 	throw BadParameterException("Checkpoint has incompatable DAG filename with command invocation");
   }

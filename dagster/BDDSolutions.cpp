@@ -519,7 +519,7 @@ void BDDSolutions::dump_checkpoint(FILE* fp) {
 	#if __has_include("dddmp.h")
 	fprintf(fp,"124349 ");
 	Dddmp_VarInfoType varoutinfo = DDDMP_VARIDS;
-	fprintf(fp,"%i %i %i ", initial_messages.size(),this->dag->no_nodes,this->vc);
+	fprintf(fp,"%lu %i %i ", initial_messages.size(),this->dag->no_nodes,this->vc);
 	for (auto it = initial_messages.begin(); it!=initial_messages.end(); it++) {
 		(*it)->dump_to_file(fp);
 	}

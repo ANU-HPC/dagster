@@ -166,7 +166,8 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
   int header_vc, header_cc;
   while((c=getc(ifp)) != EOF){ 
     if (isspace(c)) continue; else ungetc(c,ifp);
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp) == NULL)
+      throw ParsingException(" Invalid CNF file Header read\n");
     if (c=='p'){
       if(sscanf(line, "p cnf %d %d", &header_vc, &header_cc) == 2)
         break;
@@ -223,7 +224,8 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
         VLOG(3) << "parsed " << clause_index << " of " << header_cc << " clauses. ie: " << clause_index*100.0/header_cc << " percent.";
     }
     // get a new line
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp)==NULL)
+      throw ParsingException(" Unexpected error in CNF line read\n");
   }
   free(literals);
   fclose(ifp);
@@ -259,7 +261,8 @@ int CnfHolder::pseudo_split_CNF(char* cnf_filename) {
   int header_vc, header_cc;
   while((c=getc(ifp)) != EOF){ 
     if (isspace(c)) continue; else ungetc(c,ifp);
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp) == NULL)
+      throw ParsingException(" unexpected error in CNF line read\n");
     if (c=='p'){
       if(sscanf(line, "p cnf %d %d", &header_vc, &header_cc) == 2)
         break;

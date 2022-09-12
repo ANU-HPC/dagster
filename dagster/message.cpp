@@ -28,6 +28,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <glog/logging.h>
 #include "utilities.h"
+#include "exceptions.h"
 
 using namespace std;
 
@@ -176,7 +177,8 @@ void Message::dump_to_file(FILE* f) {
 	fprintf(f,"]");
 }
 void Message::read_from_file(FILE* f) {
-	fscanf(f,"%i %i [",&(this->from),&(this->to));
+	if (fscanf(f,"%i %i [",&(this->from),&(this->to)) != 2)
+      throw ParsingException(" Failed to read message from file\n");
 	this->assignments.clear();
 	while (true) {
 		int ll = 0;

@@ -321,7 +321,8 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
   int header_vc, header_cc;
   while((c=getc(ifp)) != EOF){ 
     if (isspace(c)) continue; else ungetc(c,ifp);
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp)==NULL)
+      throw ParsingException(" Unexpected line read error\n");
     if (c=='p'){
       if(sscanf(line, "p cnf %d %d", &header_vc, &header_cc) == 2)
         break;
@@ -331,7 +332,7 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
   }
   if (header_cc==0) {
     clauses[cc] = NULL;
-    cl[cc] = NULL;
+    cl[cc] = 0;
     free(literals);
     return;
   }
@@ -386,10 +387,11 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
       break;
     }
     // get a new line
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp) == NULL)
+      throw ParsingException(" Unexpected line read error\n");
   }
   clauses[cc] = NULL;
-  cl[cc] = NULL;
+  cl[cc] = 0;
     if ((header_vc != vc) || (header_cc != cc))
     throw ParsingException("CNF has header that dosnt match its body - bad variable count or clause count \n");
   free(literals);
@@ -422,7 +424,8 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
   int header_vc, header_cc;
   while((c=getc(ifp)) != EOF){ 
     if (isspace(c)) continue; else ungetc(c,ifp);
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp)==NULL)
+      throw ParsingException(" Unexpected line read error\n");
     if (c=='p'){
       if(sscanf(line, "p cnf %d %d", &header_vc, &header_cc) == 2)
         break;
@@ -462,7 +465,8 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
       }
       clause_index++;
       if (in_list==false) {
-        fgets(line, len, ifp);
+        if (fgets(line, len, ifp)==NULL)
+          throw ParsingException(" Unexpected line read error\n");
         continue;
       }
       int literal_input_count;
@@ -504,10 +508,11 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
       }
     }
     // get a new line
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp) == NULL)
+      throw ParsingException(" Unexpected line read error\n");
   }
   clauses[cc] = NULL;
-  cl[cc] = NULL;
+  cl[cc] = 0;
     if (cc!=indices.size())
     throw ParsingException("loading CNF from indices that dont exists as clauses \n");
   free(literals);
@@ -541,7 +546,8 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
   int header_vc, header_cc;
   while((c=getc(ifp)) != EOF){ 
     if (isspace(c)) continue; else ungetc(c,ifp);
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp) == NULL)
+      throw ParsingException(" Unexpected line read error\n");
     if (c=='p'){
       if(sscanf(line, "p cnf %d %d", &header_vc, &header_cc) == 2)
         break;
@@ -565,7 +571,8 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
       // if clause_index in indices then include it, else bypass
       clause_index++;
       if (!(set_indices.find(clause_index))) {
-        fgets(line, len, ifp);
+        if (fgets(line, len, ifp) == NULL)
+          throw ParsingException(" Unexpected line read error\n");
         continue;
       }
       int literal_input_count;
@@ -607,10 +614,11 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
       }
     }
     // get a new line
-    fgets(line, len, ifp);
+    if (fgets(line, len, ifp) == NULL)
+      throw ParsingException(" Unexpected line read error\n");
   }
   clauses[cc] = NULL;
-  cl[cc] = NULL;
+  cl[cc] = 0;
     if (cc!=set_indices.size()) {
       throw ParsingException("loading CNF from indices that dont exists as clauses \n");
     }
@@ -1017,7 +1025,7 @@ void Cnf::populate_from_clauses() {
   vc = 0;
   for (int i=0; clauses[i]!=NULL; i++) {
     int j=0;
-    for (j=0; clauses[i][j]!= NULL; j++)
+    for (j=0; clauses[i][j]!= 0; j++)
       if (abs(clauses[i][j]) > vc)
         vc = abs(clauses[i][j]);
     cl[i] = j;
