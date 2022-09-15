@@ -91,7 +91,6 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
   bool using__ghost_suggestions = (strcmp(advise_scheme.c_str(), "ghosts") == 0);
   srandom(genRandomSeed());
   VLOG(3) <<"using__ghost_suggestions="<<using__ghost_suggestions<<endl;
-  //exit(-1);
   int phase;
 
   while (true) {
@@ -152,26 +151,22 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
     // assignment, or not.
     // -------------------------------------------------------------
     int steps = 0;
-//      VLOG(5) << " gnovelty " << world_rank << "prior stepping";
     while (true) {
-//      VLOG(5) << " gnovelty " << world_rank << "stepping";
       int found_solution = 0;
       while ((++steps % CHECK_PREFIX_STEPS) != 0 && !found_solution) {
         found_solution = gnovelty->step_newStyle(walkProb, adaptFlag);
       }
-//      VLOG(5) << " gnovelty " << world_rank << " done stepping " << found_solution;
+      VLOG(5) << " gnovelty " << world_rank << " done stepping " << found_solution;
       if (using__ghost_suggestions)
         gnovelty->loadSuggestion_ghost(suggestions, suggestionSize);
       else
         gnovelty->loadSuggestion(suggestions, suggestionSize);
-//      VLOG(5) << " gnovelty " << world_rank << " done loading suggestion";
 
       // Communicate with CDCL procedure
       bool received_prefix = false;
       int incoming = 0;
       int prefix_length;
       MPI_Status prefixStatus;
-//      VLOG(5) << " gnovelty " << world_rank << " about to test";
       MPI_Test(&prefixRequest, &incoming, &prefixStatus); // test for a message telling us we need to change the "prefix". That is, change the set of fixed assignments that are locked in.
       // receive all incoming prefix messages and use only the most recent
       int dup = 0;
@@ -184,7 +179,7 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
         MPI_Start(&prefixRequest);
         MPI_Test(&prefixRequest, &incoming, &prefixStatus);
       }
-//      VLOG(5) << " gnovelty " << world_rank << " recieved prefix " << received_prefix;
+      VLOG(5) << " gnovelty " << world_rank << " recieved prefix " << received_prefix;
       if (received_prefix) { // New advice wrt assignment constraint has been communicated. We have a new, possibly different, prefix to think about.
         VLOG(3) << "received " << dup << " prefix messages, latest prefix_length = " << prefix_length;
         if (prefix_length == 0) // prefix length zero indicates reset to receive new CNF
