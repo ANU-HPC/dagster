@@ -22,7 +22,7 @@ def contract_sequence(seq):
 	return ",".join(st)
 
 
-subblock_size = 5
+subblock_size = 3#5
 
 
 class Problem(object):
@@ -422,16 +422,24 @@ class Problem(object):
 		#A = [-1,2,-3,-4,-5,-6,7,-8,-9,-10,-11,-12,-13,-14,-15,-16,-17,18,-19,-20,-21,-22,23,24,-25,-26,-27,28,-29,30,-31,-32,33,34,35,-36]
 		#for a in A:
 		#	self.add_clause([a])
-		
+
 	def output_CNF_MAP(self,cnf_name,map_name):
 		print("outputting CNF and MAP")
 		with open(cnf_name, "w") as f:
+			matrix_variables = []
+			for x in range(self.n):
+				for y in range(self.n):
+					v = "m_{}_{}".format(x,y)
+					matrix_variables.append(str(self.CNF_variables[v]))
+			f.write("c ind {} 0\n".format(" ".join(matrix_variables) ))
 			f.write("p cnf {} {}\n".format(len(self.CNF_variables.keys()), len(self.cnf)))
 			for c in tqdm(self.cnf):
 				f.write("{}\n".format(c))
 		with open(map_name,"w") as f:
 			for k,v in tqdm(self.CNF_variables.items()):
 				f.write("{} {}\n".format(k,v))
+
+
 
 	def interpret_solution(self,solution):
 		solution = {abs(s): 1 if s>0 else 0 for s in solution}
@@ -479,6 +487,9 @@ def determinant_problem(n, bit_resolution, cnf_file, map_file, dag_file):
 	problem = Problem(n,bit_resolution)
 	problem.write_all_constraints()
 	problem.output_CNF_MAP(cnf_file,map_file)
+	
+	global subblock_size
+	subblock_size = n-2
 
 	'''os.system("cryptominisat5 {} >zog.txt".format(cnf_file))
 	with open("zog.txt",'r') as f:
