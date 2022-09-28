@@ -3,6 +3,7 @@ import sys
 #import cgitb
 #cgitb.enable(format="")
 import json
+import click
 
 
 
@@ -58,6 +59,18 @@ def exit_program_start(button):
 	else:
 		E.call['executable_attr'].set_attr_map({None:None})
 	
+	if len(E.call['cnf'].edit_text)==0:
+		E.call['cnf_attr'].set_attr_map({None:"focus line"})
+		return
+	else:
+		E.call['cnf_attr'].set_attr_map({None:None})
+	
+	if len(E.call['dag'].edit_text)==0:
+		E.call['dag_attr'].set_attr_map({None:"focus line"})
+		return
+	else:
+		E.call['dag_attr'].set_attr_map({None:None})
+	
 	if len(E.call['processes'].edit_text)==0 or int(E.call['processes'].edit_text)<2:
 		E.call['processes_attr'].set_attr_map({None:"focus line"})
 		return
@@ -69,6 +82,13 @@ def exit_program_start(button):
 		return
 	else:
 		E.call['output_attr'].set_attr_map({None:None})
+	
+	if E.call['config_output_enabled'].state==True and len(E.call['config_output'].edit_text)==0:
+		E.call['config_output_attr'].set_attr_map({None:"focus line"})
+		return
+	else:
+		E.call['config_output_attr'].set_attr_map({None:None})
+	
 	outputting_command = True
 	raise urwid.ExitMainLoop()
 
@@ -163,6 +183,8 @@ help = {"Dagster Executable Location":{'help':"The location of the Dagster execu
 "bdd_config_BDD paths encoding":{"help":"The BDD Solutions Handler (if enabled) needs to be instructed how to represent information that it subequently delivers to CDCL SAT workers, the 'paths' encoding is the simplest, encoding all branches in a BDD as separate clauses to be delivered to the CDCL to instruct it what to do/where not to go, etc. This contrasts with cubes and minisat encoding schemes which communicate this information more compactly at the cost of introducing additional variables"},
 "Minisat CDCL Base":{"help":"Make the core CDCL solver used on the worker processes to be the Minisat Solver, this solver uses an array of differen heuristics for variable selection, clause learning and also clause forgetting, Minisat may work better than tinisat on specific CNF instances, but also currently has less options implemented than tinisat currently."},
 "Tinisat CDCL Base":{"help":"Make the core CDCL solver used on the worker processes to be the TiniSAT solver, this solver is default historical CDCL process dagster was first built with and has a plurality of configuration options, performs well generally but does not have any learnt clause forgetting mechanisms"},
+"Configuration file output":{"help":"The file that the configuration of the wizard should be output to"},
+"Configuration output":{"help":"A checkbox indicating if the wizard should put its configuration into a file"},
 "bdd_config_BDD cubes encoding":{"help":""},
 "bdd_config_BDD minisat encoding":{"help":""}, #TODO
 }
@@ -171,8 +193,8 @@ help = {"Dagster Executable Location":{'help':"The location of the Dagster execu
 # construction of menu archietcutre and options/config
 menu_top = menu(u'Main Menu', [
 	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'Dagster Executable Location: '], '#d', help['Dagster Executable Location']), 'executable'), None, focus_map='reversed'), 'executable_attr'),
-	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'CNF File Input: '], '#w', help['CNF File Input']), 'executable'), None, focus_map='reversed'), 'executable_attr'),
-	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'DAG File Input: '], '#q', help['DAG File Input']), 'executable'), None, focus_map='reversed'), 'executable_attr'),
+	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'CNF File Input: '], '#w', help['CNF File Input']), 'cnf'), None, focus_map='reversed'), 'cnf_attr'),
+	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'DAG File Input: '], '#q', help['DAG File Input']), 'dag'), None, focus_map='reversed'), 'dag_attr'),
 	E.register(urwid.AttrMap(E.register(E(urwid.IntEdit, [u'Number of MPI processes: ',1], '#0', help['number of MPI processes']), 'processes'), None, focus_map='reversed'), 'processes_attr'),
 	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u'Output Filename: '], 'o', help['Output Filename']), "output"), None, focus_map='reversed'), 'output_attr'),
 	urwid.Divider(),
@@ -245,6 +267,14 @@ menu_top = menu(u'Main Menu', [
 		urwid.AttrMap(E(urwid.RadioButton, [bdd_config,u'- BDD minisat encoding'], '@cminisat', help['bdd_config_BDD minisat encoding']), None, focus_map='reversed'),
 		menu_button(u'Back', back_callback),
 	]),
+	urwid.Divider(),
+	urwid.AttrMap(E.register(E(urwid.CheckBox, ["Configuration output"], "#o", help['Configuration output']), "config_output_enabled"), None, focus_map='reversed'),
+	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u' |_ Configuraiton file output: '], '#v', help['Configuration file output']), "config_output"), None, focus_map='reversed'), 'config_output_attr'),
+	
+	#E.register(urwid.AttrMap(E.register(
+	#	E(urwid.Edit, [u'Dagster Executable Location: '], '#d', help['Dagster Executable Location'])
+	#	, 'executable'), None, focus_map='reversed'), 'executable_attr'),
+
 	urwid.Divider(),
 	menu_button(u'Start', exit_program_start),
 	urwid.Divider(),
@@ -319,138 +349,147 @@ palette = [
 
 setattr(menu_top,"E",E)
 
-# load input command file (if there is) into the gui
-if (len(sys.argv)>1):
-	print("inputting file {}".format(sys.argv[1]))
-	with open(sys.argv[1],"r") as f:
-		import_data = json.load(f)
-	for k in import_data.keys():
-		for v in E.e['Edit']:
-			if k==v[1]:
-				v[0].set_edit_text(import_data[k])
-		for v in E.e['IntEdit']:
-			if k==v[1]:
-				v[0].set_edit_text(import_data[k])
-		for v in E.e['CheckBox']:
-			if k==v[1]:
-				v[0].set_state(import_data[k])
-		for v in E.e['RadioButton']:
-			if k==v[1]:
-				v[0].set_state(import_data[k])
-
-top = CascadingBoxes(menu_top,"Main Menu")
-frame = urwid.Frame(body=top,footer=footer_txt, header=header_padding)
-
-
-# enter main loop, and exit if selected
-urwid.MainLoop(frame, palette).run()
 
 
 
-if not outputting_command:
-	sys.exit(1)
+@click.command()
+@click.option('--config_input', type=click.Path(exists=True), default=None, help='The JSON formatted configuration options of the wizard')
+def DagsterWizard(config_input):
+	"""Wizard interface for configuring and initialising a Dagster run"""
+
+	# load input command file (if there is) into the gui
+	if config_input is not None:
+		with open(config_input,"r") as f:
+			import_data = json.load(f)
+		for k in import_data.keys():
+			for v in E.e['Edit']:
+				if k==v[1]:
+					v[0].set_edit_text(import_data[k])
+			for v in E.e['IntEdit']:
+				if k==v[1]:
+					v[0].set_edit_text(import_data[k])
+			for v in E.e['CheckBox']:
+				if k==v[1]:
+					v[0].set_state(import_data[k])
+			for v in E.e['RadioButton']:
+				if k==v[1]:
+					v[0].set_state(import_data[k])
+	
+	global top
+	top = CascadingBoxes(menu_top,"Main Menu")
+	frame = urwid.Frame(body=top,footer=footer_txt, header=header_padding)
+	# enter main loop, and exit if selected
+	urwid.MainLoop(frame, palette).run()
+	
+	# exit without processing if exit button pushed
+	if not outputting_command:
+		return
+
+	# load all the element values into a config dictionary
+	config = {}
+	for v in E.e['Edit']:
+		config[v[1]] = v[0].edit_text
+	for v in E.e['IntEdit']:
+		config[v[1]] = v[0].edit_text
+	for v in E.e['CheckBox']:
+		config[v[1]] = int(v[0]._state)
+	for v in E.e['RadioButton']:
+		config[v[1]] = v[0]._state
+	config_copy = config.copy() # mutable copy
+
+	# dump config to file
+	if config['#o']:
+		with open(config['#v'],"w") as f:
+			json.dump(config,f)
 
 
-# load all the element values into a config dictionary
-config = {}
-for v in E.e['Edit']:
-	config[v[1]] = v[0].edit_text
-for v in E.e['IntEdit']:
-	config[v[1]] = v[0].edit_text
-for v in E.e['CheckBox']:
-	config[v[1]] = int(v[0]._state)
-for v in E.e['RadioButton']:
-	config[v[1]] = v[0]._state
-config_copy = config.copy() # mutable copy
+	# process all elements with the @ and # characters
+	# @XY means set X to Y if the element is true
+	# #abracadabra is a special element that is set if true
+	special = {}
+	for k in list(config.keys()):
+		split_k = k.split(" ")
+		i = 0
+		while i<len(split_k):
+			kk= split_k[i]
+			if len(kk)==0:
+				i += 1
+				continue
+			elif kk[0]=='@':
+				assert len(kk)>1
+				if config[k]:
+					config_copy[kk[1]] = kk[2:]
+			elif kk[0]=='#':
+				if config[k]:
+					special[kk] = config[k]
+			else:
+				i += 1
+				continue
+			del split_k[i]
+		new_split_k = " ".join(split_k)
+		if new_split_k!=k:
+			config_copy[new_split_k] = config_copy[k]
+			del config_copy[k]
 
-# dump config to file
-with open("interface_dump.json","w") as f:
-	json.dump(config,f)
+	# process all elements with the ! element
+	# !abcd means delete all config elements a,b,c and d if the element is false
+	for k in list(config_copy.keys()):
+		split_k = k.split(" ")
+		i = 0
+		while i<len(split_k):
+			kk= split_k[i]
+			if len(kk)==0:
+				i += 1
+				continue
+			elif kk[0]=='!':
+				if not config_copy[k]:
+					for kill_k in kk[1:]:
+						if kill_k in config_copy.keys():
+							del config_copy[kill_k]
+			else:
+				i += 1
+				continue
+			del split_k[i]
+		new_split_k = " ".join(split_k)
+		if new_split_k!=k:
+			config_copy[new_split_k] = config_copy[k]
+			del config_copy[k]
+
+	# remove redundant or defective config elements, eg. empty strings or labels
+	for k in list(config_copy.keys()):
+		if isinstance(k,str) and len(k)==0:
+			del config_copy[k]
+		elif isinstance(config_copy[k],str) and len(config_copy[k])==0:
+			del config_copy[k]
+
+	# special processing for mode flags
+	gnovelty_present = '#1' in special.keys()
+	strengthener_present = '#2' in special.keys()
+	minisat_present = '#3' in special.keys()
+	mode_number = 0
+	if minisat_present:
+		mode_number = 4
+	elif gnovelty_present and strengthener_present:
+		mode_number = 2
+	elif strengthener_present:
+		mode_number = 3
+	elif gnovelty_present:
+		mode_number = 1
+	config_copy['m']=mode_number
+
+	#format the command string
+	config_keys = sorted(config_copy.keys())
+	parameters = " ".join(["-{} {}".format(k,config_copy[k]) for k in config_keys])
+
+	s = "mpirun -n {} {} {} {} {}\n".format(special['#0'],special['#d'], special['#q'], special['#w'], parameters)
+
+	#output the command to be run
+	print(s)
 
 
-# process all elements with the @ and # characters
-# @XY means set X to Y if the element is true
-# #abracadabra is a special element that is set if true
-special = {}
-for k in list(config.keys()):
-	split_k = k.split(" ")
-	i = 0
-	while i<len(split_k):
-		kk= split_k[i]
-		if len(kk)==0:
-			i += 1
-			continue
-		elif kk[0]=='@':
-			assert len(kk)>1
-			if config[k]:
-				config_copy[kk[1]] = kk[2:]
-		elif kk[0]=='#':
-			if config[k]:
-				special[kk] = config[k]
-		else:
-			i += 1
-			continue
-		del split_k[i]
-	new_split_k = " ".join(split_k)
-	if new_split_k!=k:
-		config_copy[new_split_k] = config_copy[k]
-		del config_copy[k]
 
-# process all elements with the ! element
-# !abcd means delete all config elements a,b,c and d if the element is false
-for k in list(config_copy.keys()):
-	split_k = k.split(" ")
-	i = 0
-	while i<len(split_k):
-		kk= split_k[i]
-		if len(kk)==0:
-			i += 1
-			continue
-		elif kk[0]=='!':
-			if not config_copy[k]:
-				for kill_k in kk[1:]:
-					if kill_k in config_copy.keys():
-						del config_copy[kill_k]
-		else:
-			i += 1
-			continue
-		del split_k[i]
-	new_split_k = " ".join(split_k)
-	if new_split_k!=k:
-		config_copy[new_split_k] = config_copy[k]
-		del config_copy[k]
+if __name__ == '__main__':
+	DagsterWizard()
 
-# remove redundant or defective config elements, eg. empty strings or labels
-for k in list(config_copy.keys()):
-	if isinstance(k,str) and len(k)==0:
-		del config_copy[k]
-	elif isinstance(config_copy[k],str) and len(config_copy[k])==0:
-		del config_copy[k]
-
-
-# special processing for mode flags
-gnovelty_present = '#1' in special.keys()
-strengthener_present = '#2' in special.keys()
-minisat_present = '#3' in special.keys()
-mode_number = 0
-if minisat_present:
-	mode_number = 4
-elif gnovelty_present and strengthener_present:
-	mode_number = 2
-elif strengthener_present:
-	mode_number = 3
-elif gnovelty_present:
-	mode_number = 1
-config_copy['m']=mode_number
-
-#format the command string
-config_keys = sorted(config_copy.keys())
-parameters = " ".join(["-{} {}".format(k,config_copy[k]) for k in config_keys])
-
-s = "mpirun -n {} {} {} {} {}\n".format(special['#0'],special['#d'], special['#q'], special['#w'], parameters)
-
-#output the command to be run
-import sys
-sys.stderr.write(s)
 
 
