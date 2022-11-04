@@ -1,3 +1,19 @@
+#
+# VIEW GRAPH
+#
+# pass in an adjacency matrix file, and the name of an SVG file you wish the graph to be output to
+# eg. as an input file:
+#
+# $cat 1.mat
+# >>> 0 0 2
+# >>> 0 0 1
+# >>> 2 1 0
+# 
+# $python view_graph.py 1.mat graph.svg
+#
+# will output an SVG file -graph.svg- of a graph showing a connection between edges 0 and 2, and 2 and 1, which is representative of the adjacency matrix that was input.
+# this tool allows visualisation of adjacency matricies. 
+
 import click
 import re
 import math
@@ -15,7 +31,7 @@ Pass in a binary matrix, view it as svg
 @click.command()
 @click.argument('matrix_file', type=click.File('r'))
 @click.argument('output_svg', type=click.File('w'))
-def view_ramsay(matrix_file, output_svg):
+def view_graph(matrix_file, output_svg):
 
 	matrix = [l.strip().split(" ") for l in matrix_file.readlines()]
 	matrix = [[int(i) for i in l] for l in matrix]
@@ -53,4 +69,4 @@ def view_ramsay(matrix_file, output_svg):
 	
 	
 if __name__ == '__main__':
-    view_ramsay()
+    view_graph()

@@ -1,4 +1,7 @@
-
+//
+// C file input into CBMC to directly calculate thoes matricies which are locally determinant maximal, calculating inverse using
+// gauss-jordan eliminaiton technique gjinv()
+//
 
 #define SWAP(A,B) { \
 	auto temp = B; \

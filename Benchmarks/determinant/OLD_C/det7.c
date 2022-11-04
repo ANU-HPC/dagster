@@ -1,3 +1,8 @@
+//
+// scan through adjacency matricies of size <N> to find directly find the ones with the gratest determinant squared
+// 
+// square of the determinant is calculated by gramm-schmitt process
+
 
 #include "stdio.h"
 #define N 9

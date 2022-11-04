@@ -44,6 +44,7 @@ def cli():
 @click.argument('map_file')
 @click.argument('cnf_name')
 def generate(map_file,cnf_name):
+	''' for a pentomino grid file, output a CNF&MAP '''
 	lines,w,h = loadLines(map_file)
 	pretty_print_puzzle(lines)
 	cnf, CNF_variables, CNF_variable_indices = generate_CNF_and_MAP(lines)
@@ -53,12 +54,14 @@ def generate(map_file,cnf_name):
 @click.command()
 @click.argument('map_file')
 def display(map_file):
+	''' for a pentomino grid file, display the grid '''
 	lines,w,h = loadLines(map_file)
 	pretty_print_puzzle(lines)
 	
 @click.command()
 @click.argument('map_file')
 def display_tikz(map_file):
+	''' for a pentomino grid file, display as latex-tikz '''
 	lines,w,h = loadLines(map_file)
 	print("\\begin{tikzpicture}")
 	for x in range(len(lines[0])):
@@ -82,6 +85,7 @@ def display_tikz(map_file):
 @click.argument('cnf_name')
 @click.argument('map_name')
 def solve(cnf_name, map_name):
+	''' solve pentomino problem for input CNF&MAP file '''
 	cnf = import_CNF(cnf_name)
 	CNF_variables,CNF_variable_indices = import_MAP(map_name)
 	w = 0
@@ -105,12 +109,14 @@ def solve(cnf_name, map_name):
 
 @click.group()
 def create():
+	''' create a pentomino problem. '''
 	pass
 
 @click.command()
 @click.argument('map_name')
 @click.argument('output_map_name')
 def forward(map_name, output_map_name):
+	''' forward complete a puzzle for a unique solution. ---- for a given partially completed pentomino grid file, fill it out with walls to make it uniquely soluble, using the forward method (usually generated easier solutions)'''
 	original_lines,w,h = loadLines(map_name)
 	lines,t = generate_forward_problem(original_lines,w,h)
 	if lines is None:
@@ -124,6 +130,7 @@ def forward(map_name, output_map_name):
 @click.argument('output_map_name')
 @click.argument('iteration_threshold', type=click.INT)
 def backward(map_name, output_map_name, iteration_threshold):
+	''' backward complete a puzzle for a unique solution. ---- for a given partially completed pentomino grid file, fill it out with walls to make it uniquely soluble, using the backward method (usually generates harder solutions) '''
 	original_lines,w,h = loadLines(map_name)
 	lines,t = generate_reverse_problem(original_lines,w,h,iteration_threshold)
 	if lines is None:
@@ -259,6 +266,7 @@ def combination_3(sizex,sizey,repeatx,repeaty,problem_name):
 
 @click.group()
 def dag_make():
+	''' construct a dag for exsiting pentomino problem '''
 	pass
 
 
@@ -605,6 +613,7 @@ def complex_cubes5(cnf_file,map_file,dag_file,horisontal_line_iterator):
 @click.command()
 @click.argument('map_file')
 def check_multiply_soluble(map_file):
+	''' for a pentomino grid file, is it multiply soluble '''
 	lines,w,h = loadLines(map_file)
 	no_solutions, sol1, sol2, t = is_multiply_soluble(lines,w,h)
 	print(no_solutions)
@@ -618,6 +627,7 @@ def check_multiply_soluble(map_file):
 @click.argument('w', type=click.INT)
 @click.argument('h', type=click.INT)
 def view_solution(map_file,solution_file,w,h):
+	''' print solution, input MAP, solution file,w,h'''
 	CNF_variables, CNF_variable_indices = import_MAP(map_file)
 	with open(solution_file,"r") as f:
 		solutions = [[int(fff) for fff in ff.strip().split(' ')] for ff in f.readlines()]

@@ -8,7 +8,7 @@ with open("runtime_log.csv","w") as f:
 	f.write("N,no_incremental,incremental\n")
 	for N in range(3, 15):
 		print("RUNNER: generating N={}".format(N))
-		soluble0 = os.system("python ../../Benchmarks/determinant/det19.py {0} 16 cnf_{0}.cnf map_{0}.map dag_{0}.dag".format(N))
+		soluble0 = os.system("python ../../Benchmarks/determinant/determinant.py {0} 16 cnf_{0}.cnf map_{0}.map dag_{0}.dag".format(N))
 		print("RUNNER: solving N={}".format(N))
 		t = time.time()
 		soluble = os.system("mpirun -n {1} ../../dagster/dagster -m 4 -e 1 -b 0 ./dag_{0}.dag ./cnf_{0}.cnf -o solutions_{0}.sols".format(N,processors))
