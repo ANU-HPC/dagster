@@ -1,7 +1,5 @@
 : '
-Script for turning the EMD problem with CBMC at different levels of fidelity.
-generating the dags for AI variable propagation.
-Also initiating and recording the timing of dagster running these problems
+Script
 : '
 
 echo "generating 6"

@@ -14,13 +14,9 @@ def chunks(l, n):
 
 if __name__ == '__main__':
 	# Read the clues from the file given as the first argument
-	assert len(sys.argv)>=3
+	assert len(sys.argv)>=3, "Command line: python gen.py <FILE_NAME> <SUDOKU_INDEX>"
 	file_name = sys.argv[1]
 	sudoku_index = int(sys.argv[2])
-	if len(sys.argv)==4:
-		easy = (sys.argv[3]==1)
-	else:
-		easy = True
 	clues = []
 	digits = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9}
 	with open(file_name, "r") as f:
@@ -62,28 +58,6 @@ if __name__ == '__main__':
 				cls.append([var(sr*D+rd,sc*D+cd,v)
 							for rd in range(1,D+1) for cd in range(1,D+1)])
 
-	if not easy:
-		for v in range(1, N+1):
-			for c in range(1, N+1):
-				cls.append(["c column {} has only one value {}".format(c,v)])
-				for r in range(1, N+1):
-					for rr in range(r+1, N+1):
-						cls.append([-var(r,c,v),-var(rr,c,v)]) # each value only appears once on any row
-			for r in range(1, N+1):
-				cls.append(["c row {} has only one value {}".format(r,v)])
-				for c in range(1,N+1):
-					for cc in range(c+1, N+1):
-						cls.append([-var(r,c,v),-var(r,cc,v)]) # each value only appears once on any column
-			for sr in range(0,D):
-				for sc in range(0,D):
-					cls.append(["c subgrid {}_{} has only one value {}".format(sr,sc,v)])
-					for rd in range(1,D+1):
-						for cd in range(1,D+1):
-							for rrd in range(1,D+1):
-								for ccd in range(1,D+1):
-									if (ccd>cd) or (ccd==cd and rrd>rd):
-										cls.append([-var(sr*D+rd,sc*D+cd,v),-var(sr*D+rrd,sc*D+ccd,v)]) # each value only appears in a box once
-
 	# The clues must be respected
 	cls.append(["c hard number constraints"])
 	for r in range(1, N+1):
@@ -110,7 +84,8 @@ if __name__ == '__main__':
 					f.write("c MAPPING -- r={} c={} v={}: -- {}\n".format(r,c,v,var(r,c,v)))
 		# Print the clauses
 		for c in cls:
-			f.write(" ".join([str(l) for l in c])+" 0\n")
+			str_line = " ".join([str(l) for l in c])
+			f.write(str_line+ (" 0\n" if 'c' not in str_line else "\n"))
 
 
 

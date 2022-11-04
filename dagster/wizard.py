@@ -1,8 +1,24 @@
-import urwid
+'''
+______________
+| THE WIZARD |
+^^^^^^^^^^^^^^
+
+A console graphical interface designed to present information and options about how to configure Dagster program
+Output from the wizard is a commandline of an appropriate invocation to stdout
+
+The wizard is designed to be easy to use, and quickly designed and sketchy to be adaptable to any required changes
+to dagster interface requirments.
+
+The wizard allows many configuration options and the possibility to save the configuration to a json formatted config file,
+to be re loaded in with the --config_input=<config_file> commandline flag
+
+The wizard relies apon the running of a python 3+ version, with an environment with urwid and click libaries installed.
+'''
+
+
 import sys
-#import cgitb
-#cgitb.enable(format="")
 import json
+import urwid
 import click
 
 
@@ -167,7 +183,7 @@ help = {"Dagster Executable Location":{'help':"The location of the Dagster execu
 "Opportunity modulo":{"help":"The number of decisions that the CDCL process will make in the geometric restarting scheme before altering the probability of restarting, the smaller this number the more often and quicker Dagster will be at increasing the restarting rate"},
 "discount factor":{"help":"The proportion by which dagster will increase the restarting rate every 'opportunity modulo' decisions in the geometric restarting scheme, for instance 0.95 means that the restarting rate will increase by 5% every 'opportunity modulo' decisions"},
 "Using Strengthener":{"help":"Whether or not the Strengthener processes should be used, particularly if enabled, there will be allocated on strengthener process per CDCL process, which will be used to strengthen (ie. reduce the number of literals) in the conflict clauses of the CDCL procedure."},
-"Using gNovelty+ Helpers":{"help":"Whether or not to use the gNovelty+ SLS helper processes, particuarly a number of SLS processes will be allocated per CDCL process, and will help the CDCL by (a) finding solutions and (b) offering variable suggestions for the CDCL to select."},
+"Using gNovelty+ Helpers":{"help":"Whether or not to use the gNovelty+ SLS helper processes, particuarly a number of SLS processes will be allocated per CDCL process, and will help the CDCL by (a) finding solutions and (b) offering variable suggestions for the CDCL to select. SLS helpers are potentially advsiable on suitable problems, particularly thoes which do not have very many variables, since gnovelty variable neighbourhood calculation overhead and storage is potentially quadratic in number of variables."},
 "gNovelty+ per CDCL":{"help":"the number of gNovelty+ SLS helpers per CDCL to attempt to allocate"},
 "gNovelty+ decision interval":{"help":"The gNovelty+ SLS helpers will be allocated to work at varying depths in the CDCL search, the decision interval is the desired spacing between the gNovelty+ allocated workers in the CDCL search tree, a spacing too large will result in the SLS process being allocated too sparsely, and thus they become less efficient, a spacing too small, and they become entirely localised to the most recent decisios in the CDCL process, and then become entirely inefficient. appropriate decision interval is some reasonable proportion (say 40%) of the expected search depth of the CDCL processes"},
 "gNovelty+ solution checking time":{"help":"The CDCL process checks the gNovelty+ SLS helpers for solutions every so many decisions, the more frequently the check is performed, the less likely that the SLS processes will have a backlog of solutions to pass up, however the more inhibited the CDCL is in its own search, if there are expected to be many solutions then decreasing the checking time may be a good idea, however if there are few solutions, then lengthening the solution checking time may be desirable"},
@@ -185,8 +201,10 @@ help = {"Dagster Executable Location":{'help':"The location of the Dagster execu
 "Tinisat CDCL Base":{"help":"Make the core CDCL solver used on the worker processes to be the TiniSAT solver, this solver is default historical CDCL process dagster was first built with and has a plurality of configuration options, performs well generally but does not have any learnt clause forgetting mechanisms"},
 "Configuration file output":{"help":"The file that the configuration of the wizard should be output to"},
 "Configuration output":{"help":"A checkbox indicating if the wizard should put its configuration into a file"},
+"minisat_incrementality_Off":{"help":"This mode is default, Minisat workers will not store any information between processing messages sent to them by master, each new message will be handled anew. a diadvantage of this is that when the master sends a worker a sequence of messages that occur on the same node of the DAG there will be no memory of previous computation to accelerate subsequent computation, however a benefit to this mode is that there will be no bloat of that information possible"},
+"minisat_incrementality_On":{"help":"This mode is not default, Minisat workers will store learnt clauses from processing messages sent to them by master. when the master sends a worker a sequence of messages that occur on the same node of the DAG there will be a memory of learnt clauses of the previous computation to accelerate subsequent computation."},
 "bdd_config_BDD cubes encoding":{"help":""},
-"bdd_config_BDD minisat encoding":{"help":""}, #TODO
+"bdd_config_BDD minisat encoding":{"help":""},  #TODO
 }
 
 
@@ -214,7 +232,6 @@ menu_top = menu(u'Main Menu', [
 		menu_button(u'Back', back_callback),
 	]),
 	urwid.Divider(),
-	urwid.AttrMap(E(urwid.RadioButton, [cdck_base_selection, "Minisat CDCL Base"], '#3', help["Minisat CDCL Base"]), None, focus_map='reversed'),
 	urwid.AttrMap(E(urwid.RadioButton, [cdck_base_selection, 'Tinisat CDCL Base'], '!ptjixykdlswra #4', help['Tinisat CDCL Base']), None, focus_map='reversed'),
 	sub_menu(u'  |_ Tinisat Tuning Options', [
 		urwid.AttrMap(E(urwid.CheckBox, ["TiniSat restarting",True],'p',help['TiniSat restarting']), None, focus_map='reversed'),
@@ -224,8 +241,8 @@ menu_top = menu(u'Main Menu', [
 		urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'On'], '@t1',help['tinisat_solution_trimming_On']), None, focus_map='reversed'),
 		urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'Positive literals only'], '@t2',help['tinisat_solution_trimming_Positive_literals_only']), None, focus_map='reversed'),
 		urwid.Divider(),
-		urwid.AttrMap(E(urwid.IntEdit, [u'SAT reporting time: ',40], 'j', help['SAT reporting time']), None, focus_map='reversed'),
-		urwid.AttrMap(E(urwid.IntEdit, [u'SAT solution interrupt: ',40], 'i', help['SAT solution interrupt']), None, focus_map='reversed'),
+		urwid.AttrMap(E(urwid.IntEdit, [u'SAT reporting time: ',20000], 'j', help['SAT reporting time']), None, focus_map='reversed'),
+		urwid.AttrMap(E(urwid.IntEdit, [u'SAT solution interrupt: ',100], 'i', help['SAT solution interrupt']), None, focus_map='reversed'),
 		urwid.Divider(),
 		urwid.AttrMap(E(urwid.CheckBox, ["Geometric restarting"], '!xy', help['Geometric restarting']), None, focus_map='reversed'),
 		urwid.AttrMap(E(urwid.IntEdit, [u' |_ Opportunity modulo: ',40],'x', help['Opportunity modulo']), None, focus_map='reversed'),
@@ -239,7 +256,7 @@ menu_top = menu(u'Main Menu', [
 			urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ per CDCL: ',1], 'k', help['gNovelty+ per CDCL']), None, focus_map='reversed'),
 			urwid.Divider(),
 			urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ decision interval: ',30], 'd', help['gNovelty+ decision interval']), None, focus_map='reversed'),
-			urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ solution checking time: ',30] ,'l', help['gNovelty+ solution checking time']), None, focus_map='reversed'),
+			urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ solution checking time: ',50] ,'l', help['gNovelty+ solution checking time']), None, focus_map='reversed'),
 			urwid.AttrMap(E(urwid.IntEdit, [u'gNovelty+ suggestion size: ',30], 's', help['gNovelty+ suggestion size']), None, focus_map='reversed'),
 			urwid.AttrMap(E(urwid.CheckBox, ["gNovelty+ clause weights "], 'w', help['gNovelty+ clause weights']), None, focus_map='reversed'),
 			urwid.Divider(),
@@ -253,6 +270,14 @@ menu_top = menu(u'Main Menu', [
 			urwid.Divider(),
 			menu_button(u'Back', back_callback),
 		]),
+		urwid.Divider(),
+		menu_button(u'Back', back_callback),
+	]),
+	urwid.AttrMap(E(urwid.RadioButton, [cdck_base_selection, "Minisat CDCL Base"], '!q #3', help["Minisat CDCL Base"]), None, focus_map='reversed'),
+	sub_menu(u'  |_ Minisat Tuning Options', [
+		urwid.Text("Incrementality Mode:"),
+		urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'Off'], '@q0',help['minisat_incrementality_Off']), None, focus_map='reversed'),
+		urwid.AttrMap(E(urwid.RadioButton, [tinisat_solution_trimming,u'On'], '@q1',help['minisat_incrementality_On']), None, focus_map='reversed'),
 		urwid.Divider(),
 		menu_button(u'Back', back_callback),
 	]),
@@ -270,11 +295,6 @@ menu_top = menu(u'Main Menu', [
 	urwid.Divider(),
 	urwid.AttrMap(E.register(E(urwid.CheckBox, ["Configuration output"], "#o", help['Configuration output']), "config_output_enabled"), None, focus_map='reversed'),
 	E.register(urwid.AttrMap(E.register(E(urwid.Edit, [u' |_ Configuraiton file output: '], '#v', help['Configuration file output']), "config_output"), None, focus_map='reversed'), 'config_output_attr'),
-	
-	#E.register(urwid.AttrMap(E.register(
-	#	E(urwid.Edit, [u'Dagster Executable Location: '], '#d', help['Dagster Executable Location'])
-	#	, 'executable'), None, focus_map='reversed'), 'executable_attr'),
-
 	urwid.Divider(),
 	menu_button(u'Start', exit_program_start),
 	urwid.Divider(),
@@ -481,10 +501,13 @@ def DagsterWizard(config_input):
 	config_keys = sorted(config_copy.keys())
 	parameters = " ".join(["-{} {}".format(k,config_copy[k]) for k in config_keys])
 
-	s = "mpirun -n {} {} {} {} {}\n".format(special['#0'],special['#d'], special['#q'], special['#w'], parameters)
+	s = "mpirun -n {} {} {} {} {} > stdout.txt 2> stderr.txt".format(special['#0'],special['#d'], special['#q'], special['#w'], parameters)
 
 	#output the command to be run
+	print("export GLOG_v=3")
+	print("export GLOG_logtostderr=true")
 	print(s)
+	print("python viewer.py {} stderr.txt".format(special['#q']))
 
 
 

@@ -1,19 +1,33 @@
 # -*- coding: utf-8 -*-
+'''
+______________
+| THE VIEWER |
+^^^^^^^^^^^^^^
+
+A console graphical interface designed to present information about the running of a dagster process
+particularly by parsing the logs of the dagster run as they are generated.
+Input to the viewer is the dag file the dagster run is using, and the file of the logs which the viewer will continually parse and interpret
+
+The viewer is sketchy and extensible to be adaptable for any changes in dagster logging syntax and information.
+It is designed to give a graphical representation of the DAG and the messages and working of the dagster workers throughout the run, 
+as well as give information on any miscelanous or other error messages as reported by dagster.
+
+Particular note must be made that it is designed to intercept dagster at log level 3, which can be set by environment variable 'export GLOG_v=3'
+(see, examples in /run_scripts) where subsequently the dagster stderr logs need to be piped to a file that is input into the viewer for effective visualisation.
+
+The viewer relies apon the running of a python 3+ version, with an environment with urwid library installed.
+'''
+
+
 
 import sys
 import time
 import re
 from collections import defaultdict
-
-assert len(sys.argv)==3, "must supply <DAG_FILENAME>, and <STREAM FILE>"
-
 import urwid
 from urwid.widget import FLOW, FIXED, PACK, BOX, GIVEN, WEIGHT, LEFT, RIGHT, RELATIVE, TOP, BOTTOM, CLIP, RELATIVE_100
-#import cgitb
-import sys
-#cgitb.enable(format="")
 
-
+assert len(sys.argv)==3, "must supply <DAG_FILENAME>, and <STREAM FILE>"
 
 
 

@@ -5,7 +5,7 @@ import time
 cores = int(os.environ["DAGSTER_PROCESSORS"])
 
 with open("runtime_log.csv","w") as f:
-	f.write("N,processors,dagster_time,return_code,solutions\n")
+	f.write("N,processors,no incrementality,incrementality\n")
 for N in range(5, 35):
 	print("RUNNER: generating N={}".format(N))
 	soluble0 = os.system("../../Benchmarks/costas/generate_costas_N -N {} > costas_{}.cnf 2> costas_{}.map".format(N,N,N))
