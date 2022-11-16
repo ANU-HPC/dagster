@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- All 18 Pentominoes, including the reflections of asymmetrical ones  -->
+
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+
+<svg  version="1.1" 
+      id="All_18_Pentominoes" 
+      xmlns="&ns_svg;" 
+      xmlns:xlink="&ns_xlink;" 
+      width="850" 
+      height="300" 
+      viewBox="0 0 850 300"
+	    overflow="visible" 
+	    enable-background="new 0 0 850 300" 
+	    xml:space="preserve">
+	    
+<g id="I">
+	<rect x="50" y="125" fill="#EEAAAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="100" fill="#EEAAAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="75" fill="#EEAAAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="50" fill="#EEAAAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="25" fill="#EEAAAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="25" fill="none" stroke="#000000" stroke-width="3" width="25" height="125"/>
+</g>
+<g id="F_1">
+	<rect x="150" y="75" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="150" y="100" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="150" y="125" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="175" y="75" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="125" y="100" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="150,75 200,75 200,100 175,100 175,150 150,150 150,125 125,125 125,100 150,100"/>
+</g>
+<g id="F_2">
+	<rect x="250" y="75" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="250" y="100" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="250" y="125" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="225" y="75" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="275" y="100" fill="#DDBB99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="275,100 300,100 300,125 275,125 275,150 250,150 250,100 225,100 225,75 275,75"/>
+</g>
+<g id="L_1">
+	<rect x="375" y="50" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="375" y="75" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="375" y="100" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="375" y="125" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="350" y="125" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="400,150 350,150 350,125 375,125 375,50 400,50"/>
+</g>
+<g id="L_2">
+	<rect x="425" y="50" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="425" y="75" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="425" y="100" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="425" y="125" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="450" y="125" fill="#CCCC88" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="425,50 450,50 450,125 475,125 475,150 425,150"/>
+</g>
+<g id="P_1">
+	<rect x="550" y="75" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="550" y="100" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="550" y="125" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="525" y="75" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="525" y="100" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="575,150 550,150 550,125 525,125 525,75 575,75"/>
+</g>
+<g id="P_2">
+	<rect x="600" y="75" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="600" y="100" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="600" y="125" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="625" y="75" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="625" y="100" fill="#BBDD99" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="600,75 650,75 650,125 625,125 625,150 600,150"/>
+</g>
+<g id="S_1">
+	<rect x="700" y="50" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="700" y="75" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="700" y="100" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="675" y="100" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="675" y="125" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="725,50 700,50 700,100 675,100 675,150 700,150 700,125 725,125"/>
+</g>
+<g id="S_2">
+	<rect x="750" y="50" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="750" y="75" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="750" y="100" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="775" y="100" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="775" y="125" fill="#AAEEAA" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="750,125 775,125 775,150 800,150 800,100 775,100 775,50 750,50"/>
+</g>
+<g id="T">
+	<rect x="25" y="200" fill="#99DDBB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="200" fill="#99DDBB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="75" y="200" fill="#99DDBB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="225" fill="#99DDBB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="50" y="250" fill="#99DDBB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="25,200 100,200 100,225 75,225 75,275 50,275 50,225 25,225"/>
+</g>
+<g id="U">
+	<rect x="125" y="225" fill="#88CCCC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="125" y="250" fill="#88CCCC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="150" y="250" fill="#88CCCC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="175" y="250" fill="#88CCCC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="175" y="225" fill="#88CCCC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="125,225 150,225 150,250 175,250 175,225 200,225 200,275 125,275"/>
+</g>
+<g id="V">
+	<rect x="275" y="200" fill="#99BBDD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="275" y="225" fill="#99BBDD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="275" y="250" fill="#99BBDD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="250" y="250" fill="#99BBDD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="225" y="250" fill="#99BBDD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="300,200 275,200 275,249.7 225,250 225,275 300,275"/>
+</g>
+<g id="W">
+	<rect x="325" y="250" fill="#AAAAEE" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="350" y="250" fill="#AAAAEE" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="350" y="225" fill="#AAAAEE" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="375" y="225" fill="#AAAAEE" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="375" y="200" fill="#AAAAEE" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="375,275 375,250 400,250 400,200 375,200 375,225 350,225 350,250 325,250 325,275"/>
+</g>
+<g id="X">
+	<rect x="450" y="200" fill="#BB99DD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="450" y="225" fill="#BB99DD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="450" y="250" fill="#BB99DD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="425" y="225" fill="#BB99DD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="475" y="225" fill="#BB99DD" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="450,200 475,200 475,225 500,225 500,250 475,250 475,275 450,275 450,250 425,250 425,225 450,225"/>
+</g>
+<g id="Y_1">
+	<rect x="550" y="175" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="550" y="200" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="550" y="225" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="550" y="250" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="525" y="200" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="575,275 550,275 550,225 525,225 525,200 550,200 550,175 575,175"/>
+</g>
+<g id="Y_2">
+	<rect x="600" y="175" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="600" y="200" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="600" y="225" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="600" y="250" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="625" y="200" fill="#CC88CC" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="600,175 625,175 625,200 650,200 650,225 625,225 625,275 600,275"/>
+</g>
+<g id="Z_1">
+	<rect x="700" y="200" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="675" y="200" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="675" y="225" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="675" y="250" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="650" y="250" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="725,200 675,200 675,250 650,250 650,275 700,275 700,225 725,225"/>
+</g>
+<g id="Z_2">
+	<rect x="750" y="200" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="775" y="200" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="775" y="225" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="775" y="250" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<rect x="800" y="250" fill="#DD99BB" stroke="#000000" stroke-width="0.25" width="25" height="25"/>
+	<polygon fill="none" stroke="#000000" stroke-width="3" points="750,225 775,225 775,275 825,275 825,250 800,250 800,200 750,200"/>
+</g>
+
+</svg>

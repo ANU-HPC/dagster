@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>DAGSTER Tutorial4</title>
+		<link rel="stylesheet" href="revealjs/dist/reveal.css">
+		<link rel="stylesheet" href="revealjs/dist/theme/solarized.css">
+		<link rel="stylesheet" href="revealjs/plugin/highlight/monokai.css">
+	</head>
+	<body>
+
+		<div class="reveal">
+			<div class="slides">
+
+				<section>
+					<h2>Dagster</h2>
+					<p>Tutorial 4: Extra Example and Deeper Dive</p>
+				</section>
+				
+				<section>
+					<h2>Previously:</h2>
+					<div style="display: inline-grid;">
+					Topics:<br>
+					<ul>
+						<li>Introduction</li>
+						<li>Description of Elements</li>
+						<li>Practial Invocation</li>
+					</ul><br>
+					Case Studies:<br>
+					<ul>
+						<li>Costas Arrays</li>
+						<li>Pentominos</li>
+						<li>Determinants</li>
+					</ul>
+					</div>
+				</section>
+				
+				<section>
+					<h2>Now:</h2>
+					<ul>
+						<li>More involved Case Study:<br> Bounded Model Checking</li>
+						<li>Source Exploration</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2>Case Study</h2>
+					Protocol Model Checking<br>Splitting by variable fidelity
+				</section>
+				
+				
+				<section>
+					<h2>Model Checking Programs</h2>
+					Can a program error state be reached?<br>
+					Annotate source, compile to SAT problem<br><br>
+					CBMC: <pre style="width:50%">https://github.com/diffblue/cbmc</pre>
+					<img src="CBMC1.svg" width="500"/>
+				</section>
+				
+				<section>
+					<h2>Example run</h2>
+					
+					<pre><code data-trim class="language-c">int main() {
+	int X_1;
+	X_1 = X_1 * X_1;
+	X_1 = (X_1 ^ 1936);
+	if ((X_1 & 47732)==0) {
+		__CPROVER_assert(0, "I did a booboo"); // Oh my error state!
+	}
+}
+					</code></pre>
+					
+					<pre><code data-trim class="language-plaintext">$ cbmc test.c
+CBMC version 5.10 (cbmc-5.10) 64-bit x86_64 linux
+Parsing test.c
+.......................
+Solving with MiniSAT 2.2.1 with simplifier
+1810 variables, 9230 clauses
+SAT checker: instance is SATISFIABLE
+Runtime decision procedure: 0.00649107s
+
+** Results:
+[main.assertion.1] I did a booboo: FAILURE
+
+** 1 of 1 failed (1 iteration)
+VERIFICATION FAILED
+					</code></pre>
+				</section>
+				
+				
+				<section>
+					<h2>Implied freedom</h2>
+					You can do SAT reasoning about logic which you can code (...in principle...)<br>
+					<br>
+					Including emulation of a communication protocol between actors.<br>Where an error state is where protocol is broken.
+				</section>
+				
+				<section>
+					<h2> Example Pseudocode </h2>
+<pre><code data-trim class="language-c">int main() {
+	Communicated_Data X_1;
+	X_1.append(Actor_1_communicate(X_1));
+	X_1.append(Actor_2_communicate(X_1));
+	X_1.append(Actor_3_intercept(X_1));
+	X_1.append(Actor_1_communicate(X_1));
+	X_1.append(Actor_3_recieve(X_1));
+	if (Actor_3_has_secret_key()) {
+		__CPROVER_assert(0, "Protocol broken");
+	}
+}
+					</code></pre><br>
+
+				</section>
+				
+				<section>
+					<h2> Bounded Model Checking with AI variables </h2>
+					Protocols can involve many elements<br>(packets, hashes, ids, etc)<br>
+					A hack may not depend on specific elements.<br>
+					<br>
+					<i>Approach:</i> resolve a hack at a lower level of variable resolution, and propagate to higher level.<br>
+					Abstraction Invariant (AI) variables
+					
+				</section>
+				
+				<section>
+					<h2> Dag idea: </h2>
+					<img src="zog3.svg" width="500"/>
+				</section>
+				
+				
+				<section>
+					<h2> Paper </h2>
+					<i>A lightweight security protocol for ultra-low power ASIC implementation for wireless Implantable Medical Devices</i> by Saied Hosseini-Khayat<br> 5th International Symposium on Medical Information and Communication Technology (2011)<br>
+				</section>
+				
+				<section>
+					<img src="IMD1.svg" width="800"/>
+				</section>
+				
+				<section>
+					<h2> Communication Stages </h2>
+					<ul>
+						<li>BASE has a 64-bit message $X$, 32 bit Serial Number $S$ and message counter $B$</li>
+						<li>BASE adds one to its message counter $B$</li>
+						<li>BASE produces a message $$M_1,M_2=\text{Split}(\text{Interleave}(X,S\Vert B))$$</li>
+						<li>BASE sends the message $\{M_1\}_K\Vert\{M_2\}_K$ to IMD</li>
+					</ul>
+					
+				</section>
+				
+				<section>
+					<ul>
+						<li>IMD receives $\{M_1\}_K\Vert\{M_2\}_K$ and decrypts each part with $K$, then joins and de-interleaves to find $X,S,B$</li>
+						<li>IMD checks compatible $S$, dropping the message if $S$ is not recognised. It then checks message counter $B$ against its own counter $A$. If $B>A$ it accepts the message and sets $A$ to be equal to $B$, otherwise it drops the message</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2> How is this protocol subject to denial of service attack? </h2>
+				</section>
+				
+				<section>
+					<h2> How is this protocol subject to denial of service attack? </h2>
+					<div> the Attacker inserts </div>$\{M_2\}_K\Vert\{M_2\}_K$
+				</section>
+				
+				
+				
+				<section>
+					<ul>
+						<li>BASE produces<br>$M_1,M_2=\text{Split}(\text{Interleave}(X,S\Vert B))$<br> and sends $\{M_1\}_K\Vert\{M_2\}_K$</li>
+						<li style="color:tomato;">Attacker intercepts $\{M_1\}_K\Vert\{M_2\}_K$ and transmits $\{M_2\}_K\Vert\{M_2\}_K$ to IMD</li>
+						<li>IMD receives <span style="color:tomato;">$\{M_2\}_K$</span>$\Vert\{M_2\}_K$ and decrypts each part with $K$, then joins and de-interleaves to find <span style="color:DeepPink">$Y$</span>$,S,$<span style="color:tomato;">$S\ne B$</span></li>
+						<li>IMD then verifies the message via $S$ and then sets its message counter <span style="color:tomato;">$A=S$</span>, bricking the IMD.</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2> demonstration strategy </h2>
+					
+<pre><code data-trim class="language-c">int main() {
+	Communicated_Data X_1; bool base_go_1...n; bool IMD_go_1...n;
+	// Round 1
+	if (IMD_go_1) X_1.append(IMD_recieve(X_1));
+	else if (Base_go_1) X_1.append(Base_communicate(X_1));
+	else X_1.append(Attacker_communicate(X_1));
+	if ((IMD_go_1) && (IMD_extracted_B < A)) goto bad_ending;
+	// Round 2
+	...
+	// Round 3
+	...
+	return 0;
+	bad_ending:
+	__CPROVER_assert(0, "Protocol broken");
+}
+					</code></pre><br>
+					<pre>github.com/ThomWillingham/bmc-summer2122</pre>
+				</section>
+				
+				<section>
+					<h2>Abstraction Invariants Approach</h2>
+					The attack is valid irrespective of the encryption algorithm, the key $K$, or the size of the variables $A,B,S,X$<br>
+					Only sensitive to (abstraction invariant) control variables that instruct Attacker to send $\{M_2\}_K\Vert\{M_2\}_K$<br><br>
+				</section>
+				
+				<section>
+					<h2>Abstraction Invariants Approach</h2>
+					Prove attack works at lower fidelity, propagate control variables to problem at higher fidelity, to prove it works there aswell.<br>
+					<img src="zog3.svg" width="500"/>
+				</section>
+				
+				<section>
+					<h2> Practical Demonstration </h2>
+				</section>
+				
+				<section>
+					<img src="5bb.svg" width="900"/>
+				</section>
+
+
+				<section>
+					<h2> Source Code Exploration </h2>
+					git tag: <pre style="width: 20%;">tutorial_v_1.0</pre>
+				</section>
+				
+				
+				<section>
+					<h2> <i>"Cant you just read code?"</i> </h2>
+					<img src="files2.png" width="700"/>
+				</section>
+				
+				<section>
+					<h2> obvious stuff </h2>
+				</section>
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files3.png" width="300"/><br>
+					"I contain the unit tests"<br>
+					"I am obligatory GNU licence"<br>
+					"I am Makefile, I instruct compilation"
+				</section>
+				
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files4.png" width="700"/><br>
+					"I contain example run scripts"<br>
+					"I am your viewer and wizard" (you have seen me before)<br>
+					"I am Utils" (truly misc functions)<br>
+					"I contain custom exception classes"
+				</section>
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files6.png" width="100"/><br>
+					"I am legacy interface" (dont worry about me)
+				</section>
+				
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files5.png" width="200"/><br>
+					"I am class that holds and parses commandline arguments"
+				</section>
+				
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files7.png" width="500"/><br>
+					"We are simple data structures"
+				</section>
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files8.png" width="100"/><br>
+					"I kick off your tests"
+				</section>
+				
+				<section>
+					<h2> obvious stuff </h2>
+					<img src="files9.png" width="100"/><br>
+					"I just hold some global flag values for MPI messages"
+				</section>
+				
+				<section>
+					<h2> basic/important stuff </h2>
+				</section>
+				
+				<section>
+					<h2> basic/important stuff </h2>
+					<img src="files10.png" width="200"/><br>
+					"We load/verfy and hold all information about a DAG file, we are static"
+				</section>
+				
+				<section>
+					<h2> basic/important stuff </h2>
+					<img src="files11.png" width="200"/><br>
+					"We hold/load/access/change all information about a CNF, we NOT static"
+				</section>
+				
+				
+				<section>
+				<h2>Master/Worker/Helpers architecture</h2>
+				<img src="master_worker2.svg"/>
+				</section>
+				
+				
+				
+				<section>
+					<h2> Master Storage Stuff </h2>
+					<img src="files12.png" width="700"/><br>
+					Virtual Class, and two implementations.<br>
+					"Master uses us for knowing logical work done/to-be-done"<br>
+					work transposed into/outof messages for workers to complete
+				</section>
+				
+				<section>
+					<h2> Master Storage Stuff </h2>
+					<img src="files13.png" width="200"/><br>
+					"I just keep track/allocate for master of what messages are being worked on by what workers"
+				</section>
+				
+				<section>
+					<h2> Master Storage Stuff </h2>
+					<img src="files14.png" width="100"/><br>
+					"I just keep track of statistics for master of what messages are being worked on by what workers"
+				</section>
+				
+				<section>
+					<h2> Master Storage Stuff </h2>
+					<img src="files15.png" width="200"/><br>
+					"I am the master loop class"
+				</section>
+				
+				<section>
+					<h2> Master Storage Stuff </h2>
+					I <img src="files15.png" width="100" style="margin:unset;"/> am master<br>
+					I have a <img src="files14.png" width="50" style="margin:unset;"/> to keep stats<br>
+					and a <img src="files13.png" width="100" style="margin:unset;"/> to organise messages to my workers<br>
+					and a <img src="files12.png" width="350" style="margin:unset;"/><br> to keep track of logic and to generate messages for my workers
+				</section>
+				
+				
+				<section>
+				<h2>Master/Worker/Helpers architecture</h2>
+				<img src="master_worker2.svg"/>
+				</section>
+				
+				<section>
+					<h2> Master to worker Stuff </h2>
+					<img src="files16.png" width="200"/><br>
+					"I am the worker loop"
+				</section>
+				
+				
+				
+				<section>
+					<h2> Master to worker Stuff </h2>
+					<img src="files17.png" width="500"/><br>
+					"I am the message class"<br>
+					"I am a communication module, that just wraps around MPI send/recieve calls"
+				</section>
+				
+				
+				
+				<section>
+					<h2> Master to worker Stuff </h2>
+					<img src="files18.png" width="200"/><br>
+					"I hold/load/generate sub-CNFs for workers to load and work on"
+				</section>
+				
+				
+				
+				<section>
+					<h2> Master to worker Stuff </h2>
+					<img src="files19.png" width="200"/><br>
+					"I am a virtual class for a CDCL procedure, I take CNFs and give worker solutions"
+				</section>
+				
+				
+				<section>
+					<h2> Master to worker Stuff </h2>
+					I am worker <img src="files16.png" width="100" style="margin:unset;"/><br>
+					I take and return <img src="files21.png" width="100" style="margin:unset;"/> of work to master, via a <img src="files20.png" width="100" style="margin:unset;"/> <br>
+					I use a <img src="files18.png" width="100" style="margin:unset;"/> to load and collate CNFs for do work with.<br>
+					and I interract with an instantiation of a <img src="files19.png" width="100" style="margin:unset;"/><br> process my work.
+				</section>
+				
+				
+				<section>
+				<h2>Master/Worker/Helpers architecture</h2>
+				<img src="master_worker2.svg"/>
+				</section>
+				
+				
+				<section>
+					<h2> Worker CDCLs </h2>
+					<img src="files22.png" width="400"/><br>
+					"We are the core TiniSAT procedure"
+				</section>
+				
+				
+				<section>
+					<h2> Worker CDCLs </h2>
+					<img src="files23.png" width="600"/><br>
+					"We are the core MiniSAT procedure"
+				</section>
+				
+				<section>
+				<h2>Master/Worker/Helpers architecture</h2>
+				<img src="master_worker2.svg"/>
+				</section>
+				
+				<section>
+					<h2> Worker Helpers </h2>
+					<img src="files24.png" width="600"/><br>
+					"We are the gNovelty+ procedure"
+				</section>
+				
+				<section>
+					<h2> Worker Helpers </h2>
+					<img src="files25.png" width="600"/><br>
+					"We are the Strengthener procedure"
+				</section>
+				
+				
+				<section>
+					<h2> Worker Helpers </h2>
+					<img src="files26.png" width="100"/><br>
+					"We are the main method"
+				</section>
+			</div>
+		</div>
+
+		<script src="revealjs/dist/reveal.js"></script>
+		<script src="revealjs/plugin/math/math.js"></script>
+		<script src="revealjs/plugin/highlight/highlight.js"></script>
+		<script src="revealjs/plugin/animate/plugin.js"></script>
+		<script src="revealjs/plugin/animate/svg.min.js"></script>
+		<script>
+			Reveal.initialize({ plugins: [ RevealMath.KaTeX, RevealHighlight, RevealAnimate ] });
+		</script>
+		
+
+	</body>
+</html>

@@ -1,0 +1,358 @@
+<!--{ "setup": [
+{ "element": "#part_0", "modifier": "attr", "parameters": [ {"class": "fragment", "data-fragment-index": "0"} ] },
+{ "element": "#part_1", "modifier": "attr", "parameters": [ {"class": "fragment", "data-fragment-index": "1"} ] },
+{ "element": "#part_2", "modifier": "attr", "parameters": [ {"class": "fragment", "data-fragment-index": "2"} ] },
+{ "element": "#part_3", "modifier": "attr", "parameters": [ {"class": "fragment", "data-fragment-index": "3"} ] }
+]}-->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" height="900" width="900" style="font-size: medium;">
+<circle cx="720" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="720" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="750" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="750" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="780" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="780" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="810" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="810" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="840" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="840" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<circle cx="870" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="870" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<text x="6.0" y="24" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>1</tspan> <tspan style='fill:gray;'>2</tspan> <tspan style='fill:gray;'>3</tspan> </text>
+<text x="6.0" y="48" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>5</tspan> </text>
+<text x="6.0" y="72" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>5</tspan> <tspan style='fill:gray;'>6</tspan> </text>
+<text x="6.0" y="96" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-3</tspan> <tspan style='fill:gray;'>-5</tspan> </text>
+<text x="6.0" y="120" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-2</tspan> <tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>-4</tspan> </text>
+<text x="6.0" y="144" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-4</tspan> <tspan style='fill:gray;'>5</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="168" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>1</tspan> <tspan style='fill:gray;'>2</tspan> <tspan style='fill:gray;'>4</tspan> </text>
+<text x="6.0" y="192" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="216" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-2</tspan> <tspan style='fill:gray;'>-3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="240" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-2</tspan> <tspan style='fill:gray;'>-3</tspan> </text>
+<g id='part_0'><rect width="900" height="900" style="fill:rgb(253,246,227)" /><circle cx="720" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="720" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="750" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="750" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="780" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="780" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="810" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="810" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="840" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="840" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<circle cx="870" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="870" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<circle cx="720" cy="60.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="750" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="780" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="450.0" y1="60.0" x2="480.0" y2="90.0" style="stroke:black;stroke-width:2" />
+<circle cx="450.0" cy="60.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="450.0" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<text x="6.0" y="24" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:blue;'>2</tspan> <tspan style='fill:blue;'>3</tspan> </text>
+<text x="6.0" y="48" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>5</tspan> </text>
+<text x="6.0" y="72" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>5</tspan> <tspan style='fill:gray;'>6</tspan> </text>
+<text x="6.0" y="96" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-3</tspan> <tspan style='fill:gray;'>-5</tspan> </text>
+<text x="6.0" y="120" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-2</tspan> <tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>-4</tspan> </text>
+<text x="6.0" y="144" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-4</tspan> <tspan style='fill:gray;'>5</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="168" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:blue;'>2</tspan> <tspan style='fill:blue;'>4</tspan> </text>
+<text x="6.0" y="192" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="216" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-2</tspan> <tspan style='fill:gray;'>-3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="240" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-2</tspan> <tspan style='fill:gray;'>-3</tspan> </text>
+</g><g id='part_1'><rect width="900" height="900" style="fill:rgb(253,246,227)" /><circle cx="720" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="720" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="750" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="750" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="780" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="780" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="810" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="810" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="840" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="840" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<circle cx="870" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="870" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<circle cx="720" cy="60.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="750" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="780" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="450.0" y1="60.0" x2="480.0" y2="90.0" style="stroke:black;stroke-width:2" />
+<circle cx="450.0" cy="60.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="450.0" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="720" cy="90.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="90.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="480.0" y1="90.0" x2="510.0" y2="120.0" style="stroke:black;stroke-width:2" />
+<circle cx="480.0" cy="90.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="480.0" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<text x="6.0" y="24" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:cornflowerblue;'>2</tspan> <tspan style='fill:blue;'>3</tspan> </text>
+<text x="6.0" y="48" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>5</tspan> </text>
+<text x="6.0" y="72" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>5</tspan> <tspan style='fill:gray;'>6</tspan> </text>
+<text x="6.0" y="96" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-3</tspan> <tspan style='fill:gray;'>-5</tspan> </text>
+<text x="6.0" y="120" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:red;'>-2</tspan> <tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>-4</tspan> </text>
+<text x="6.0" y="144" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>-4</tspan> <tspan style='fill:gray;'>5</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="168" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:cornflowerblue;'>2</tspan> <tspan style='fill:blue;'>4</tspan> </text>
+<text x="6.0" y="192" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:gray;'>3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="216" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:red;'>-2</tspan> <tspan style='fill:gray;'>-3</tspan> <tspan style='fill:gray;'>4</tspan> <tspan style='fill:gray;'>-6</tspan> </text>
+<text x="6.0" y="240" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:red;'>-2</tspan> <tspan style='fill:gray;'>-3</tspan> </text>
+</g><g id='part_2'><rect width="900" height="900" style="fill:rgb(253,246,227)" /><circle cx="720" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="720" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="750" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="750" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="780" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="780" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="810" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="810" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="840" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="840" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<circle cx="870" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="870" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<circle cx="720" cy="60.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="750" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="780" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="450.0" y1="60.0" x2="480.0" y2="90.0" style="stroke:black;stroke-width:2" />
+<circle cx="450.0" cy="60.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="450.0" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="720" cy="90.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="90.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="480.0" y1="90.0" x2="510.0" y2="120.0" style="stroke:black;stroke-width:2" />
+<circle cx="480.0" cy="90.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="480.0" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="720" cy="120.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="120.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="120.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="120.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="120.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="120.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="510.0" y1="120.0" x2="480.0" y2="150.0" style="stroke:black;stroke-width:2" />
+<circle cx="510.0" cy="120.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="510.0" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="720" cy="150.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="150.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="150.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="150.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="150.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="150.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="480.0" y1="150.0" x2="450.0" y2="180.0" style="stroke:black;stroke-width:2" />
+<circle cx="480.0" cy="150.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="480.0" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="720" cy="180.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="180.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="180.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="180.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="180.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="180.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="870" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<line x1="450.0" y1="180.0" x2="420.0" y2="210.0" style="stroke:black;stroke-width:2" />
+<circle cx="450.0" cy="180.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="450.0" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<circle cx="720" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="840" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="870" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="870" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<line x1="420.0" y1="210.0" x2="450.0" y2="240.0" style="stroke:black;stroke-width:2" />
+<circle cx="420.0" cy="210.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="420.0" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<text x="6.0" y="24" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:cornflowerblue;'>2</tspan> <tspan style='fill:blue;'>3</tspan> </text>
+<text x="6.0" y="48" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>3</tspan> <tspan style='fill:blue;'>4</tspan> <tspan style='fill:cornflowerblue;'>5</tspan> </text>
+<text x="6.0" y="72" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>5</tspan> <tspan style='fill:blue;'>6</tspan> </text>
+<text x="6.0" y="96" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>-3</tspan> <tspan style='fill:blue;'>-5</tspan> </text>
+<text x="6.0" y="120" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>-2</tspan> <tspan style='fill:blue;'>3</tspan> <tspan style='fill:cornflowerblue;'>-4</tspan> </text>
+<text x="6.0" y="144" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>-4</tspan> <tspan style='fill:cornflowerblue;'>5</tspan> <tspan style='fill:cornflowerblue;'>-6</tspan> </text>
+<text x="6.0" y="168" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:cornflowerblue;'>2</tspan> <tspan style='fill:blue;'>4</tspan> </text>
+<text x="6.0" y="192" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>3</tspan> <tspan style='fill:blue;'>4</tspan> <tspan style='fill:cornflowerblue;'>-6</tspan> </text>
+<text x="6.0" y="216" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>-2</tspan> <tspan style='fill:cornflowerblue;'>-3</tspan> <tspan style='fill:blue;'>4</tspan> <tspan style='fill:cornflowerblue;'>-6</tspan> </text>
+<text x="6.0" y="240" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>-2</tspan> <tspan style='fill:cornflowerblue;'>-3</tspan> </text>
+</g><g id='part_3'><rect width="900" height="900" style="fill:rgb(253,246,227)" /><circle cx="720" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="720" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="750" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="750" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="780" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="780" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="810" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="810" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="840" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="840" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<circle cx="870" cy="30" r="10" style="fill:none; stroke:black; stroke-width:1px"/>
+<text x="870" y="30" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<circle cx="720" cy="60.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="750" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="780" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="60.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="450.0" y1="60.0" x2="480.0" y2="90.0" style="stroke:black;stroke-width:2" />
+<circle cx="450.0" cy="60.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="450.0" y="60.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >1</text>
+<circle cx="720" cy="90.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="90.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="780" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="810" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="90.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="480.0" y1="90.0" x2="510.0" y2="120.0" style="stroke:black;stroke-width:2" />
+<circle cx="480.0" cy="90.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="480.0" y="90.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >2</text>
+<circle cx="720" cy="120.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="120.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="120.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="120.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="810" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="840" cy="120.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="120.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="510.0" y1="120.0" x2="480.0" y2="150.0" style="stroke:black;stroke-width:2" />
+<circle cx="510.0" cy="120.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="510.0" y="120.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >3</text>
+<circle cx="720" cy="150.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="150.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="150.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="150.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="150.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="150.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="870" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<line x1="480.0" y1="150.0" x2="450.0" y2="180.0" style="stroke:black;stroke-width:2" />
+<circle cx="480.0" cy="150.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="480.0" y="150.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >4</text>
+<circle cx="720" cy="180.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="180.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="180.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="180.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="180.0" r="10" style="fill:rgb(0,200,255);"/>
+<text x="840" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >N</text>
+<circle cx="870" cy="180.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="870" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<line x1="450.0" y1="180.0" x2="420.0" y2="210.0" style="stroke:black;stroke-width:2" />
+<circle cx="450.0" cy="180.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="450.0" y="180.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >6</text>
+<circle cx="720" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="840" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="870" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="870" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<line x1="420.0" y1="210.0" x2="450.0" y2="240.0" style="stroke:black;stroke-width:2" />
+<circle cx="420.0" cy="210.0" r="15" style="fill:white; stroke-width:0.7; stroke:black;"/>
+<text x="420.0" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >5</text>
+<circle cx="720" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="720" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="750" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="750" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="780" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="780" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="810" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="810" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="840" cy="210.0" r="10" style="fill:rgb(128,255,0);"/>
+<text x="840" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >T</text>
+<circle cx="870" cy="210.0" r="10" style="fill:rgb(0,100,255);"/>
+<text x="870" y="210.0" fill="black" dominant-baseline="middle" text-anchor="middle" alignment-baseline="middle" >F</text>
+<circle cx="450.0" cy="240.0" r="15" style="fill:white;"/>
+<line x1="445.0" y1="235.0" x2="450.0" y2="245.0" style="stroke:green;stroke-width:2" />
+<line x1="450.0" y1="245.0" x2="460.0" y2="235.0" style="stroke:green;stroke-width:1.7" />
+<text x="6.0" y="24" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:cornflowerblue;'>2</tspan> <tspan style='fill:blue;'>3</tspan> </text>
+<text x="6.0" y="48" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>3</tspan> <tspan style='fill:blue;'>4</tspan> <tspan style='fill:cornflowerblue;'>5</tspan> </text>
+<text x="6.0" y="72" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>5</tspan> <tspan style='fill:blue;'>6</tspan> </text>
+<text x="6.0" y="96" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>-3</tspan> <tspan style='fill:blue;'>-5</tspan> </text>
+<text x="6.0" y="120" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>-2</tspan> <tspan style='fill:blue;'>3</tspan> <tspan style='fill:cornflowerblue;'>-4</tspan> </text>
+<text x="6.0" y="144" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>-4</tspan> <tspan style='fill:cornflowerblue;'>5</tspan> <tspan style='fill:cornflowerblue;'>-6</tspan> </text>
+<text x="6.0" y="168" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:cornflowerblue;'>1</tspan> <tspan style='fill:cornflowerblue;'>2</tspan> <tspan style='fill:blue;'>4</tspan> </text>
+<text x="6.0" y="192" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>3</tspan> <tspan style='fill:blue;'>4</tspan> <tspan style='fill:cornflowerblue;'>-6</tspan> </text>
+<text x="6.0" y="216" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>-2</tspan> <tspan style='fill:cornflowerblue;'>-3</tspan> <tspan style='fill:blue;'>4</tspan> <tspan style='fill:cornflowerblue;'>-6</tspan> </text>
+<text x="6.0" y="240" alignment-baseline="hanging" style="font-size: x-large;"><tspan style='fill:blue;'>-2</tspan> <tspan style='fill:cornflowerblue;'>-3</tspan> </text>
+</g></svg>

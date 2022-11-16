@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
-#SUDOKU CNF generator
-# -- see https://users.aalto.fi/~tjunttil/2020-DP-AUT/notes-sat/solving.html
+# SUDOKU CNF generator
+# with custom DAG file output
+# modify the clauses in the dag and what nodes they occur on by the comment line that each set of clauses occurs under
+#
+# original: -- see https://users.aalto.fi/~tjunttil/2020-DP-AUT/notes-sat/solving.html
 
 import sys
 from collections import defaultdict

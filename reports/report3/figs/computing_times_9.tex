@@ -1,0 +1,92 @@
+   \begin{figure}[]
+        \centering
+		\begin{tikzpicture}
+		\begin{axis}[
+			title={},
+			xlabel={Costas array size $n$},
+			ylabel={Execution time (s)},
+			%xmin=0, xmax=0.25,
+			%ymin=10.00, ymax=100000.00,
+			ymode=log,
+			%xtick={1,2,3,4},
+			%ytick={0,20,40,60,80,100},
+			%yticklabel=$\pgfmathprintnumber{\tick}\%$,
+			legend pos=north west,
+			ymajorgrids=true,
+			grid style=dashed,
+			xticklabel style={/pgf/number format/fixed},
+			width = 380,
+			height = 330
+		]
+
+
+
+%7 0
+\addplot[color=black!100!black,line width=0.4pt] coordinates {
+(5,1.7233116626739502)(6,1.7336804866790771)(7,1.6857199668884277)(8,1.7209577560424805)(9,1.9494273662567139)(10,3.7782273292541504)(11,26.04908299446106)(12,355.1301419734955)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Tinisat}
+%1 1
+\addplot[color=green!0!blue,line width=0.4pt] coordinates {
+(5,1.7617261409759521)(6,1.7701399326324463)(7,1.9139091968536377)(8,2.0938005447387695)(9,2.7034528255462646)(10,4.03750205039978)(11,8.336487293243408)(12,27.943363189697266)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 1 worker}
+%2 1
+\addplot[color=green!16!blue,line width=0.4pt] coordinates {
+(5,1.7403790950775146)(6,1.7476980686187744)(7,1.8156287670135498)(8,1.9597218036651611)(9,2.223801851272583)(10,2.9278087615966797)(11,5.075685977935791)(12,14.959787130355835)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 2 workers}
+%3 1
+\addplot[color=green!33!blue,line width=0.4pt] coordinates {
+(5,1.7267048358917236)(6,1.7385246753692627)(7,1.7945480346679688)(8,1.8464725017547607)(9,2.050525426864624)(10,2.5507652759552)(11,3.9506607055664062)(12,10.498562097549438)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 3 workers}
+%4 1
+\addplot[color=green!50!blue,line width=0.4pt] coordinates {
+(5,1.7476730346679688)(6,1.7598364353179932)(7,1.783722162246704)(8,1.847625732421875)(9,1.955826997756958)(10,2.3513436317443848)(11,3.463749885559082)(12,8.45968246459961)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 4 workers}
+%5 1
+\addplot[color=green!66!blue,line width=0.4pt] coordinates {
+(5,1.7145400047302246)(6,1.762425184249878)(7,1.762725830078125)(8,1.8145930767059326)(9,1.90655517578125)(10,2.2145986557006836)(11,3.1358208656311035)(12,7.102583646774292)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 5 workers}
+%6 1
+\addplot[color=green!83!blue,line width=0.4pt] coordinates {
+(5,1.728133201599121)(6,1.7359440326690674)(7,1.7797179222106934)(8,1.7957656383514404)(9,1.8959105014801025)(10,2.1317298412323)(11,2.9118590354919434)(12,6.247759103775024)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 6 workers}
+%7 1
+\addplot[color=green!100!blue,line width=0.4pt] coordinates {
+(5,1.7507891654968262)(6,1.7465291023254395)(7,1.7865455150604248)(8,1.8121833801269531)(9,1.9107396602630615)(10,2.1464974880218506)(11,2.7865793704986572)(12,5.738665819168091)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 7 workers}
+%1 3
+\addplot[color=red!0!yellow,line width=0.4pt] coordinates {
+(5,1.740027666091919)(6,1.7959539890289307)(7,1.9641659259796143)(8,2.213284492492676)(9,2.8761558532714844)(10,4.2639100551605225)(11,8.936074256896973)(12,29.324066638946533)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 1 worker, w/ Stre.}
+%2 3
+\addplot[color=red!16!yellow,line width=0.4pt] coordinates {
+(5,1.735372543334961)(6,1.7959709167480469)(7,1.864142894744873)(8,1.9800684452056885)(9,2.311938762664795)(10,3.0440127849578857)(11,5.375962734222412)(12,15.556080341339111)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 2 workers, w/ Stre.}
+%3 3
+\addplot[color=red!33!yellow,line width=0.4pt] coordinates {
+(5,1.773280143737793)(6,1.7613086700439453)(7,1.8293604850769043)(8,1.901294231414795)(9,2.117265462875366)(10,2.6454083919525146)(11,4.281031131744385)(12,10.989223003387451)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 3 workers, w/ Stre.}
+%4 3
+\addplot[color=red!50!yellow,line width=0.4pt] coordinates {
+(5,1.7839329242706299)(6,1.8280584812164307)(7,1.8118910789489746)(8,1.9240765571594238)(9,2.0599892139434814)(10,2.460129976272583)(11,3.739928722381592)(12,8.848089694976807)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 4 workers, w/ Stre.}
+%5 3
+\addplot[color=red!66!yellow,line width=0.4pt] coordinates {
+(5,1.7851345539093018)(6,1.8012142181396484)(7,1.8610224723815918)(8,1.9011309146881104)(9,2.0090622901916504)(10,2.353060483932495)(11,3.3319859504699707)(12,7.512958288192749)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 5 workers, w/ Stre.}
+%6 3
+\addplot[color=red!83!yellow,line width=0.4pt] coordinates {
+(5,1.7916393280029297)(6,1.799912691116333)(7,1.8881261348724365)(8,1.8864703178405762)(9,1.9798228740692139)(10,2.2282285690307617)(11,3.1278672218322754)(12,6.7282233238220215)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 6 workers, w/ Stre.}
+%7 3
+\addplot[color=red!100!yellow,line width=0.4pt] coordinates {
+(5,1.809154748916626)(6,1.8253264427185059)(7,1.8611371517181396)(8,1.9011993408203125)(9,1.9731299877166748)(10,2.2371304035186768)(11,2.9331955909729004)(12,6.089136123657227)}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{Dagster 7 workers, w/ Stre.}
+
+
+
+		\end{axis}
+		\end{tikzpicture}
+		%\vspace{-18pt}
+		\caption[Runtime performance on Costas problems with/without strengthener]{Runtime performance on Costas problems with and without strengthening processes, for different numbers of cores on costas problems of different size}
+		\label{fig:performance_graph46fwfwfasfs461}
+    \end{figure}

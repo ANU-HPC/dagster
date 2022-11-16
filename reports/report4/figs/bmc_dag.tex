@@ -1,0 +1,18 @@
+\begin{figure}[]
+\centering
+
+
+\begin{tikzpicture}[scale=0.9]
+	\node [fill=white, draw=black, shape=circle, text width=1.5cm, text centered] (0) at (0, 0) {low-fidelity model};
+	\node [fill=white, draw=black, shape=circle, text width=1.5cm, text centered] (1) at (5, 0) {high-fidelity model};
+	\draw [fill=none, ->] (0) to node[above,pos=0.5]{\footnotesize AI variables} (1);
+\end{tikzpicture}
+%\caption{DAG for Costas problem.}\label{fig:dag_example121}
+
+
+
+
+
+\caption[DAG for bounded model checking problem]{DAG for bounded model checking problem, showing AI variables being passed from the solution of low fidelity model to higher fidelity model}\label{fig:bmc_dag}
+\end{figure}
+

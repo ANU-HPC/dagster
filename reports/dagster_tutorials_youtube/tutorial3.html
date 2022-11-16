@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>DAGSTER Tutorial3</title>
+		<link rel="stylesheet" href="revealjs/dist/reveal.css">
+		<link rel="stylesheet" href="revealjs/dist/theme/solarized.css">
+		<link rel="stylesheet" href="revealjs/plugin/highlight/monokai.css">
+	</head>
+	<body>
+
+		<div class="reveal">
+			<div class="slides">
+
+				<section>
+					<h2>Dagster</h2>
+					<p>Tutorial 3: Shallow-to-Deep How to use Dagster</p>
+				</section>
+				
+				<section>
+					<h2> Install Requirements </h2>
+					<ul>
+						<li>MPI implementation (eg. OpenMPI)</li>
+						<li>Google Logging Library (glog)</li>
+						<li>CUDD library (davidkebo.com)</li>
+					</ul><br>
+					see dockerfile<br>
+					(NOTE: for BDD checkpointing dddmp cudd sublibrary needs to be installed)
+				</section>
+				
+				<section>
+					<h2> Demonstration </h2>
+					Introduction to the wizard, and a basic visualised run.
+				</section>
+				
+				<section>
+					<h2> Demonstration Checklist </h2>
+					<ul>
+						<li>Make dagster with appropriate libraries</li>
+						<li>Generate appropriate CNFs / DAGs</li>
+						<li>Either a) use Wizard or b) use commandline to configure dagster</li>
+						<li>Set Logging environment variables</li>
+						<li>initiate the run</li>
+						<li>pipe logs into viewer if desired</li>
+						<li>inspect output</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2> Further Demonstration </h2>
+					Custom CNF and DAG pitfalls
+				</section>
+				
+				<section>
+					<h2> Demonstration Summary </h2>
+					<ul>
+						<li>Multiple ways to generat a DAG for a CNF, some bad, some good</li>
+						<li>exerimentation is always advised</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2> Pentominos Demonstration </h2>
+					Introducing Pentominos, and some options of the wizard<br>
+					minisat option, checkpointing
+				</section>
+				
+				
+				<section>
+					<h2> Determinant Demonstration </h2>
+					Introducing Determinant problem, and some options of the wizard<br>
+					incrementality options
+				</section>
+				
+				
+				<section>
+					<h2>Stay Tuned<br>Tutorial 4</h2>
+					Further configuration and Walkthrough
+				</section>
+			</div>
+		</div>
+
+		<script src="revealjs/dist/reveal.js"></script>
+		<script src="revealjs/plugin/math/math.js"></script>
+		<script src="revealjs/plugin/highlight/highlight.js"></script>
+		<script src="revealjs/plugin/animate/plugin.js"></script>
+		<script src="revealjs/plugin/animate/svg.min.js"></script>
+		<script>
+			Reveal.initialize({ plugins: [ RevealMath.KaTeX, RevealHighlight, RevealAnimate ] });
+		</script>
+		
+
+	</body>
+</html>

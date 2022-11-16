@@ -1,0 +1,62 @@
+   \begin{figure}[]
+        \centering
+		\begin{tikzpicture}
+		\begin{axis}[
+			title={},
+			xlabel={Number of subproblems},
+			ylabel={Execution time (s)},
+			%xmin=0, xmax=0.25,
+			%ymin=10.00, ymax=100000.00,
+			ymode=log,
+			%xtick={1,2,3,4},
+			%ytick={0,20,40,60,80,100},
+			%yticklabel=$\pgfmathprintnumber{\tick}\%$,
+			legend pos=north west,
+			ymajorgrids=true,
+			grid style=dashed,
+			xticklabel style={/pgf/number format/fixed},
+			width = 380,
+			height = 330
+		]
+
+
+
+\addplot[color=black,line width=0.4pt] coordinates {
+(16,1.87029707431793)(17,1.92771661281586)(18,2.18657296895981)(19,4.68632769584656)(20,7.03779625892639)(21,10.4536855220795)(22,13.0971279144287)(23,12.7622435092926)(24,11.2612333297729)(25,8.13171243667603)(26,8.8489944934845)(27,9.57459020614624)(28,8.9266465306282)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster Q1}
+\addplot[color=black,line width=0.4pt] coordinates {
+(16,1.90215826034546)(17,2.00683748722076)(18,2.7956976890564)(19,5.9575035572052)(20,10.3129312992096)(21,14.109504699707)(22,21.753312587738)(23,19.1263642311096)(24,21.2152478694916)(25,14.0246398448944)(26,17.496031999588)(27,70.4617695808411)(28,121.512965083122)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster Q2}
+\addplot[color=black,line width=0.4pt] coordinates {
+(16,1.92497652769089)(17,2.4318271279335)(18,3.4368941783905)(19,6.98887455463409)(20,12.5552127361298)(21,19.0286390781403)(22,29.6213130950928)(23,42.0927107334137)(24,31.3075752258301)(25,34.9120211601257)(26,71.9202024936676)(27,121.519523322582)(28,121.53688532114)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster Q3}
+
+
+
+
+\addplot[color=red,line width=0.4pt] coordinates {
+(16,1.88902771472931)(17,1.97083801031113)(18,2.23984467983246)(19,3.4965181350708)(20,7.1448438167572)(21,8.56125116348267)(22,10.6567153930664)(23,11.4999976158142)(24,7.8448269367218)(25,7.50787425041199)(26,10.0208868980408)(27,34.5360842347145)(28,114.785450518131)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster Q1, w/ \gnoveltyp}
+\addplot[color=red,line width=0.4pt] coordinates {
+(16,1.9259524345398)(17,2.05786156654358)(18,2.67266917228699)(19,4.10202240943909)(20,9.93401026725769)(21,10.3891091346741)(22,13.803998708725)(23,13.6891260147095)(24,11.6268980503082)(25,17.189138174057)(26,67.8895261287689)(27,121.501763820648)(28,121.50686109066)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster Q2, w/ \gnoveltyp}
+\addplot[color=red,line width=0.4pt] coordinates {
+(16,1.99800217151642)(17,2.26264613866806)(18,3.24780559539795)(19,5.63313210010529)(20,12.9800088405609)(21,13.5810811519623)(22,18.9693191051483)(23,27.1158828735352)(24,30.8131198883057)(25,44.6492695808411)(26,121.523935079575)(27,121.512243688107)(28,121.512674212456)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster Q3, w/ \gnoveltyp}
+
+
+
+
+
+		\end{axis}
+		\end{tikzpicture}
+		%\vspace{-18pt}
+		\caption[Runtime performance for random $5$-SAT formulas]{Runtime performance---specifically first quartile (Q1), median (Q2) and third quartile (Q3)---of \dagster\ on monolithic SAT problems comprised of $n$ ``easy'' random 5-SAT problems. We contrast \dagster\ performance both with and without \gnoveltyp\ assistance. For each value of $n$ we ran \dagster\ $28$ times, and the reported statistics are based on that empirical distribution. Each \dagster\ run was with an $1800$s timeout.}
+		\label{fig:performance_graph46asfs461}
+    \end{figure}

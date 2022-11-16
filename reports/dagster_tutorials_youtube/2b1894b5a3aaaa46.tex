@@ -1,0 +1,252 @@
+\documentclass[preview]{standalone}
+
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{nicematrix}
+\usepackage{fancyvrb}
+\usepackage[hyphens]{url}
+
+\usepackage{xcolor}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage{xspace} % fix missing spaces after fancy commands e.g. \dagster
+\usepackage{makecell}
+\usepackage{fancyvrb}
+\usepackage{tikz}
+\usepackage{tikzscale}
+\usepackage{pgfplots}
+\usepackage{graphicx}
+\usepackage{todonotes}
+\usepackage{wrapfig}
+%\usepackage{dingbat}
+% to be able to draw some self-contained figs
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{subcaption}
+\usepackage[misc]{ifsym}
+\usepackage{nicematrix}
+
+
+\begin{document}
+
+\begin{center}
+
+
+\begin{figure}[!ht]
+\centering
+    \begin {tikzpicture}[yscale=-0.9,xscale=0.9,rotate=180]
+    %\begin {tikzpicture}[yscale=0.7,xscale=0.7,rotate=0]
+
+
+
+\draw[fill=black,draw=none] (0.0,-0.0) circle (0.06);
+\draw[line width=1pt,black] (0.0,-0.0) -- (0.45,-0.35);
+\draw[fill=black,draw=none] (0.45,-0.35) circle (0.06);
+\draw[line width=1pt,black] (0.45,-0.35) -- (0.9,-0.7);
+\draw[line width=1pt,black] (0.45,-0.35) -- (0.0,-0.7);
+\draw[fill=white,draw=none] (0.0,-0.7) circle (0.27);
+\draw[fill=black,draw=none] (0.9,-0.7) circle (0.06);
+\draw[line width=1pt,black] (0.9,-0.7) -- (1.35,-1.0499999999999998);
+\draw[line width=1pt,black] (0.9,-0.7) -- (0.45,-1.0499999999999998);
+\draw[fill=white,draw=none] (0.45,-1.0499999999999998) circle (0.27);
+\draw[fill=black,draw=none] (1.35,-1.0499999999999998) circle (0.06);
+\draw[line width=1pt,black] (1.35,-1.0499999999999998) -- (0.9,-1.4);
+\draw[line width=1pt,black] (1.35,-1.0499999999999998) -- (1.8,-1.4);
+\draw[fill=white,draw=none] (1.8,-1.4) circle (0.27);
+\draw[fill=black,draw=none] (0.9,-1.4) circle (0.06);
+\draw[line width=1pt,black] (0.9,-1.4) -- (0.45,-1.75);
+\draw[line width=1pt,black] (0.9,-1.4) -- (1.35,-1.75);
+\draw[fill=white,draw=none] (1.35,-1.75) circle (0.27);
+\draw[fill=lightgray,draw=none] (0.45,-1.75) circle (0.06);
+\draw[line width=1pt,lightgray] (0.45,-1.75) -- (0.9,-2.0999999999999996);
+\draw[fill=lightgray,draw=none] (0.9,-2.0999999999999996) circle (0.06);
+\draw[line width=1pt,lightgray] (0.9,-2.0999999999999996) -- (1.35,-2.4499999999999997);
+\draw[line width=1pt,lightgray] (0.9,-2.0999999999999996) -- (0.45,-2.4499999999999997);
+\draw[fill=white,draw=none] (0.45,-2.4499999999999997) circle (0.27);
+\draw[fill=lightgray,draw=none] (1.35,-2.4499999999999997) circle (0.06);
+\draw[line width=1pt,lightgray] (1.35,-2.4499999999999997) -- (1.8,-2.8);
+\draw[line width=1pt,lightgray] (1.35,-2.4499999999999997) -- (0.9,-2.8);
+\draw[fill=white,draw=none] (0.9,-2.8) circle (0.27);
+\draw[fill=lightgray,draw=none] (1.8,-2.8) circle (0.06);
+\draw[line width=1pt,lightgray] (1.8,-2.8) -- (2.25,-3.15);
+\draw[line width=1pt,lightgray] (1.8,-2.8) -- (1.35,-3.15);
+\draw[fill=white,draw=none] (1.35,-3.15) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.25,-3.15) circle (0.06);
+\draw[line width=1pt,lightgray] (2.25,-3.15) -- (2.7,-3.5);
+\draw[line width=1pt,lightgray] (2.25,-3.15) -- (1.8,-3.5);
+\draw[fill=white,draw=none] (1.8,-3.5) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-3.5) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-3.5) -- (3.15,-3.8499999999999996);
+\draw[line width=1pt,lightgray] (2.7,-3.5) -- (2.25,-3.8499999999999996);
+\draw[fill=white,draw=none] (2.25,-3.8499999999999996) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-3.8499999999999996) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-3.8499999999999996) -- (3.6,-4.199999999999999);
+\draw[line width=1pt,lightgray] (3.15,-3.8499999999999996) -- (2.7,-4.199999999999999);
+\draw[fill=white,draw=none] (2.7,-4.199999999999999) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.6,-4.199999999999999) circle (0.06);
+\draw[line width=1pt,lightgray] (3.6,-4.199999999999999) -- (3.15,-4.55);
+\draw[line width=1pt,lightgray] (3.6,-4.199999999999999) -- (4.05,-4.55);
+\draw[fill=white,draw=none] (4.05,-4.55) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-4.55) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-4.55) -- (3.6,-4.8999999999999995);
+\draw[line width=1pt,lightgray] (3.15,-4.55) -- (2.7,-4.8999999999999995);
+\draw[fill=white,draw=none] (2.7,-4.8999999999999995) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.6,-4.8999999999999995) circle (0.06);
+\draw[line width=1pt,lightgray] (3.6,-4.8999999999999995) -- (4.05,-5.25);
+\draw[line width=1pt,lightgray] (3.6,-4.8999999999999995) -- (3.15,-5.25);
+\draw[fill=white,draw=none] (3.15,-5.25) circle (0.27);
+\draw[fill=lightgray,draw=none] (4.05,-5.25) circle (0.06);
+\draw[line width=1pt,lightgray] (4.05,-5.25) -- (4.5,-5.6);
+\draw[line width=1pt,lightgray] (4.05,-5.25) -- (3.6,-5.6);
+\draw[fill=white,draw=none] (3.6,-5.6) circle (0.27);
+\draw[fill=lightgray,draw=none] (4.5,-5.6) circle (0.06);
+\draw[line width=1pt,lightgray] (4.5,-5.6) -- (4.05,-5.949999999999999);
+\draw[line width=1pt,lightgray] (4.5,-5.6) -- (4.95,-5.949999999999999);
+\draw[fill=white,draw=none] (4.95,-5.949999999999999) circle (0.27);
+\draw[fill=black,draw=none] (0.45,-1.75) circle (0.06);
+\draw[line width=1pt,black] (0.45,-1.75) -- (0.0,-2.0999999999999996);
+\draw[fill=black,draw=none] (0.0,-2.0999999999999996) circle (0.06);
+\draw[line width=1pt,black] (0.0,-2.0999999999999996) -- (-0.45,-2.4499999999999997);
+\draw[line width=1pt,black] (0.0,-2.0999999999999996) -- (0.45,-2.4499999999999997);
+\draw[fill=white,draw=none] (0.45,-2.4499999999999997) circle (0.27);
+\draw[fill=black,draw=none] (-0.45,-2.4499999999999997) circle (0.06);
+\draw[line width=1pt,black] (-0.45,-2.4499999999999997) -- (0.0,-2.8);
+\draw[line width=1pt,black] (-0.45,-2.4499999999999997) -- (-0.9,-2.8);
+\draw[fill=white,draw=none] (-0.9,-2.8) circle (0.27);
+\draw[fill=black,draw=none] (0.0,-2.8) circle (0.06);
+\draw[line width=1pt,black] (0.0,-2.8) -- (0.45,-3.15);
+\draw[line width=1pt,black] (0.0,-2.8) -- (-0.45,-3.15);
+\draw[fill=white,draw=none] (-0.45,-3.15) circle (0.27);
+\draw[line width=1pt,blue,dashed] (-0.7,-2.9499999999999997) -- (0.7,-2.9499999999999997);
+\draw[fill=black,draw=none] (0.45,-3.15) circle (0.06);
+\draw[line width=1pt,black] (0.45,-3.15) -- (0.9,-3.5);
+\draw[line width=1pt,black] (0.45,-3.15) -- (0.0,-3.5);
+\draw[fill=white,draw=none] (0.0,-3.5) circle (0.27);
+\draw[fill=black,draw=none] (0.9,-3.5) circle (0.06);
+\draw[line width=1pt,black] (0.9,-3.5) -- (1.35,-3.8499999999999996);
+\draw[line width=1pt,black] (0.9,-3.5) -- (0.45,-3.8499999999999996);
+\draw[fill=white,draw=none] (0.45,-3.8499999999999996) circle (0.27);
+\draw[fill=black,draw=none] (1.35,-3.8499999999999996) circle (0.06);
+\draw[line width=1pt,black] (1.35,-3.8499999999999996) -- (1.8,-4.199999999999999);
+\draw[line width=1pt,black] (1.35,-3.8499999999999996) -- (0.9,-4.199999999999999);
+\draw[fill=white,draw=none] (0.9,-4.199999999999999) circle (0.27);
+\draw[fill=black,draw=none] (1.8,-4.199999999999999) circle (0.06);
+\draw[line width=1pt,black] (1.8,-4.199999999999999) -- (1.35,-4.55);
+\draw[line width=1pt,black] (1.8,-4.199999999999999) -- (2.25,-4.55);
+\draw[fill=white,draw=none] (2.25,-4.55) circle (0.27);
+\draw[line width=1pt,blue,dashed] (1.1,-4.35) -- (2.5,-4.35);
+\draw[fill=black,draw=none] (1.35,-4.55) circle (0.06);
+\draw[line width=1pt,black] (1.35,-4.55) -- (1.8,-4.8999999999999995);
+\draw[line width=1pt,black] (1.35,-4.55) -- (0.9,-4.8999999999999995);
+\draw[fill=white,draw=none] (0.9,-4.8999999999999995) circle (0.27);
+\draw[fill=lightgray,draw=none] (1.8,-4.8999999999999995) circle (0.06);
+\draw[line width=1pt,lightgray] (1.8,-4.8999999999999995) -- (2.25,-5.25);
+\draw[fill=lightgray,draw=none] (2.25,-5.25) circle (0.06);
+\draw[line width=1pt,lightgray] (2.25,-5.25) -- (2.7,-5.6);
+\draw[line width=1pt,lightgray] (2.25,-5.25) -- (1.8,-5.6);
+\draw[fill=white,draw=none] (1.8,-5.6) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-5.6) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-5.6) -- (3.15,-5.949999999999999);
+\draw[line width=1pt,lightgray] (2.7,-5.6) -- (2.25,-5.949999999999999);
+\draw[fill=white,draw=none] (2.25,-5.949999999999999) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-5.949999999999999) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-5.949999999999999) -- (2.7,-6.3);
+\draw[line width=1pt,lightgray] (3.15,-5.949999999999999) -- (3.6,-6.3);
+\draw[fill=white,draw=none] (3.6,-6.3) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-6.3) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-6.3) -- (2.25,-6.6499999999999995);
+\draw[line width=1pt,lightgray] (2.7,-6.3) -- (3.15,-6.6499999999999995);
+\draw[fill=white,draw=none] (3.15,-6.6499999999999995) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.25,-6.6499999999999995) circle (0.06);
+\draw[line width=1pt,lightgray] (2.25,-6.6499999999999995) -- (2.7,-7.0);
+\draw[line width=1pt,lightgray] (2.25,-6.6499999999999995) -- (1.8,-7.0);
+\draw[fill=white,draw=none] (1.8,-7.0) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-7.0) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-7.0) -- (3.15,-7.35);
+\draw[line width=1pt,lightgray] (2.7,-7.0) -- (2.25,-7.35);
+\draw[fill=white,draw=none] (2.25,-7.35) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-7.35) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-7.35) -- (3.6,-7.699999999999999);
+\draw[line width=1pt,lightgray] (3.15,-7.35) -- (2.7,-7.699999999999999);
+\draw[fill=white,draw=none] (2.7,-7.699999999999999) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.6,-7.699999999999999) circle (0.06);
+\draw[line width=1pt,lightgray] (3.6,-7.699999999999999) -- (3.15,-8.049999999999999);
+\draw[line width=1pt,lightgray] (3.6,-7.699999999999999) -- (4.05,-8.049999999999999);
+\draw[fill=white,draw=none] (4.05,-8.049999999999999) circle (0.27);
+\draw[fill=black,draw=none] (1.8,-4.8999999999999995) circle (0.06);
+\draw[line width=1pt,black] (1.8,-4.8999999999999995) -- (1.35,-5.25);
+\draw[fill=black,draw=none] (1.35,-5.25) circle (0.06);
+\draw[line width=1pt,black] (1.35,-5.25) -- (0.9,-5.6);
+\draw[line width=1pt,black] (1.35,-5.25) -- (1.8,-5.6);
+\draw[fill=white,draw=none] (1.8,-5.6) circle (0.27);
+\draw[line width=1pt,red] (1.72,-5.68) -- (1.8800000000000001,-5.52);
+\draw[line width=1pt,red] (1.72,-5.52) -- (1.8800000000000001,-5.68);
+\draw[fill=black,draw=none] (0.9,-5.6) circle (0.06);
+\draw[line width=1pt,black] (0.9,-5.6) -- (1.35,-5.949999999999999);
+\draw[line width=1pt,black] (0.9,-5.6) -- (0.45,-5.949999999999999);
+\draw[fill=white,draw=none] (0.45,-5.949999999999999) circle (0.27);
+\draw[line width=1pt,red] (0.37,-6.029999999999999) -- (0.53,-5.869999999999999);
+\draw[line width=1pt,red] (0.37,-5.869999999999999) -- (0.53,-6.029999999999999);
+\draw[line width=1pt,blue,dashed] (0.20000000000000007,-5.75) -- (1.6,-5.75);
+\draw[fill=black,draw=none] (1.35,-5.949999999999999) circle (0.06);
+\draw[line width=1pt,black] (1.35,-5.949999999999999) -- (0.9,-6.3);
+\draw[line width=1pt,black] (1.35,-5.949999999999999) -- (1.8,-6.3);
+\draw[fill=white,draw=none] (1.8,-6.3) circle (0.27);
+\draw[line width=1pt,red] (1.72,-6.38) -- (1.8800000000000001,-6.22);
+\draw[line width=1pt,red] (1.72,-6.22) -- (1.8800000000000001,-6.38);
+\draw[fill=black,draw=none] (0.9,-6.3) circle (0.06);
+\draw[line width=1pt,black] (0.9,-6.3) -- (0.45,-6.6499999999999995);
+\draw[line width=1pt,black] (0.9,-6.3) -- (1.35,-6.6499999999999995);
+\draw[fill=white,draw=none] (1.35,-6.6499999999999995) circle (0.27);
+\draw[line width=1pt,red] (1.27,-6.7299999999999995) -- (1.4300000000000002,-6.569999999999999);
+\draw[line width=1pt,red] (1.27,-6.569999999999999) -- (1.4300000000000002,-6.7299999999999995);
+\draw[fill=black,draw=none] (0.45,-6.6499999999999995) circle (0.06);
+\draw[line width=1pt,black] (0.45,-6.6499999999999995) -- (0.0,-7.0);
+\draw[line width=1pt,black] (0.45,-6.6499999999999995) -- (0.9,-7.0);
+\draw[fill=white,draw=none] (0.9,-7.0) circle (0.27);
+\draw[line width=1pt,red] (0.8200000000000001,-7.08) -- (0.98,-6.92);
+\draw[line width=1pt,red] (0.8200000000000001,-6.92) -- (0.98,-7.08);
+\draw[fill=black,draw=none] (0.0,-7.0) circle (0.06);
+\draw[line width=1pt,black] (0.0,-7.0) -- (0.45,-7.35);
+\draw[line width=1pt,black] (0.0,-7.0) -- (-0.45,-7.35);
+\draw[fill=white,draw=none] (-0.45,-7.35) circle (0.27);
+\draw[line width=1pt,red] (-0.53,-7.43) -- (-0.37,-7.27);
+\draw[line width=1pt,red] (-0.53,-7.27) -- (-0.37,-7.43);
+\draw[line width=1pt,blue,dashed] (-0.7,-7.15) -- (0.7,-7.15);
+\draw[fill=black,draw=none] (0.45,-7.35) circle (0.06);
+\draw[line width=1pt,black] (0.45,-7.35) -- (0.9,-7.699999999999999);
+\draw[line width=1pt,black] (0.45,-7.35) -- (0.0,-7.699999999999999);
+\draw[fill=white,draw=none] (0.0,-7.699999999999999) circle (0.27);
+\draw[line width=1pt,red] (-0.08,-7.779999999999999) -- (0.08,-7.619999999999999);
+\draw[line width=1pt,red] (-0.08,-7.619999999999999) -- (0.08,-7.779999999999999);
+\draw[fill=black,draw=none] (0.9,-7.699999999999999) circle (0.06);
+\draw[line width=1pt,black] (0.9,-7.699999999999999) -- (1.35,-8.049999999999999);
+\draw[line width=1pt,black] (0.9,-7.699999999999999) -- (0.45,-8.049999999999999);
+\draw[fill=white,draw=none] (0.45,-8.049999999999999) circle (0.27);
+\draw[line width=1pt,red] (0.37,-8.129999999999999) -- (0.53,-7.969999999999999);
+\draw[line width=1pt,red] (0.37,-7.969999999999999) -- (0.53,-8.129999999999999);
+\draw[fill=black,draw=none] (1.35,-8.049999999999999) circle (0.06);
+\draw[line width=1pt,black] (1.35,-8.049999999999999) -- (0.9,-8.399999999999999);
+\draw[line width=1pt,black] (1.35,-8.049999999999999) -- (1.8,-8.399999999999999);
+\draw[fill=white,draw=none] (1.8,-8.399999999999999) circle (0.27);
+\draw[line width=1pt,red] (1.72,-8.479999999999999) -- (1.8800000000000001,-8.319999999999999);
+\draw[line width=1pt,red] (1.72,-8.319999999999999) -- (1.8800000000000001,-8.479999999999999);
+
+
+\node (a1)		at (-0.5,0.4)	[align=center] {CDCL decision branching};
+\node (a3)		at (3,-1.5)	[align=center,lightgray] {previously\\explored\\branch};
+\node (a4)		at (-0.5,-9.0)	[align=center,red] {prohibited\\decisions};
+\node (a5)		at (-0.4,-4.5)	[align=center,blue] {SLS kickoff\\depths};
+
+
+    \end {tikzpicture}
+\end{figure}
+
+
+
+\end{center}
+
+\end{document}

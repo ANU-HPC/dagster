@@ -15,7 +15,7 @@ these two constraints consist of a tiling problem.
 
 The benchmark utility program - Benchmarks/Pentomino/pentominos.py - contains a number of execution modes that generate, decompose, solve and display pentomino problems.
 
-simply executing the pentomino utility program will display some of these options:
+simply executing the pentomino utility program will display some of these commands:
 
 $ python pentominos.py 
 > ----------------------------
@@ -41,6 +41,7 @@ $ python pentominos.py
 >   view-solution
 
 
+these commands may have subcommands, for instance
 
 
 

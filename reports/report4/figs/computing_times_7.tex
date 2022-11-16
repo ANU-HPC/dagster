@@ -1,0 +1,85 @@
+   \begin{figure}[]
+        \centering
+		\begin{tikzpicture}
+		\begin{axis}[
+			title={},
+			xlabel={Pentomino array size, $n$},
+			ylabel={Execution time (s)},
+			%xmin=0, xmax=0.25,
+			%ymin=10.00, ymax=100000.00,
+			ymode=log,
+			xtick={1,2,3,4},
+			%ytick={0,20,40,60,80,100},
+			%yticklabel=$\pgfmathprintnumber{\tick}\%$,
+			legend pos=north west,
+			ymajorgrids=true,
+			grid style=dashed,
+			xticklabel style={/pgf/number format/fixed},
+			width = 350,
+			height = 300
+		]
+
+
+\addplot[color=black,line width=0.4pt] coordinates {
+(1,2.80105912685394)(2,10.57788002491)(3,23.9460713863373)(4,51.4822851419449)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\tinisat}
+\addplot[color=red,line width=0.4pt] coordinates {
+(1,3.05225157737732)(2,10.7639915943146)(3,35.4204362630844)(4,98.6813420057297)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\lingeling}
+
+\addplot[color=blue!0!green,line width=0.4pt] coordinates {
+(1,3.20242965221405)(2,5.49430537223816)(3,9.83862674236298)(4,20.3514490127563)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 2 cores}
+\addplot[color=blue!15!green,line width=0.4pt] coordinates {
+(1,3.15934991836548)(2,5.35892224311829)(3,9.11750507354736)(4,18.654797077179)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 3 cores}
+\addplot[color=blue!30!green,line width=0.4pt] coordinates {
+(1,3.20555901527405)(2,5.43349432945251)(3,9.10745751857758)(4,18.4888120889664)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 4 cores}
+\addplot[color=blue!45!green,line width=0.4pt] coordinates {
+(1,3.20880806446075)(2,5.50885105133057)(3,9.26280069351196)(4,18.1849012374878)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 5 cores}
+\addplot[color=blue!60!green,line width=0.4pt] coordinates {
+(1,3.23214876651764)(2,5.45397925376892)(3,9.19934237003326)(4,17.846045255661)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 6 cores}
+
+
+
+
+\addplot[color=blue!0!green,line width=0.4pt] coordinates {
+(1,3.18395233154297)(2,5.55072700977325)(3,10.0285331010819)(4,21.3312681913376)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 2 cores, w/ Stre.}
+\addplot[color=blue!15!green,line width=0.4pt] coordinates {
+(1,3.18648815155029)(2,5.48706614971161)(3,9.33053779602051)(4,19.1051753759384)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 3 cores, w/ Stre.}
+\addplot[color=blue!30!green,line width=0.4pt] coordinates {
+(1,3.28249680995941)(2,5.57455515861511)(3,9.50650572776794)(4,19.7531452178955)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 4 cores, w/ Stre.}
+\addplot[color=blue!45!green,line width=0.4pt] coordinates {
+(1,3.3218799829483)(2,5.64312767982483)(3,9.76925492286682)(4,19.2610232830048)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 5 cores, w/ Stre.}
+\addplot[color=blue!60!green,line width=0.4pt] coordinates {
+(1,3.37587356567383)(2,5.72409021854401)(3,9.68606567382813)(4,19.9980112314224)
+}node[pos=0.8](endofplotsquare){} ;
+\addlegendentry{\dagster 6 cores, w/ Stre.}
+
+
+
+
+		\end{axis}
+		\end{tikzpicture}
+		%\vspace{-18pt}
+		\caption[Runtime performance for Pentomino problems with and without strengthener]{Runtime performance (specifically medians) of \dagster\ against \tinisat\ and \lingeling\ solvers for different numbers of cores, across $n$, for $n\times n$ grid of $15\times 15$ pentomino problems, with and without additional strengthening cores.}
+		\label{fig:performance_graph4646ddd1}
+    \end{figure}

@@ -1,6 +1,0 @@
-
-Running "make" will generate an executable named "tinisat."
-
-Usage: tinisat <cnf-file>
-
-Please send comments and bug reports to jinbo.huang@nicta.com.au.

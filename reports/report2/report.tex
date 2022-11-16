@@ -1,0 +1,618 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arsclassica Article
+% LaTeX Template
+% Version 1.1 (1/8/17)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Lorenzo Pantieri (http://www.lorenzopantieri.net) with extensive modifications by:
+% Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\documentclass[
+10pt, % Main document font size
+a4paper, % Paper type, use 'letterpaper' for US Letter paper
+oneside, % One page layout (no page indentation)
+%twoside, % Two page layout (page indentation for binding and different headers)
+headinclude,footinclude, % Extra spacing for the header and footer
+BCOR5mm, % Binding correction
+]{scrartcl}
+
+\input{structure.tex} % Include the structure.tex file which specified the document structure and layout
+\hyphenation{Fortran hy-phen-ation} % Specify custom hyphenation points in words with dashes where you would like hyphenation to occur, or alternatively, don't put any dashes in a word to stop hyphenation altogether
+\usepackage{makecell}
+\usepackage{fancyvrb}
+\usepackage{tikz}
+\usepackage{tikzscale}
+\usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{graphicx}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{hyperref}
+%\usepackage[table,xcdraw]{xcolor}
+
+\usepackage{color}
+\usepackage{colortbl}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Formatting C code - this can be removed if
+%% a nicer way of formatting is found.
+\usepackage{listings}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=C,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+
+\usetikzlibrary{snakes,arrows,shapes}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{arrows}
+\usepgfplotslibrary{fillbetween}
+
+\title{\normalfont\spacedallcaps{Dagster}} % The article title
+\subtitle{- DRAFT IN PROGRESS - \\ A Parallel Structured SAT Solver \\ Progress Report Against Project Activities} % Uncomment to display a subtitle
+\author{\spacedlowsmallcaps{Mark Burgess, Charles Gretton,}\\\spacedlowsmallcaps{Josh Milthorpe, Marshall Cliffton, Luke Croak}} % The article author(s) - author affiliations need to be specified in the AUTHOR AFFILIATIONS block
+\date{\today} % An optional date to appear under the author(s)
+
+\begin{document}
+
+\newcommand{\dagster}{\textsc{Dagster}}
+\newcommand{\tinisat}{\textsc{TiniSAT}}
+\newcommand{\lingeling}{\textsc{Lingeling}}
+\newcommand{\gnoveltyp}{\textsc{gNovelty$+$}}
+
+\renewcommand{\sectionmark}[1]{\markright{\spacedlowsmallcaps{#1}}} % The header for all pages (oneside) or for even pages (twoside)
+%\renewcommand{\subsectionmark}[1]{\markright{\thesubsection~#1}} % Uncomment when using the twoside option - this modifies the header on odd pages
+\lehead{\mbox{\llap{\small\thepage\kern1em\color{halfgray} \vline}\color{halfgray}\hspace{0.5em}\rightmark\hfil}} % The header style
+\pagestyle{scrheadings} % Enable the headers specified in this block
+
+
+\maketitle % Print the title/author/date block
+
+
+\section*{Abstract} % This section will not appear in the table of contents due to the star (\section*)
+
+
+In this report we update stakeholders on developments since our midterm report, by providing a new record of progress towards goals of the project.
+%
+%%We outlay the changes that have taken place since the midterm report.
+In particular we summarise new functionalities/features that have been implemented since our last report,
+and we outlay several demonstration example runs of \dagster\ to indicate performance and function.
+
+\let\thefootnote\relax\footnotetext{All Authors: \textit{School of Computing, Australian National University, Canberra, Australia.}}
+%\let\thefootnote\relax\footnotetext{* \textit{Department of Biology, University of Examples, London, United Kingdom}}
+%\let\thefootnote\relax\footnotetext{\textsuperscript{1} \textit{Department of Chemistry, University of Examples, London, United Kingdom}}
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+\setcounter{tocdepth}{2} % Set the depth of the table of contents to show sections and subsections only
+\tableofcontents % Print the table of contents
+\listoffigures % Print the list of figures
+\listoftables % Print the list of tables
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+%----------------------------------------------------------------------------------------
+%	INTRODUCTION
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+
+This report outlines some evaluations of \dagster, a SAT solver we have built to solve difficult and/or large SAT problems using HPC infrastructure.
+%%
+\dagster\ takes as input a sequence of disjunctive clauses and a graphical structure that determines the problem at hand, its compositional structure, and thereby information about how to solve that problem in a distributed computing environment.
+\dagster\ proceeds by solving independent subproblems in parallel in an HPC (High Performance Computing) environment, so that eventually the satisfiability of the problem of interest is determined.
+In the case of satisfiable instances of the SAT problem, the \dagster\ tool can also be used to count the number of satisfying valuations efficiently using a parallel computing environment. 
+%%
+The formula of interest and its compositional structure is described according to a labelled Directed Acyclic Graph (DAG).
+Labelled vertices index subproblems---i.e. subsets of disjunctive clauses---and directed edges are labelled with small sets of problem variables, parameterising the sets of cubes---i.e. each a conjunctive clause---that define subproblems.
+There are two opportunities for parallel search here:
+\begin{enumerate}
+\item For each outgoing arc from a source vertex, each satisfying valuation of the source problem poses one subproblem at each destination vertex.
+\item In case a destination has multiple incoming arcs, for each logically consistent combination of incoming valuations we have one subproblem at that destination.
+%% \item	in case of neighbouring vertices connected in sequence by an arc, each satisfying valuation at the source subproblem poses one subproblem at the sink;
+%% \item	in case of a vertex connected to multiple neighbours:
+%%   \begin{enumerate}
+%%   \item in the case of two or more incoming arcs, we have that source subproblems are solved independently and each comparable solution valuation is joined together to pose a subproblem at the sink.
+%%   \item in the case of two or more outgoing arcs,  
+%%   \end{enumerate}
+\end{enumerate}
+
+In summary, the way the search is distributed across multiple processes in described by the DAG structure, with partial valuations and sets of logically consistent partial valuations determining what search tasks need to be scheduled.
+%%
+This method of solving has several features:
+\begin{itemize}
+\item	Search is immediately parallel, as different parts of the problem are resolved across computing cores with minimal overhead.
+\item	\dagster is designed to take advantage of known substructure within the SAT problem, with different logical components of the problem solved in parallel.
+\item	Large problems do not need to be handled in-memory at-once, allowing for solutions to problems too big to fit in RAM.
+\end{itemize}
+There are also several weaknesses of the approach to be aware of:
+\begin{itemize}
+\item The performance of the search is highly sensitive to the quality of the provided problem decomposition.
+Given an arbitrary formula finding a `good' decomposition is not necessarily easy.
+\item	The parallel infrastructure that the tool provides has some computational overhead, such that the tool shows worse performance compared to serial baseline solves on small and/or easy problems, where you might expect to solve the problem routinely on a laptop.
+\end{itemize}
+
+In this report we provide an update on the records provided in our midterm report, wherein we reported on some of the features of the \dagster\ system.
+%%
+We have previously highlighted the following features of \dagster:
+\begin{itemize}
+\item	It treats a SAT problem according to a DAG decomposition, taking in a set of disjunctive clauses and a DAG file object which described the problem to be resolved in parallel using the MPI messaging system.
+\item	Features an in-memory and filesystem subproblem breakdown, allowing \dagster\ to solve CNF problems which are larger than the system has memory.
+\item	An optional hybridisation solving mode between CDCL---particularly the search implemented in the \tinisat\ system---and SLS---particularly derived from the \gnoveltyp\ system---allowing the \dagster\ tool accelerated solving on problems both more suitable for CDCL and also SLS procedures.
+\item	An optimal parallel clause strengthening module, actively simplifying learnt clauses within the CDCL routine.
+\item	A scheduling algorithm that moderates the resolving of subproblem components in an MPI environment, with optional modes tailored to the enumerating all solutions of a SAT problem, and and also tailored to racing to a first solution.
+\item	An optional Binary Decision Diagram (BDD) module storing and compiling knowledge about the solutions to subproblems. This can minimise computational and communication overhead where there might otherwise be combinatorial explosion in memory.
+\end{itemize}
+
+Within these subsystems the \dagster\ tool has the potential to solve problems in parallel, and a testing suite was designed for verification and validation of the correct execution of this function.
+%%
+In this report we provide some verified use cases and computation experiments about the performance of \dagster, and update stakeholders on developments since the midterm report.
+
+\subsection{changelog}
+Noteworthy software changes since the midterm report include:
+\begin{itemize}
+\item	Smaller in-memory storage of DAG information using {\em RangeSets} for storing indices of subproblem clauses and variables -- i.e. to minimise memory bloat for very large DAG instances. This feature was required for the below reported Pentominoes case study, as well as for a range of other problems we have been testing on. 
+\item	The addition of an optional, more fragile but quicker, mechanism that skips testing logical compatibility for multiple incoming valuations. %% solution resolving mechanism which assumes all messages are compatible - which eliminates a potential bottleneck on parallel problems
+\item	The addition of solution counting interrupt to workers which allows them to be reallocated to different problems more easily.
+\item	The addition of the ability of \dagster\ to handle disjoint DAGs, and an additional mode of operation which race to a first solution on each disjoint sub-graph. This feature is important for the Property Directed Reachability case study being examined by PhD candidate Marshall Clifton. 
+\item	An additional solution simplifying loop inside CDCL processes to minimise the number of variables in reported (sub-)problem solutions. This feature is important for the symbolic execution workflows being examined by honours student Luke Croak. 
+\item	Added an fast process of parsing and splitting a CNF into subproblems without having to load it entirely into RAM - allows processing of large CNF files that would otherwise exhaust the RAM to load.
+\item	Very many performance improvements were implemented, and a few critical bugs were discovered and resolved.
+\end{itemize}
+
+
+\clearpage
+\section{Model Counting in Parallel - Hard Satisfiable Random Formulae}\label{section:section1}
+
+Here, we examine the performance of the tool at counting models in a hard synthetic example that exhibits a single solution.
+One simple case of verifying the parallel performance of \dagster\ is to test the performance solving small-hard SAT problems which are entirely disjoint.
+%%
+Particularly it is expected that as the number of small-hard problems increases then the time \dagster\ should take in solving these should be a function of the time it takes to solve any single one of the subproblems, and the ratio of the number of multiprocessing cores to the number of subproblems which need to be solved.
+
+The SGEN1 script\footnote{SGEN1: \url{http://www.cs.qub.ac.uk/~i.spence/sgen/}} distributed with \dagster\ was used to generate small-hard subproblems comprising $95$ variables and featuring one unique solution.
+Such problems take our baseline CDCL procedure, \tinisat, about half a second to solve and also prove that no further solutions exists.
+%%
+Our repository includes a custom script for conjoining subproblems of that type into one super-problem described by a accompanying DAG.
+Figure~\ref{fig:dag_example4315} gives a depiction of this type of super-problem.
+The performance of \dagster\ at solving this arrangement of subproblems was measured.
+We examined the wall-time performance of the tool as we scale the number of cores \dagster\ was operating with as a fraction of the time it took a vanilla CDCL procedure in \tinisat\ to solve the problem without having to also prove that no further solution exists.
+
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=-1.03,scale=1.1]
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (1) at (0, 1) {8};
+	
+	%\node [fill=white, draw=black, shape=circle, minimum size=6mm] (2) at (-4, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (3) at (-3, 0) {1};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (4) at (-2, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (5) at (-1, 0) {3};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (6) at (0, 0) {4};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (7) at (1, 0) {5};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (8) at (2, 0) {6};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (9) at (3, 0) {7};
+	%\node [fill=white, draw=black, shape=circle, minimum size=6mm] (10) at (4, 0) {10};
+
+	
+	%\draw [fill=none, ->] (2) to (1);
+	\draw [fill=none, ->] (3) to (1);
+	\draw [fill=none, ->] (4) to (1);
+	\draw [fill=none, ->] (5) to (1);
+	\draw [fill=none, ->] (6) to (1);
+	\draw [fill=none, ->] (7) to (1);
+	\draw [fill=none, ->] (8) to (1);
+	\draw [fill=none, ->] (9) to (1);
+	%\draw [fill=none, ->] (10) to (1);
+\end{tikzpicture}
+\caption[An example DAG for conjoined small-hard problems]{An example DAG for conjoined small-hard problems, where disjoint subproblems are processed in parallel and their solutions joined together at the final node}\label{fig:dag_example4315}
+\end{figure}
+
+
+The run-time of search on  super-problems with varying numbers of subproblems, in different computational environments where we vary the number of available cores, is shown in Figures~\ref{fig:performance_graph1}~and~\ref{fig:performance_graph2}.
+%%
+From Figure~\ref{fig:performance_graph1} we can see that as the number of subproblems increases the time it takes \dagster\ to solve the problem as a fraction of the time it takes the baseline CDCL procedure, \tinisat, to solve the problem decreases -- i.e. \dagster\ is significantly faster.
+Particularly, it is possible to note that the trend-line is approximately hyperbolic, indicating that the computational overhead of using \dagster\ goes to zero as the number of subproblems increases.
+Also, the speed of \dagster\ is pseudo-linearly increasing for large numbers of subproblems from figure \ref{fig:performance_graph2} which is expected.
+The reader should also not that here, \dagster\ is solving a more difficult problem compared to the CDCL baseline.
+It has to find the one satisfying valuable, and then further prove that no further solutions exists.
+
+We also notice that increasing the number of cores available to \dagster\ solving the problem increases performance, but only upto a certain point.
+Particularly it was noticed that $64$ cores performed significantly worse than $32$ cores.
+This measurement of degrading performance is something we shall investigate in due course, and is likely due to the experimental host being oversubscribed at the time we took the measurement. 
+
+The invocation to run the above experiment is to be found by executed the following command within the code repository:
+
+\begin{verbatim}
+python3 ~/summer1819/Benchmarks/cnf_concatenator/run.py
+\end{verbatim}
+
+Experimenting with with small-hard problems in parallel we were able to verify that \dagster\ offers significant parallel advantage, as is expected by its design.
+
+\input{figs/computing_times_1.tex}
+\input{figs/computing_times_2.tex}
+
+\clearpage
+
+
+\section{A Large Satisfiable Problem - Pentominoes}
+
+A tiling problem was extended as a benchmark for \dagster\ from a recreational puzzle solving youtube channel\footnote{Cracking the Cryptic, youtube video: \url{youtube.com/watch?v=S2aN-s3hG6Y}}, as shown in Figure \ref{fig:pentomino_puzzle1}, where the challenge is to fill a grid with Pentominoes (5 connected blocks) such that no pentomino crosses a boldened black line, and that no pentominoes of the same shape (counting reflections/rotations) touch each other.
+
+\input{figs/pentomino1.tex}
+
+A generator of these kind of problems was coded to randomly generate hard 15x15 pentomino problems, involving a process of:
+\begin{enumerate}
+\item	Randomly filling a 15x15 grid with pentominoes
+\item	Bolden the outline of those pentominoes, and removing them
+\item	Iteratively remove a random boldened line segments while the puzzle is uniquely solvable, until no more such removals are possible.
+\end{enumerate}
+
+This process was shown to become prohibitively slow to generate problems larger than 25x25, and so to generate bigger pentomino problems these 15x15 pentomino problems were cascaded side-by-side together in a grid pattern, such as shown in Figure \ref{subproblem2}.
+In this way, the grid of pentomino problems constitutes a larger problem which has logically distinct parts and where each subproblem is logically related only to its immediate neighbours: above, below, left and right; and because every pentomino subproblem is uniquely solvable then also this larger pentomino problem is also uniquely solvable.
+
+For these large pentomino problems a DAG would be generated embodying a solution process of solving from the top left diagonally through to the bottom right, as shown in Figure \ref{fig:dag_example1215}.
+In these particular problems the size of the grid of 15x15 pentomino subproblems would determine the maximum branching of the parallel process and thus the efficiency of the solving in parallel.
+
+\input{figs/pentomino2.tex}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=-1.03,scale=1.1]
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (1) at (0, 0) {1};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (2) at (1, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (4) at (2, 0) {4};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (7) at (3, 0) {7};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (3) at (0, 1) {3};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (5) at (1, 1) {5};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (8) at (2, 1) {8};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (11) at (3, 1) {11};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (6) at (0, 2) {6};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (9) at (1, 2) {9};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (12) at (2, 2) {12};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (14) at (3, 2) {14};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (10) at (0, 3) {10};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (13) at (1, 3) {13};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (15) at (2, 3) {15};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (16) at (3, 3) {16};
+	
+	\draw [fill=none, ->] (1) to (3);
+	\draw [fill=none, ->] (2) to (5);
+	\draw [fill=none, ->] (4) to (8);
+	\draw [fill=none, ->] (7) to (11);
+	
+	\draw [fill=none, ->] (3) to (6);
+	\draw [fill=none, ->] (5) to (9);
+	\draw [fill=none, ->] (8) to (12);
+	\draw [fill=none, ->] (11) to (14);
+	
+	\draw [fill=none, ->] (6) to (10);
+	\draw [fill=none, ->] (9) to (13);
+	\draw [fill=none, ->] (12) to (15);
+	\draw [fill=none, ->] (14) to (16);
+	
+	\draw [fill=none, ->] (1) to (2);
+	\draw [fill=none, ->] (2) to (4);
+	\draw [fill=none, ->] (4) to (7);
+	
+	\draw [fill=none, ->] (3) to (5);
+	\draw [fill=none, ->] (5) to (8);
+	\draw [fill=none, ->] (8) to (11);
+	
+	\draw [fill=none, ->] (6) to (9);
+	\draw [fill=none, ->] (9) to (12);
+	\draw [fill=none, ->] (12) to (14);
+	
+	\draw [fill=none, ->] (10) to (13);
+	\draw [fill=none, ->] (13) to (15);
+	\draw [fill=none, ->] (15) to (16);
+\end{tikzpicture}
+\caption{An example DAG for a 4x4 pentomino superproblem}\label{fig:dag_example1215}
+\end{figure}
+
+For these problems we tested the performance of \dagster\ for different numbers of processor cores, against the  \tinisat\ and \lingeling\ CDCL baselines for different sized problems, the results are shown in figure \ref{fig:performance_graph46461}.
+In this figure, we see that \dagster\ is upto an order of magnitude faster (in the median) for these problems than serial sat solvers, but that increasing the number of cores does not necessarily improve performance.
+Specifically we suspect that this is because the DAGs of these problems (such as per instance in figure \ref{fig:dag_example1215}) do not support sufficiently many parallel processing streams to take advantage of higher parallel processing cores.
+
+\input{figs/computing_times_4.tex}
+
+These Pentomino problems verified the functioning of \dagster\ in providing speedup due to parallelisation in solving larger structured problems with coupled subproblems. 
+
+The invocation to run these experiments is to be found by executed the following command within the code repository:
+\begin{verbatim}
+~/summer1819/Benchmarks/Pentomino/runme.sh
+\end{verbatim}
+
+
+
+\clearpage
+\section{Counting Models in Parallel - Costas Arrays}
+
+A Costas array is a set of $n$ points in an $nxn$ array such that each column and row contains exactly one point and each of the $n(n-1)/2$ displacement vectors between the the points are distinct; Costas arrays are well known and have various applications, and the process of using search techniques to solve for them is known to be challenging.
+Specifically there is an open question about whether any Costas arrays exist notably for sizes 32x32 and 33x33.
+Searching processes have revealed that there are none of specific sub-classes of Costas arrays those sizes \cite{748721}, which has invited some to predict that Costas arrays of those sizes exist \cite{conf/ciss/RussoEB10}.
+Notwithstanding, searching processes has been conducted at least upto size 29x29 \cite{DBLP:journals/amco/DrakakisIRW11}.
+
+
+As an example, consider the following 6x6 Costas array in table \ref{table:costas1}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+                         &                          & \cellcolor[HTML]{333333} &                          &                          &                          \\ \hline
+                         &                          &                          &                          & \cellcolor[HTML]{333333} &                          \\ \hline
+                         &                          &                          &                          &                          & \cellcolor[HTML]{333333} \\ \hline
+\cellcolor[HTML]{333333} &                          &                          &                          &                          &                          \\ \hline
+                         &                          &                          & \cellcolor[HTML]{333333} &                          &                          \\ \hline
+                         & \cellcolor[HTML]{333333} &                          &                          &                          &                          \\ \hline
+\end{tabular}
+\caption{An example 6x6 Costas array}\label{table:costas1}
+\end{table}
+from this example Costas array we can see that there is exactly one filled-in cell for every column and row; additionally we can see that the vector displacement between any of the filled-in cells is unique and that there are no two sets of cells that have the same spacing between them. Particularly if we we tabulate all of the $n(n-1)/2$ displacements between pairs of nodes in table \ref{table:costas2} we can see that all the displacements values along each of the rows are unique.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|l|llll}
+\cline{2-6}
+                                 & \textbf{1} & \multicolumn{1}{l|}{\textbf{2}} & \multicolumn{1}{l|}{\textbf{3}} & \multicolumn{1}{l|}{\textbf{4}} & \multicolumn{1}{l|}{\textbf{5}} \\ \hline
+\multicolumn{1}{|l|}{\textbf{1}} & +2         & \multicolumn{1}{l|}{-5}         & \multicolumn{1}{l|}{+4}         & \multicolumn{1}{l|}{-3}         & \multicolumn{1}{l|}{+1}         \\ \hline
+\multicolumn{1}{|l|}{\textbf{2}} & -3         & \multicolumn{1}{l|}{-1}         & \multicolumn{1}{l|}{+1}         & \multicolumn{1}{l|}{-2}         &                                 \\ \cline{1-5}
+\multicolumn{1}{|l|}{\textbf{3}} & +1         & \multicolumn{1}{l|}{-4}         & \multicolumn{1}{l|}{+2}         &                                 &                                 \\ \cline{1-4}
+\multicolumn{1}{|l|}{\textbf{4}} & -2         & \multicolumn{1}{l|}{-3}         &                                 &                                 &                                 \\ \cline{1-3}
+\multicolumn{1}{|l|}{\textbf{5}} & -1         &                                 &                                 &                                 &                                 \\ \cline{1-2}
+\end{tabular}
+\caption{The displacements of the example 6x6 Costas array \ref{table:costas1}, organised by horisontal distance in rows, by horisontal offset in columns}\label{table:costas2}
+\end{table}
+
+Costas arrays are known to exist for many sizes, and for every Costas array, there are potentially 8 symmetry mappings of the same array that are also Costas arrays (by rotations and flip, ie. the dihedral group), consider numbers of Costas arrays by size given by online encyclopedia of integer sequences (OEIS): \url{https://oeis.org/A008404} and \url{https://oeis.org/A001441}.
+
+The investigative question therefore is: if we can encode the Costas problem into SAT, and then decompose the resulting SAT problem for accelerated solving using \dagster.
+Particularly the SAT encoding of the Costas problem was produced with optional symmetry breaking constraints to break dihedral mappings, particularly with lex-leader symmetry breaking, and a more simplified and less total symmetry breaking as found in \cite{conf/ciss/RussoEB10}.
+From this SAT problem we considered primarily two different ways of decomposing the SAT problem.
+\begin{enumerate}
+\item	Inspired by the construction of such tables as table \ref{table:costas2}, we considered a decomposition of iteratively constructing Costas arrays from the bottom of the table up. This decomposition proved to be poor performing as a combinatorial number of intermediate solutions between depths were created
+\item	Taking a much simpler approach of decomposing the problem into two parts, the first being placing the first two columns of the Costas array, and the second part of the problem being that the rest of the Costas array would be filled in. This proved to be more effective decomposition of the problem. See Figure \ref{fig:dag_example121}.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+	\node [fill=white, draw=black, shape=circle] (0) at (0, 0) {0};
+	\node [fill=white, draw=black, shape=circle] (1) at (1, 0) {1};
+	\draw [fill=none, ->] (0) to (1);
+\end{tikzpicture}
+\caption{A simplified DAG structure for the Costas decomposition}\label{fig:dag_example121}
+\end{figure}
+
+The performance of \dagster\ at solving Costas problems for different sized Costas arrays is given in Figure \ref{fig:performance_graph3}.
+In this figure the time taken to count all the Costas arrays of a given size is plotted against the size of the problem for different numbers of cores against the time taken to do the same thing running the serial baseline CDCL procedure implemented in \tinisat\ (shown in black).
+From this figure we can see that for larger sized Costas arrays that \dagster\ shows significantly improved performance in solving the Costas model counting problem, where the performance increases with the number of cores.
+However it is also noticed that for smaller and easier Costas problems (of size $nxn$ where $n<10$) that the parallel overhead of using \dagster\ is the primary determinant of the solution time, where the greater the number of cores the larger the overhead and the slower the process.
+
+With this simulation we can verify that \dagster\ can be used to speedup solving performance on the types of problems which are geometrically difficult and resemble research-interesting questions.
+
+The Costas simulation that produced the data shown in Figure \ref{fig:performance_graph3} can be invoked from the \dagster\ repository by executing:
+\begin{verbatim}
+/summer1819/Benchmarks/run.sh
+\end{verbatim}
+Where the script compiles and invokes the `generate-costas-N' program from inside that same directory.
+
+\input{figs/computing_times_3.tex}
+
+
+
+
+\clearpage
+\section{Accelerating Unsatisfiability Proofs via Parallelisation}
+
+Empirical studies of the Boolean satisfiability problem late last century identified and studied a notion of empirically {\em hard} problems.
+The earliest works studied formulae occurring in conjunctive normal form with all disjunctive clauses having a fixed length $k$.
+A range of studies of this ``{\em $k$-Satisfiability}'' problem have been undertaken treating different values of $k$, and other more flexible concepts of structural invariants.
+Taking $k=3$ and studying sets of pseudo-random problems researchers found that so-called ``hard'' problems occur when the ratio of the count of clauses to the count of problem variables is approximately $4.26$~\cite{cheeseman:etal:1991}. 
+Here we present a small study of pseudo-random $3$-Satisfiability using the problem distributions associated with Dubois et al. (2000)\cite{dubois:etal:2000}.
+
+Somewhat trivially---i.e. primarily due to a portfolio effect---the hybrid search implemented in \dagster\ outperforms CDCL baselines in hard satisfiable random instances.
+For satisfiable $3$-Satisfiability the best solution procedure is a local search~\cite{pham:etal:2008}. 
+Our hybrid configuration of  \dagster\ allows any number of such searches to be scheduled to run more-or-less independently in parallel on your cluster.
+Thus, not only is this parallel system better than CDCL here, courtesy of implementing a local search, it is also faster than running a serial local search procedure, because the expected walltime to a solution being emitted is at the lower end of the runtime distribution of that stochastic procedure.
+Here, we focus on the more interesting setting, accelerating search in a family of unsatisfiable $3$-Satisfiability problems.
+
+In our first result, we accelerate the walltime performance of the default implementation of CDCL in \tinisat, by leveraging the hybrid search mode, using the local search to generate a complete set of relatively easy UNSAT subproblems that can be solved independently in parallel.
+A comparison of runtime of \dagster\ as compared with the serial CDCL procedure in \tinisat\ is given in Figure~\ref{fig:3UNSAT_140random}. 
+Specifically, we can decompose the problem using a 2 node DAG in which the ``source'' node indexes $94\%$ of clauses, and this communicates solutions to a ``sink'' node that includes all the clauses from the concrete problem at hand.
+What is communicated is a small prefix of the total subproblem valuation. 
+The problem at the source node, with only  $94\%$ of clauses, is easily satisfiable using a local search, and indeed the hybrid procedure can quickly enumerate all solutions to that subproblem and subsequently the CDCL procedure can prove that no further solutions exists.
+The problem of proving that the concrete problem in unsatisfiable, for each of the valuations associated with the source node subproblem, is extremely easy.
+
+%\input{figs/3UNSAT_140random.tex}
+
+\input{figs/computing_times_5.tex}
+
+In conclusion, our hybrid solver can, by virtue of local search, easily enumerate the solutions to an underconstrained subproblem, and by virtual of parallelism quickly eliminate those solution candidates using systematic search. 
+
+\clearpage
+\section{Decomposing Software Verification Problems for Use in \dagster}
+
+Software verification problems are extremely important and finding a way to decompose them is critical to making proper use of \dagster. We will consider one pipeline that produces SAT problems from C and C++ source code and a preliminary approach which results in a working decomposition for \dagster.
+
+We use the tool CBMC, which is a bounded model checker for C and C++ programs, to generate the SAT problems. CBMC takes a program, which we want to verify certain properties about, and broadly speaking it passes it through 3 stages to result in the SAT formula. We will work through the example code in Figure \ref{ex1_code} to illustrate the process\footnote{CBMC can perform other safety checks in relation to memory and array bounds etc.. Our example will only consider an assertion that the user wants to be satisfied.}.
+\begin{enumerate}
+    \item In the first stage the given C/C++ program is converted into a GOTO program, which results in all code that performs a jump of some kind such as if statements, jumps and loops being converted into an equivalent goto statement which optionally has a guard or condition attached to it. The resulting GOTO program will only contain guarded goto statements\footnote{Which can be thought of, and are represented as, a conditional "if !X THEN GOTO Y".}, assignments, assertions, labels and goto instructions.
+    \item In the second stage the GOTO program is converted into single static assignment (SSA) form as CBMC performs loop unwinding which is done to a fixed bound\footnote{The unwinding can be determined manually by the user or left to the program to verify when enough unwinding has been done. We will not go into the details of this here.}. In SSA form variables can only be assigned once and with a special $\phi$ function are inserted at merge points to determine which of the possible instances of the variable are now being referred to. An example of this conversion can be seen in Figure \ref{ex1_ssa}, where $\phi$ nodes have been expanded into a form that uses the C ternary operator "?:".
+    \item In the final stage the SSA form is converted into a formula, by turning the assignments into equalities and forming the conjunction of all them as in Figure \ref{ex1_formula}, noting that the property to be checked is negated which in this case means we check to see if crash\_5 $= 1$. This formula is then converted into a form amenable for SAT by a process known as bit-blasting, we will not go into the details of that here.
+\end{enumerate}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=6cm]{./figs/ex1_code.png}
+  \caption{Example code in C.}
+  \label{ex1_code}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=6cm]{./figs/ex1_ssa.png}
+  \caption{Conversion of code into SSA form.}
+  \label{ex1_ssa}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=6cm]{./figs/ex1_formula.png}
+  \caption{Resultant formula from conversion.}
+  \label{ex1_formula}
+\end{figure}
+
+We are able to produce a decomposition for this program by considering the formula as it is represented in SSA form. The resulting decomposition that we create will have four nodes, see Figure \ref{ex1_dag}. The first node contains clauses that relate to calculating the goal and determining the values that guard\#1 and guard\#2 should be to reach that goal. These guard values will be communicated to nodes two and three which contain clauses that calculate the corresponding the values for $a$ and $b$ separately as the variable values are independent of one another. The final node will merge the results of nodes two and three and confirm that they cohere to form a solution.
+
+
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+	\node [fill=white, draw=black, shape=circle,align=center] (0) at (0, 3) {crash4\\ crash5};
+	\node [fill=white, draw=black, shape=circle,align=center] (1) at (3, 3) {guard$\#$2\\ b\_2};
+	\node [fill=white, draw=black, shape=circle,align=center] (2) at (0, 0) {guard$\#$1\\ b\_1};
+	\node [fill=white, draw=black, shape=circle,align=center] (3) at (3, 0) {Merge\\Node};
+	\draw [fill=none, ->] (0) to (1);
+	\draw [fill=none, ->] (0) to (2);
+	\draw [fill=none, ->] (1) to (3);
+	\draw [fill=none, ->] (2) to (3);
+\end{tikzpicture}
+  \caption{DAG for example code.}
+  \label{ex1_dag}
+\end{figure}
+
+
+Using a similar method we can produce a decomposition for a program with three independent conditionals \ref{ex2_code}, which will result in three completely independent sub-problems that are embarrassingly parallel \ref{ex2_dag}.
+
+\begin{figure}
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+
+  \includegraphics[width=6cm]{./figs/ex2_code.png}
+  \caption{Three independent conditionals.}
+  \label{ex2_code}
+
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+
+\begin{tikzpicture}[scale=0.7]
+	\node [fill=white, draw=black, shape=circle,align=center] (0) at (0, 0) {guard$\#$1};
+	\node [fill=white, draw=black, shape=circle,align=center] (1) at (0, 3) {crash1!0\\@1$\#$4};
+	\node [fill=white, draw=black, shape=circle,align=center] (2) at (3, 0) {guard$\#$2};
+	\node [fill=white, draw=black, shape=circle,align=center] (3) at (3, 3) {crash2!0\\@1$\#$4};
+	\node [fill=white, draw=black, shape=circle,align=center] (4) at (6, 0) {guard$\#$3};
+	\node [fill=white, draw=black, shape=circle,align=center] (5) at (6, 3) {crash2!0\\@1$\#$4};
+	\draw [fill=none, ->] (0) to (1);
+	\draw [fill=none, ->] (2) to (3);
+	\draw [fill=none, ->] (4) to (5);
+\end{tikzpicture}
+  \caption{DAG for the problem with three independent conditionals.}
+  \label{ex2_dag}
+
+
+    \end{minipage}
+\end{figure}
+
+
+
+Finally, we are also able to decompose software verification problems which contain loops where variables are independently acted upon \ref{ex3_code}. This will result in the first node computing the goal as before, and then two child nodes which deal with calculating the resultant values for the independent variables $a$ and $b$, whose results are then passed onto the merge node cf. \ref{ex3_dag}. 
+
+
+\begin{figure}
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+
+  \includegraphics[width=6cm]{./figs/ex3_code.png}
+  \caption{A crash is triggered based on the resulting values of two variables acted upon independently in a loop.}
+  \label{ex3_code}
+
+
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+
+\begin{tikzpicture}
+	\node [fill=white, draw=black, shape=circle,align=center] (0) at (0, 0) {crash=1};
+	\node [fill=white, draw=black, shape=circle,align=center] (1) at (2, 1) {variable b};
+	\node [fill=white, draw=black, shape=circle,align=center] (2) at (2, -1) {variable a};
+	\node [fill=white, draw=black, shape=circle,align=center] (3) at (4, 0) {Merge\\Node};
+	\draw [fill=none, ->] (0) to (1);
+	\draw [fill=none, ->] (0) to (2);
+	\draw [fill=none, ->] (1) to (3);
+	\draw [fill=none, ->] (2) to (3);
+\end{tikzpicture}
+  \caption{DAG for the problem with a loop.}
+  \label{ex3_dag}
+
+
+    \end{minipage}
+\end{figure}
+
+
+
+
+The above decompositions were all produced using the same recipe and were successfully run with \dagster. These small examples don't motivate large parallel compute, but we are validating our recipes and running them with \dagster\ which is executing these decompostions in parallel. Research is still ongoing into improving the decomposition method that was used to form the above DAG structures.
+
+
+
+\clearpage
+\section{Model Counting in Parallel - Easy Large Satisfiable Random Formulae}
+
+It is also possible to verify that \dagster\ has steady performance with larger problems, particularly we consider solving large-easy SAT problems which are entirely disjoint and in parallel, similar to the scheme implemented in section \ref{section:section1}.
+Particularly it is verified that as the number of large-easy problems increases then the memory that \dagster\ should take in solving these should be less than the size of the CNF file of all those problems combined; and in this way it is verifiable that \dagster\ can solve problems which are larger than the amount of memory on the machine.
+This is accomplished by splitting the CNF of the larger problem into parts corresponding to subproblems, which are loaded sequentially and solved in turn in accordance with the DAG.
+
+Particularly a 5MB random-7-SAT problem was generated, and multiple copies of the same problem were concatenated to form a parallel DAG - as previously shown in figure \ref{fig:dag_example4315}).
+In this way the maximum size of any subproblem was 5MB, whereas the CNF of the problem would be many multiples of 5MB.
+
+The memory consumed by \dagster\ running these problems against the size of the CNF of these problems for different numbers of cores is shown in figures \ref{fig:memory_consumption}.
+From figure \ref{fig:memory_consumption} we can see that the memory used is a barely a fraction of the size of the CNF, which doesn't vary considerably with the number of cores.
+From this experiment it can be verified that \dagster\ can tackle problems which are large with respect to the available memory.
+
+The invocation to run these experiments is to be found by executed the following command within the code repository:
+
+\begin{verbatim}
+~/summer1819/Benchmarks/cnf_concatenator/runme.sh
+\end{verbatim}
+
+
+\input{figs/computing_times_6.tex}
+
+
+\renewcommand{\refname}{\spacedlowsmallcaps{References}} % For modifying the bibliography heading
+\bibliographystyle{unsrt}
+\bibliography{bib.bib} % The file containing the bibliography
+\end{document}

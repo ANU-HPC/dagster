@@ -39,34 +39,32 @@ using namespace GlucoRed;
 #endif
 
 int strengthener_surrogate_main(MPI_Comm *communicator, CnfHolder* cnf_holder) {
-  // get filename, additional clauses from master
+  // get message additional clauses from master
   // start up reducer with this information, rank and tags
-  // TODO manage communicating a shutdown signal (look at how it is done in
-  // the SLS process
 
   int phase = 0;
   // Get a new CNF file from SatHandler
-  int fname_length;
+  int buffer_length;
   MPI_Status mpi_status;
-  MPI_Recv(&fname_length, 1 /*Number of ints*/, MPI_INT, 0 /*CDCL process ID*/, CNF_FILENAME_LENGTH_TAG, *communicator, &mpi_status);
+  MPI_Recv(&buffer_length, 1 /*Number of ints*/, MPI_INT, 0 /*CDCL process ID*/, CNF_FILENAME_LENGTH_TAG, *communicator, &mpi_status);
   Message* m = NULL;
   Cnf* cnf = NULL;
   int* buffer = NULL;
-  while (fname_length > 0) {
+  while (buffer_length > 0) {
     // start waiting for the next CNF filename length to be sent
     // (a length of zero is the signal to kill this process)
     if (buffer!=NULL)
       free(buffer);
-    TEST_NOT_NULL(buffer = (int*)calloc(sizeof(int), fname_length))
+    TEST_NOT_NULL(buffer = (int*)calloc(sizeof(int), buffer_length))
     if (m!=NULL)
       delete m;
     if (cnf!=NULL)
       delete cnf;
-    MPI_Recv(buffer, fname_length, MPI_INT, 0, CNF_FILENAME_TAG, *communicator, &mpi_status);
+    MPI_Recv(buffer, buffer_length, MPI_INT, 0, CNF_FILENAME_TAG, *communicator, &mpi_status);
     m = new Message(buffer);
     cnf = cnf_holder->compile_Cnf_from_Message(m);
     MPI_Request next_cnf_req;
-    MPI_Recv_init(&fname_length, 1, MPI_INT, 0, CNF_FILENAME_LENGTH_TAG, *communicator, &next_cnf_req);
+    MPI_Recv_init(&buffer_length, 1, MPI_INT, 0, CNF_FILENAME_LENGTH_TAG, *communicator, &next_cnf_req);
     MPI_Start(&next_cnf_req);
     run_strengthener(communicator, phase++, &next_cnf_req, cnf);
   }

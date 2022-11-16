@@ -1,0 +1,1765 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arsclassica Article
+% LaTeX Template
+% Version 1.1 (1/8/17)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Lorenzo Pantieri (http://www.lorenzopantieri.net) with extensive modifications by:
+% Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\documentclass[
+10pt, % Main document font size
+a4paper, % Paper type, use 'letterpaper' for US Letter paper
+oneside, % One page layout (no page indentation)
+%twoside, % Two page layout (page indentation for binding and different headers)
+headinclude,footinclude, % Extra spacing for the header and footer
+BCOR5mm, % Binding correction
+]{scrartcl}
+
+\input{structure.tex} % Include the structure.tex file which specified the document structure and layout
+\hyphenation{Fortran hy-phen-ation} % Specify custom hyphenation points in words with dashes where you would like hyphenation to occur, or alternatively, don't put any dashes in a word to stop hyphenation altogether
+\usepackage{makecell}
+\usepackage{fancyvrb}
+\usepackage{tikz}
+\usepackage{tikzscale}
+\usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{graphicx}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{hyperref}
+%\usepackage[table,xcdraw]{xcolor}
+
+\usepackage{color}
+\usepackage{colortbl}
+
+\usepackage{xspace} % fix missing spaces after fancy commands e.g. \dagster
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Formatting C code - this can be removed if
+%% a nicer way of formatting is found.
+\usepackage{listings}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=C,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+
+\usetikzlibrary{snakes,arrows,shapes}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{arrows}
+\usepgfplotslibrary{fillbetween}
+
+\title{\normalfont\spacedallcaps{Dagster}} % The article title
+\subtitle{A Parallel Structured SAT Solver \\ Final Report Against Project Activities} % Uncomment to display a subtitle
+\author{\spacedlowsmallcaps{Mark Burgess$^*$, Charles Gretton,}\\\spacedlowsmallcaps{Josh Milthorpe, Marshall Clifton, Luke Croak}} % The article author(s) - author affiliations need to be specified in the AUTHOR AFFILIATIONS block
+\date{\today} % An optional date to appear under the author(s)
+
+\begin{document}
+\newcommand{\dagster}{\textsc{Dagster}\xspace}
+\newcommand{\tinisat}{\textsc{TiniSAT}\xspace}
+\newcommand{\lingeling}{\textsc{Lingeling}\xspace}
+\newcommand{\gnoveltyp}{\textsc{gNovelty$+$}\xspace}
+
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+
+
+\renewcommand{\sectionmark}[1]{\markright{\spacedlowsmallcaps{#1}}} % The header for all pages (oneside) or for even pages (twoside)
+%\renewcommand{\subsectionmark}[1]{\markright{\thesubsection~#1}} % Uncomment when using the twoside option - this modifies the header on odd pages
+\lehead{\mbox{\llap{\small\thepage\kern1em\color{halfgray} \vline}\color{halfgray}\hspace{0.5em}\rightmark\hfil}} % The header style
+\pagestyle{scrheadings} % Enable the headers specified in this block
+
+
+\maketitle % Print the title/author/date block
+
+
+\section*{Abstract}
+We describe a novel solver for the Boolean satisfiability (SAT) problem for use in high-performance computing (HPC) environments.
+%%
+Our solver is hybrid, incorporating both systematic backtracking search and (stochastic) local search processes, and providing flexibility regarding the specific arrangement used for a given search exercise. 
+%%
+Our objectives are twofold: {\em (i)} engineer a SAT solver that seamlessly scales to very large CNF formulae, and {\em (ii)} enable practitioners to solve relatively challenging problems in HPC environments by efficiently distributing search effort across computing cores. 
+%%
+Our solver takes as input a SAT problem and a decomposition of it into parts, with each part a conjunctive normal form formula corresponding to an abstract subproblem connected together in a directed acyclic graph (DAG).
+%%
+As search progresses and primitive subproblem solutions are computed, our solver uses the labelled DAG to schedule subsequent search activities for execution on the available processing resources.
+%%
+Through the creation of this tool and subsequent demonstrating experiments, we are able to show how our tool  meets our objectives in the context of the various problems.
+%%
+Additionally we outline several demonstration runs of \dagster\ to indicate specific qualities and functions.
+
+
+
+\blfootnote{All Authors: \textit{School of Computing, Australian National University, Canberra, Australia.}}
+\blfootnote{$^*$Corresponding Author: \url{mark.burgess@anu.edu.au}}
+%\let\thefootnote\relax\footnotetext{* \textit{Department of Biology, University of Examples, London, United Kingdom}}
+%\let\thefootnote\relax\footnotetext{\textsuperscript{1} \textit{Department of Chemistry, University of Examples, London, United Kingdom}}
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+\setcounter{tocdepth}{2} % Set the depth of the table of contents to show sections and subsections only
+\tableofcontents % Print the table of contents
+\listoffigures % Print the list of figures
+\listoftables % Print the list of tables
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+%----------------------------------------------------------------------------------------
+%	INTRODUCTION
+%----------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+\section{Introduction}
+
+This report describes the design and experimental evaluation of \dagster, a Boolean satisfiability problem (SAT) solver we have built to solve difficult and/or large SAT problems using HPC (High Performance Computing) infrastructure.
+%%
+\dagster\ takes as input a sequence of disjunctive logical clauses defining a SAT problem and also a graph structure that describes its components (or subproblems) and defines the way in which they should be solved in parallel and/or in sequence. In this way information about how to solve a given problem in a distributed computing environment is specified.
+\dagster\ proceeds by solving independent subproblems in parallel in an HPC environment, so that eventually the satisfiability of the entire SAT problem is determined.
+In the case that the SAT problem is satisfiable, our \dagster\ tool can also be used to count the number of satisfying valuations efficiently using the parallel computing environment. 
+
+The SAT problem of interest and its compositional structure of subproblems is described according to a labelled Directed Acyclic Graph (DAG) which is input into the program.
+The labelled vertices of the DAG represent distinct subproblems and each edge between represents a set of variables that is shared between two subproblems.
+At each edge, the variable assignments that are present in solutions generated by the preceding subproblems are used to constrain the search in subsequent subproblems.
+Where multiple paths exist through the DAG these paths can be processed in parallel.
+Additionally, any subproblem can potentially generate multiple solutions that place different constraints on subsequent subproblems, which can then also be executed in parallel; thus there are multiple means of instantiating parallel search within \dagster.
+A detailed explanation of the structure of the relevant DAGs and how they relate to SAT subproblems is provided the subsequent sections.
+
+In summary, the way the search is distributed across multiple processes is described by the DAG structure, with partial valuations and sets of logically consistent partial valuations determining what search tasks need to be scheduled.
+%%
+This approach provides several benefits:
+\begin{itemize}
+\item	\dagster is designed to take advantage of known substructure within SAT problems, with different logical components of the problem solved in parallel.
+\item	Search can take advantage of distributed processing cores with minimal overhead.
+\item	Large problems do not need to be handled in-memory at-once, allowing for calculation of solutions to SAT problems too big to fit in RAM.
+\end{itemize}
+There are also several weaknesses of the approach to be aware of:
+\begin{itemize}
+\item	The performance of the search is highly sensitive to the quality of the provided DAG problem decomposition, and finding a `good' decomposition is not necessarily easy.
+\item	The parallel infrastructure that the tool provides has some computational overhead, such that the tool shows worse performance compared to serial solves on some very small and/or easy problems.
+\end{itemize}
+
+In this report we outline some of the features of the \dagster\ system:
+\begin{itemize}
+\item	A simple input file format for DAG decomposition, which is used in addition to a standard DIMACS CNF representation of the SAT problem.
+\item	Support for solving CNF problems which are larger than available system memory.
+\item	An optional hybrid solving mode between CDCL---particularly the search implemented in the \tinisat\ system---and SLS---particularly derived from the \gnoveltyp\ system---allowing \dagster to combine the benefits of these varied procedures.
+\item	An optimal parallel clause strengthening module, actively simplifying learnt clauses within the CDCL routine.
+\item	A distributed solver framework using MPI for communication between processes, including a Master scheduler with optional modes tailored to enumerating all solutions of a SAT problem, or racing to a first solution.
+\item	An optional Binary Decision Diagram (BDD) module storing and compiling knowledge about the solutions to subproblems. This can minimise computational and communication overhead where there might otherwise be combinatorial explosion in memory.
+\item   A testing suite for verification and validation of the correct execution of these functions.
+\end{itemize}
+
+
+%%
+
+Within this document, we detail the background, design, and evaluation of \dagster in the following sections:
+\begin{itemize}
+\item	Section \ref{sec:background} gives a brief background to the SAT problem and the state of SAT solving processes;
+\item	Section \ref{sec:decompositions} gives an outline of two conceptual ways of decomposing SAT problems into parts for parallel computation, and indicates that \dagster is a tool which can handle both.
+\item	Section \ref{sec:dagster_components} describes the components of the \dagster system in isolation, introducing each with some background in turn.
+\item	Section \ref{sec:dagster_structure_composition} describes how these subsystems communicate together to solve a problem, and specify the input/output of the \dagster program that results.
+\item	Section \ref{sec:experiments} considers some sources of DAG decomposed SAT problems, and introduces a range of \dagster experiments with their results, particularly: 
+\begin{itemize}
+\item	Section \ref{section:section1}: parallel solution of small hard problems.
+\item	Section \ref{sec:pentominos}: parallel solution of larger hard problems, particularly Pentomino problems.
+\item	Section \ref{section:costas_arrays}: a divide-and-conquer solution to the Costas array problem.
+\item	Section \ref{section:gensat_problems}: a two part decomposition of random SAT problems to accelerate their solution process, with SLS assistance.
+\item	Section \ref{sec:easy_large_problems}: solving easy large problems in parallel, demonstrating how \dagster can solve problems in sequence where an explicit representation of that set of problems exceeds the computer memory.
+\item	Section \ref{sec:easy_connected_problems}: connected easy-5-SAT problems, showing that SLS assistance can speed up solution process.
+\item	Section \ref{section:software_verification}: software verification problems.
+\end{itemize}
+\end{itemize}
+
+
+
+
+\clearpage
+
+
+
+
+\section{Background}\label{sec:background}
+
+Modern satisfiability solving has a long history of development and research, and currently there are many well respected and powerful solvers which can tackle many distinct problems from a range of disciplines.
+%%
+The Boolean satisfiability problem (SAT) is the problem of determining whether a formula in propositional logic is {\em satisfiable}; in other words, whether there exists an assignment of the propositional variables under which the formula evaluates to {\em true}.
+If no such assignment exists, we say the formula is {\em unsatisfiable}.
+SAT problems are often specified in conjunctive normal form (CNF), where the problem is rendered as being a conjunction over a disjunctions of literals (or a conjunction over `clauses', where a literal is a variable, negated or not).
+The related $\#$SAT problem is that of counting the number of distinct satisfying assignments associated with a formula.
+The Boolean SAT problem is the canonical problem of the NP-complete class~\cite{10.1145/800157.805047,Kar72}.
+This report outlines the development and functionality of the \dagster\  tool which supports solving both the SAT and $\#$SAT problems. 
+
+There are two dominant paradigms for solving SAT problems using serial processing: {\em (i)} {\em stochastic local search} (SLS) such as investigated in~\cite{pham:etal:2008,pham:etal:2007,balint:schoning:14}, and  {\em (ii)} the systematic backtracking search of {\em conflict-driven clause learning} (CDCL), as studied in~\cite{audemard:and:simon:2009,biere:2008}.
+%%
+The latter are descendants of the Davis, Putnam, Logemann, and Loveland (DPLL) procedure~\cite{10.1145/368273.368557,10.1145/321033.321034}.
+%%
+Both local and systematic searches operate by computing a satisfying valuation should one exists.
+%%
+Systematic searches are sound and complete procedures -- I.e., they are guaranteed to find a satisfying assignment should one exist, and if they declare that none exists, that declaration is valid.
+In case the formula at hand is unsatisfiable, some modern structured SAT solvers are able to emit UNSAT proof certificates in a canonical format~\cite{10.1007/978-3-319-09284-3_31}.
+%%
+Conversely, Local search procedures are sound but not complete.
+These treat the SAT problem as an optimisation problem in which the objective is to compute an assignment that minimises the number of unsatisfied Boolean clauses.
+If a satisfying assignment is reported, then it is valid, and the formula at hand is satisfiable.
+However, because local search procedures aren't systematic in their search, they are unable to prove that a formula is unsatisfiable.
+
+In modern systematic SAT solvers, the implemented search procedure is augmented with additional rules and dynamics, such as restarts, sophisticated heuristics regarding what variables and values to explore during search and mechanisms to acquire succinct representations of acquired/learnt knowledge about the problem at hand.
+Notably, most of these procedures are sequential, and not typically designed to be parallelised across multiple compute cores.
+Additionally, there is no obvious way to benefit substantially from parallel computing environments in the case of local search procedures.
+Some challenges of accelerating and scaling SAT solving in parallel computing environments are discussed in~\cite{AAAI125001}.
+%%
+Parallelism can be exploited in the tuning of algorithm configurations~\cite{birattari:etal:2010}, {\em search-space splitting}, or {\em portfolio approaches}~\cite{lindauer:etal:2017,lindauer:etal:2015,hutter:etal:2009}.
+And in these cases, identifying and sharing good clauses is key to efficient parallelism~\cite{audemard:and:simon:2009}, however, \cite{katsirelos:2013} identify bottlenecks in the structure of resolution refutations which place hard limits on parallelism in search-space splitting for CDCL solvers.
+Finally, in case the domain of interest is {\em bounded model checking} (BMC), see~\cite{biere:etal:2003}, parallelisation is raised as a topic when considering the search horizon at which to pose queries~\cite{rintanen:2004,streeter:and:smith:2007}.
+How to leverage parallelisation in this setting has not been explored satisfactorily in the existing literature. 
+
+In our work, we pursue scaling and accelerating SAT solving in HPC environments supposing we have a decomposition of the problem for parallel satisfiability.
+We typically break the SAT formula itself into different subproblems, such that a conjunction of subproblems corresponds to the original problem itself.
+Solving each of the subproblems and resolving any differences between the solutions to the parts of the problem results in a solution to the original problem.
+%%
+Our open-source solver is called \dagster\  and includes state-of-the-art components including SLS reporting and recommendations, BDD simplification between subproblems, and clause simplifying, and subproblem scheduling techniques.
+The effectiveness of the decomposition of the problem into subproblems determines the effectiveness of the resultant search procedure, and hence the effectiveness of the solver.
+However, for problems that are naturally decomposed into subproblems our solver can exceed the walltime performance of sequential solvers, as the results in this report will demonstrate.
+
+
+
+
+\section{Decomposing SAT Problems}\label{sec:decompositions}
+
+The fundamental problem of breaking a SAT problem into subproblems for parallel computing involves a couple of considerations, particularly what structure the subproblems should have and how they should be solved together.
+We focus on two uniquely distinct processes of breaking down a problem, which we broadly call the `divide and conquer' approach, and the `divide and unify' approach.
+In light of this we consider building a tool which can be adapted to handle both approaches.
+
+The `divide-and-conquer' approach partitions the search space into disjoint sets by constraining some of the variable values; each of these subspaces are then searched in parallel.
+In this way, a solution to any of the parts is a solution to the original problem, and therefore the original problem is satisfied the moment that any process finds a solution.
+Alternatively the `divide and unify' approach breaks the problem apart by considering different subsets of the clauses that define the original problem. Because each part has a subset of the clauses of the original problem, it is thus under-constrained, and hence a unification of the solutions of the parts together defines the solutions of the original problem.
+
+These approaches define distinct approaches to SAT parallelisation.
+
+\subsection{The `Divide and Conquer' Approach}
+
+Various authors have experimented with the process of breaking SAT problems into subproblems arranged in various structures.
+One of the most direct ways of breaking a SAT problem into subproblems is to consider the resulting subproblems after certain variables have been assigned.
+If a single variable is assigned to be one way, then the choice of values over the remaining variables reduces the dimension of the search space.
+This resulting search space is also disjoint from the resulting search space if the variable was assigned the other way.
+These subproblems can also potentially be broken down into yet smaller subproblems by selection of further variables, and those subproblems will also be disjoint in the same way.
+This process of generating subproblems we call the `divide-and-conquer' strategy to parallel SAT solving \cite{DBLP:journals/aim/HamadiW13}, as different problems will be
+guaranteed to be searching for solutions in different and disjoint parts of the problem search space.
+One noteworthy example of this process is the so-called 'cube-and-conquer' algorithm \cite{cube_and_conquer1} which breaks the problem into 
+many subproblems by first using a `lookahead' process \cite{lookahead_sat_solvers1} and breaking the search into subproblems at different junctions of that search.
+In the 'divide-and-conquer' technique, each subproblem encodes a portion of the search space which is then searched in parallel. In this scheme,
+a solution to any subproblem is also a solution to the original problem, as each subproblem is describing a problem that is more constrained than the original problem.
+
+These ideas can be made concrete using a simple example.
+
+\newtheorem{myeg}{Example}
+\begin{myeg} \label{eg:cubes}
+  Let $f$ be the following CNF formula over $4$ propositional variables. 
+  \[
+  \begin{array}{c}
+    ( \neg 1 \lor 2 \lor 3) \land  (1 \lor \neg 2 \lor \neg 3 ) \land ( 2 \lor \neg 3 ) \land ( 3 \lor \neg 4 ) \land (2 \lor \neg 3 \lor \neg 4 ) \land ( \neg 2 \lor 3 \lor 4 )
+  \end{array}
+  \]
+  The set of $3$ possible satisfying assignments to $f$ is:
+  \[
+  \{1 \land 2 \land 3 \land 4 ;
+  1 \land 2 \land 3 \land \neg 4 ;
+  \neg 1 \land \neg 2 \land \neg 3 \land \neg 4 \}\]
+  The set of clauses in the formula $f$ set can be considered after the following $4$ disjoint assignments (or `cubes') of variables $1$ and $4$: $1\land 4$, $1\land \neg 4$,  $\neg 1\land 4$,  and $\neg 1\land \neg 4$.
+  For example, the solutions associated with cube $1\land 4$ are a satisfying assignment to $f \land 1 \land 4$.
+  In Table~\ref{table3v2} we tabulate the solutions of $f$ associated with each cube.
+  Note that the cubes induce a partition of the satisfying assignments of $f$.
+  \begin{flushright}$\blacksquare$\end{flushright}
+\end{myeg}
+
+
+The `divide-and-conquer' approach is identified as being quite effective at parallel SAT solving, particularly with hard or UNSAT problems where there is no easy structure inherent to the problem that can be exploited.
+However, where there does exist inherent structure to the problem, another kind of decomposition may be useful.
+Particularly where a SAT problem is decomposable into multiple distinct parts which could be solved together; and this is the inspiration for the `divide-and-unify' approach.
+
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{c|c|c|c|c|}
+\cline{2-5}
+& \multicolumn{4}{c|}{Cubes} \\
+ \cline{2-5}
+ & $1\land 4$ & $1\land \neg 4$ & $\neg 1\land 4$ & $\neg 1\land \neg 4$ \\
+ \hline
+\multicolumn{1}{|c|}{Clauses}  &
+\makecell{ $2 \lor 3 $ \\ \\ $ 2 \lor \neg 3 $ \\ $ 3 $ \\ $ 2 \lor \neg 3 $ \\ $~$} &
+\makecell{ $2 \lor 3 $ \\ \\ $ 2 \lor \neg 3 $ \\ \\ \\ $ \neg 2 \lor 3 $ } &
+\makecell{ \\ $ \neg 2 \lor \neg 3 $ \\ $ 2 \lor \neg 3 $ \\ $ 3 $ \\ $ 2 \lor \neg 3 $ \\ $~$ } &
+\makecell{ \\ $ \neg 2 \lor \neg 3 $ \\ $ 2 \lor \neg 3 $ \\ \\ \\ $ \neg 2 \lor 3 $ } \\ \hline
+\multicolumn{1}{|c|}{Solutions} &
+\makecell{ $ 1 \land 2 \land 3 \land 4 $ } &
+\makecell{ $ 1 \land 2 \land 3 \land \neg 4 $ } &
+\makecell{ $ \emptyset $ } &
+\makecell{ $ \neg 1 \land \neg 2 \land \neg 3 \land \neg 4 $ }
+\\ \hline
+\end{tabular}
+\caption[Process table of CNF subproblems solved by cubes]{An instance of a problem from Example~\ref{eg:cubes} is decomposed into four independent parts based on the possible assignments of variables $1$ and $4$ in the `divide-and-conquer' approach. Each independent part has a reduced clause set and possible solutions, and the solutions of each part match the solutions of the full problem.}
+\label{table3v2}
+\end{table}
+
+
+\subsection{The `Divide and Unify' Approach}
+
+In the `divide-and-unify' approach, each subproblem is less-constrained than the original problem; a union of the subproblem clauses/solutions solves the original problem. Thus, there are more solutions to the subproblems than there are solutions to the whole problem itself.
+
+One possible way of solving subproblems together is to run a process to generate all possible solutions to each subproblem, and then afterwards go through a process of enumerating compatible subproblem solutions together to resolve solutions that satisfy the original problem.
+This process of solving each subproblem independently and then merging their solutions is one way of solving many subproblems together, and a simple example of this is shown in Table \ref{table1}. In Table \ref{table1} we have two subproblems (part1 and part2), that are composed of separate clauses on the first row. 
+The possible solutions to each of the subproblems are shown on the second row, the merger of compatible pairs of solutions of these subproblems is shown on the bottom row. Note
+that each of the merged solutions on the bottom row is exhaustive in satisfying all the clauses of both the subproblems together.
+
+Another way of solving subproblems together is that the solutions of one subproblem can be fed as constraints into the solving procedure of a second subproblem.
+In this way the solutions of the second subproblem will tacitly be compatible with (at least one) solution of the first subproblem.
+It is obviously quite possible to string this process together in a line, in this way the $n^{th}$ subproblem will be solved with the constraints that satisfy a solution of the $(n-1)$th 
+subproblem, which was solved with constraints that satisfy a solution of the $(n-2)$th subproblem, and so on.
+%%
+In this manner, if there is a solution to the final subproblem in such a line, then it will satisfy all the subproblems and hence be a valid solution to the original problem.
+%%
+This line between subproblems is just one example of a directed acyclic graph (DAG) between subproblems.
+
+A simple example of this is shown in Table \ref{table2}. In Table \ref{table2} are two subproblems (similar to that shown in Table~\ref{table1}), 
+but the relevant variables to subproblem 1 are fed as constraints into subproblem 2.
+Here, the subproblem 1 has four unique solutions, however only the variables $2$ and $3$ are relevant to the second subproblem, and the solutions from subproblem 2 in response to the possible values of $2$ and $3$ from subproblem 1 are shown in the second column; note that this process creates the same outputs as shown in Table \ref{table1}, hence a complete solution set over both the subproblems.
+
+By these two ways, we can see techniques of solving subproblems together (all independently, and in a sequence) and these are extreme examples of possible ways of solving subproblems together.
+However, it is easy to imagine alternatives, for instance, if there are three subproblems, it is possible to solve the first two independently and resolve their solutions together 
+before feeding those resolved solutions as constraints into the third subproblem.
+In such a way, it is possible to consider the structure of the ordering of subproblems into a directed acyclic graph -- I.e., an arbitrary DAG.
+
+This raises the question of when and where it is preferable to solve subproblems independently or sequentially.
+Particularly it is seen that it is preferable to solve subproblems independently when the number of variables shared between the subproblems is small, such that the solutions of one subproblem are largely independent of those generated for the other.
+Conversely it is better to arrange subproblems in a sequence where there is a large variable overlap between them, such that the solutions of one subproblem are expected to constrain the possible compatible solutions of the other subproblem.
+
+In light of this flexibility, we developed a DAG file format to specify the possible decomposition of the SAT problem to be used in a solving routine as given in Section \ref{sec:dag_file}.
+
+It is also worth pointing out that there are several explicit examples of the `divide-and-unify' approach used in wider literature. 
+One simple instance of this approach is considered in \cite{DBLP:conf/ppam/SingerM07} where the `Joining and model Checking scheme' or JaCk-SAT, where the set of all variables is divided into two subsets of similar size, and the set of clauses is divided into three groups, one which features the variables of one variable subset, one which features the variables of the other subset, and one which features the variables of both subsets.
+JaCk-SAT then proceeds by generating the first and second clause sets, before resolving the solutions together with the third clause set.
+
+Another example of our SAT decomposition is found in \cite{conf/ictai/HabetPT09} which considers a much more general tree-based decomposition of problem into multiple parts based on a hypergraph of the relationship between variables and clauses; they define and describe their tree-based decomposition and consider a DPLL inspired solver for different subproblems.
+An alternative approach to subproblem generation and solving is given in \cite{DBLP:journals/endm/AmirM01} where they decompose a SAT problem into parts based on clause/variable ratio, that are solved in a series where the solutions of one part of the problem are passed on to the next part of the problem as a constraint; this process directly mirrors our elucidation in this section.
+
+
+
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{c|c|c|}
+\cline{2-3}
+                                       & part1     & part2     \\ \hline
+\multicolumn{1}{|c|}{Clauses}              & 
+\makecell{ $\neg 1 \lor 2 \lor 3 $ \\ $ 1 \lor \neg 2 \lor \neg 3 $ \\ $ 2 \lor \neg 3 $ }
+          &
+\makecell{ $ 3 \lor \neg 4 $ \\ $ 2 \lor \neg 3 \lor \neg 4 $ \\ $ \neg 2 \lor 3 \lor 4 $ }
+           \\ \hline
+\multicolumn{1}{|c|}{Solutions}   &      
+\makecell{ $ 1 \land 2 \land 3 $ \\ $ 1 \land 2 \land \neg 3 $ \\ $ \neg 1 \land 2 \land \neg 3 $ \\ $ \neg 1 \land \neg 2 \land \neg 3 $ \\  }
+          &
+\makecell{ $ 2 \land 3 \land 4 $ \\ $ 2 \land 3 \land \neg 4 $ \\ $ \neg 2 \land 3 \land \neg 4 $ \\ $ \neg 2 \land \neg 3 \land \neg 4 $ \\  }
+           \\ \hline
+\multicolumn{1}{|c|}{Merged Solutions} & \multicolumn{2}{l|}{
+\makecell{ $ 1 \land 2 \land 3 \land 4 $ \\ $ 1 \land 2 \land 3 \land \neg 4 $ \\ $ \neg 1 \land \neg 2 \land \neg 3 \land \neg 4 $ }
+} \\ \hline
+\end{tabular}
+\caption[Solving CNF subproblems independently and merging solutions]{An instance of a problem decomposed into two parts with different clauses, the solution to both subproblems is the merger of compatible pairs of solutions of the subproblems}
+\label{table1}
+\end{table}
+
+
+
+
+
+\begin{table}[h!]
+\centering
+
+\begin{tabular}{c|c|c|}
+\cline{2-3}
+                          & part1 & part2 \\ \hline
+\multicolumn{1}{|c|}{Clauses} &
+\makecell{ $\neg 1 \lor 2 \lor 3 $ \\ $ 1 \lor \neg 2 \lor \neg 3 $ \\ $ 2 \lor \neg 3 $ }
+       &
+\makecell{ $ 3 \lor \neg 4 $ \\ $ 2 \lor \neg 3 \lor \neg 4 $ \\ $ \neg 2 \lor 3 \lor 4 $ }
+       \\ \hline
+Solutions                 &  $~~ \textcolor{blue}{1 \land}~~~~~~ 2 \land 3 $ $~~\Rightarrow$    &   
+\makecell{ $ 1 \land 2 \land 3 \land 4 $ \\ $ 1 \land 2 \land 3 \land \neg 4 $ }    \\ \cline{3-3} 
+                          &  \makecell{ $ ~\textcolor{blue}{1 \land}~~~~~ 2 \land \neg 3 $ \\ $ \textcolor{blue}{\neg 1 \land}~~~~~ 2 \land \neg 3 $  } $\Rightarrow$    &   $\emptyset$    \\ \cline{3-3} 
+                          &  $\textcolor{blue}{\neg 1 \land}~~~ \neg 2 \land \neg 3 $  $~\Rightarrow$   &   $ \neg 1 \land \neg 2 \land \neg 3 \land \neg 4 $    \\ \cline{2-3} 
+\end{tabular}
+\caption[Solving CNF subproblems in sequence]{An instance of a problem decomposed into two parts with different clauses, the solutions to the first part constrain the solutions generated by the second (blue indicates redundant literals into the second part)}
+\label{table2}
+\end{table}
+
+
+
+
+
+
+
+\pagebreak
+\section{\dagster\  Components}\label{sec:dagster_components}
+
+\subsection{Conflict-Driven Clause Learning Solver}\label{sec:CDCL_intro}
+
+A central part of the \dagster\  program is the choice of SAT solver that generates solutions to any subproblem, and there is a wide range of potential SAT solving algorithms available for this purpose.
+The canonical approach is the conflict-driven clause learning (CDCL) backtracking search. Within this class, there exist a range of options regarding the choice of clause-learning process, heuristics for variable selection, and restart schedules.
+We took the choices embedded in the GPL licenced \tinisat\ solver coded by Huang et al.~\cite{DBLP:conf/ijcai/Huang07} as our starting point.
+
+In the backtracking process, when a contradiction between variable assignments and clauses is reached, it is possible for the procedure to learn additional information about the `reason' why the conflict occurred and to append an additional clause to the problem to avoid the same conflict at different points in the search.
+In this way, each additional clause learnt reduces the size of the remaining search space.
+
+CDCL solvers utilise clause learning processes, and the 1-UIP procedure is almost universally employed, although there are other possible clause learning algorithms which can potentially be chosen~\cite{10.1007/978-3-030-51825-7_3,968634}.
+The basis of many of the clause learning processes is well documented and involve creating a `cut' in the graph of implications that directly lead to the occurrence of a conflict.
+A cut in the implication graph (sometimes called the `I-graph') divides the conflict itself (as a conflicting implication) on the one side, 
+from a set of intermediary variable valuations which directly lead to it, on the other.
+These variable assignments are collected, and then a clause is added to the CDCL procedure to avoid these variable assignments in future; particularly the variable values are negated and then added as an additional disjunctive clause in the CDCL procedure.
+In this way CDCL procedures have the ability to learn new clauses with each conflict encountered, which raises questions about how these many clauses are managed; where many SAT solvers have heuristics to identify and keep the most valuable clauses.
+
+CDCL solvers also differ depending on what heuristic is used to select the variables on which the process branches.
+ A particularly famous heuristic is called VSIDS, which was introduced with the \textsc{Chaff} solver~\cite{10.1145/378239.379017}.
+The VSIDS selection rule assigns each variable with a score called the \textit{activity} (initially zero) and then increments each variable's activity by $1$ (the additive `bump') each time it appears (or is associated with) the learning of a conflict clause.
+Then at regular intervals in the solving procedure, the activity of all variables is multiplied by some constant $0<\alpha<1$ (called the multiplicative \textit{decay factor}), the VSIDS heuristic selects variables with the highest activity for branching.
+The VSIDS heuristic is just one example of a popular SAT heuristic algorithm, with some investigation into why it is effective in practice \cite{liang2015understanding}.
+Different heuristics are possible, and for \dagster\  we considered an entirely different process to variable selection guided by Stochastic Local Search, with VSIDS
+as a fallback, as considered in Section \ref{sec:SLS_suggestions}.
+
+Another consideration in the selection of a CDCL procedure is in relation to the restart schedule employed.
+CDCL procedures scan through the problem space in a branching process in order to find satisfying solutions to the problem. However it is identified that it is advantageous for the CDCL procedure to occasionally restart itself to avoid being locked in unproductive areas of the problem space.
+A restart in CDCL resets the values of all the variables and starts a fresh branching process with the assistance of all of the learnt clauses it has previously derived.
+The hope is that the restarted CDCL process will then use its learnt knowledge to quickly come to a solution in a different part of the search space.
+CDCL restarts are an effective component of solving relevant and industrial problems, and the choice of different restart procedures can be instrumental~\cite{DBLP:conf/ijcai/Huang07}.
+There also exists the possible effectiveness of partial restarts and choice of different restart schedules etc.~\cite{conf/sat/RamosTH11}
+For \dagster\  we utilised the Luby restart policy~\cite{Luby93optimalspeedup} inbuilt into the \tinisat\ solver coded by Huang et al.~\cite{DBLP:conf/ijcai/Huang07}.
+
+
+
+
+
+\subsection{Stochastic Local Search}\label{sec:SLS_intro}
+
+In order to solve different subproblems in an effective way, different solution methodologies need to be employed, and there is a particularly interesting division between backtracking search (such as CDCL) and those searches which don't use backtracking, particularly stochastic local search (SLS).
+Stochastic local search procedures have been the topic of investigation for SAT problems since at least the early 90's, when \cite{10.5555/1867135.1867203,10.1145/130836.130837} introduced stochastic local hill-climbing procedures which outperformed more traditional backtracking procedures at the time.
+From this time there has been much interest, development and experimentation with these procedures which can be loosely described using the pseudocode in Algorithm \ref{algorithm2}.
+
+\SetKw{KwBy}{by}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{CNF formula $\Phi$, max steps $m$}
+\KwOut{satisfying assignment of $\Phi$ or $no solution$.}
+ \For{$i\gets 1$ \KwTo $m$}{
+  $s \leftarrow \text{initAssign}(\Phi)$\;
+  \eIf{$s$ satisfies $\Phi$}{
+   \KwRet{$s$}
+  }{
+   $x \leftarrow \text{chooseVariable}(\Phi,s)$\;
+   $s \leftarrow s \text{ with truth of }x\text{ flipped}$\;
+  }
+ }
+ \KwRet{no solution}
+ \caption{loose pseudocode of SLS procedure}\label{algorithm2}
+\end{algorithm}
+
+From this pseudocode, it is seen that the SLS algorithm is primarily dependent on what method is used to choose the variable to flip in each iteration, and there exist a range of possibilities.
+One of the very first SLS algorithms was GSAT \cite{10.5555/1867135.1867203} where $initAssign$ function is a randomisation of all problem variables, and $chooseVariable$ method selects a variable which, if flipped, would minimise the number of clauses of the CNF $\Phi$ that are unsatisfied (and random selection between variables which are equally good).
+This GSAT algorithm encodes the classic `greedy' SLS step, of trying to select a variable that greedily attempts to satisfy CNF clauses.
+
+From inspection, there are several things worth noting about SLS procedures, particularly that SLS procedures can fail to find satisfying assignments in reasonable time as they are fundamentally stochastic in their performance.
+Furthermore, it is quite apparent that SLS procedures (particularly GSAT) may become caught in `local minima' of the search space, where the search procedure enters into loops of variable flips and/or becomes locked into a set of assignments which satisfy some but not all clauses of the CNF~\cite{journals/jair/GentW93}.
+
+Over time there have been multiple variants of the SLS procedure with different elements in the algorithm:
+\begin{itemize}
+\item	The incorporation of algorithm restarts, where periodically the algorithm is restarted with some randomisation with the intention that it may avoid being trapped in the same sets of local minimum, and potentially find global minima (satisfying all clauses); restarts are a feature in the original GSAT procedure, and most others.
+\item	A probabilistic random step in an iteration adjacent to the greedy step. This is most notably embodied in the `GSAT with random walk' or GWSAT algorithm \cite{DBLP:conf/aaai/SelmanKC94} where, every step with probability $p$ a randomly selected variable from an unsatisfied clause is flipped.
+\item	There is the possibility of adding a bias to search towards variables that are least recently flipped, such as historically encoded in the HSAT algorithm \cite{Gent:93AA} where the variable that was least recently selected is selected among equally greedy candidates.
+\item	By incorporating a Tabu into the search that prohibits flipping of recently flipped variables, such as encoded in the TSAT algorithm \cite{DBLP:conf/aaai/MazureSG97}
+\item	By introducing a `walk' step, which is similar to the random step, in that a random unsatisfied clause is selected, and a variable of that clause is chosen to be flipped.
+Particularly the  variable can be selected in a greedy manner (to minimise the total clauses unsatisfied) or such as to minimise breaking existing satisfied clauses, or to prioritise those flips which ensure that no existing satisfied clause is made unsatisfied \cite{DBLP:conf/aaai/SelmanKC94}. see \cite{DBLP:conf/aaai/McAllesterSK97}.
+\item	By incorporating clause weighting techniques, such as to make persistently unsatisfied clauses more important in the selection process and bias the search away from local minima. 
+For instance, each time step, an unsatisfied clause can increase its weight linearly or multiplicatively \cite{DBLP:conf/aaai/ThorntonPBF04}.
+\end{itemize}
+
+Over time, many different SLS procedures have been developed and implemented, and many of their elements are compatible with each other.
+Particularly we implemented the \gnoveltyp\ algorithm \cite{DBLP:journals/jsat/PhamTGS08}, as shown in Algorithm \ref{algorithm3}.
+In this algorithm a variable is \textit{promising} if its flip satisfies more clauses than it breaks, and more promising the greater/lesser the difference.
+Also, the adaptive noise update step is inherited from AdaptNovelty+ \cite{DBLP:conf/aaai/Hoos02}, and the clause weight update scheme is inherited from the PAWS algorithm \cite{DBLP:conf/aaai/ThorntonPBF04}.
+
+\SetKw{KwBy}{by}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{CNF formula $\Phi$, max steps $m$, probabilities $p,s,w$}
+\KwOut{satisfying assignment of $\Phi$ or $no solution$.}
+Initialise the weight of each clause to $1$\;
+randomly generate an assignment $A$\;
+\For{$i\gets 1$ \KwTo $m$}{
+ \eIf{$A$ satisfies $\Phi$}{
+  \KwRet{$A$}
+ }{
+  \uIf{within a walking probability $wp$}{
+   randomly select a variable $x$ that appears in an unsatisfied clause\;
+  }
+  \uElseIf{If there exist \textit{promising} variables}{
+   \textit{greedily} select promising variable $x$, breaking ties by selecting the least recently flipped\;
+  }
+  \Else{
+   \textit{greedily} select the most promising variable $x$ from a random unsatisfied clause $c$, breaking ties by selecting least recently flipped\;
+   \uIf{$x$ is the most recently flipped variable in $c$ AND within a noise probability $p$}{
+    re-select $x$ as the second most promising variable in $c$
+   }
+   update the weights of unsatisfied clauses\;
+   with probability $sp$ smooth the weights of all \textit{weighted} clauses\;
+  }
+  update $A$ with the flipped value of $x$\;
+  adaptively adjust the noise probability $p$\;
+ }
+}
+ \KwRet{no solution}
+ \caption{\gnoveltyp\ algorithm without Tabu}\label{algorithm3}
+\end{algorithm}
+
+
+
+\subsubsection{Stochastic Local Search - Solution Reporting}
+One of the primary differences between SLS and CDCL is the types of steps that SLS can perform, which CDCL cannot.
+Particularly the \textit{greedy} step---in which a variable is flipped that directly increases the number of clauses satisfied even if it makes other clauses unsatisfied---is an example of a step which is available in SLS which is not part of CDCL.
+The greedy step is not incorporated into the CDCL procedure primarily as it is not easily compatible with a stack-based backtracking process that maps uniquely over the search space.
+
+Steps such as the greedy step make the search space under SLS much more connected, and thus it is more likely that the SLS will race to a solution more quickly than CDCL.
+The primary cost of this quality is that SLS does not do backtracking, and therefore will also potentially fail to find any solution and/or fail to terminate if the original problem is UNSAT.
+Whereas by contrast, the CDCL procedure will methodologically scan through the entire solution space, and can therefore be implemented to report the entire set of solutions to the problem.
+In this way, SLS is understood to be generally more effective at non-deterministically finding solutions to particular classes of problems, whereas CDCL is more effective at deterministically finding solutions in other classes of problems, and particularly problems that are UNSAT.
+
+A trivial way of integrating the advantages of SLS and CDCL in solving a problem is to run them both in parallel (i.e., in a portfolio arrangement), and detect which finishes first in finding a solution.
+This integration inherits the advantages of both algorithms, and \dagster\  was programmed with this flexibility in mind.
+Particularly in Section \ref{sec:configuration} we identify a mode of \dagster's operation where each CDCL process is run alongside $k$ other SLS processes, and the solutions which these processes find are recorded and accounted for in real time.
+
+However, another way of integrating the advantages of SLS and CDCL is in using the information gathered in the SLS process to assisting the CDCL procedure, and {\em vise versa}, in making better decisions about what part of the search space to explore.
+
+\subsubsection{Stochastic Local Search - Suggestions}\label{sec:SLS_suggestions}
+One of the ways in which SLS can assist in the CDCL procedure is in the selection of what variables the CDCL procedure should branch upon.
+
+Within CDCL procedures, there is a choice of appropriate rules/heuristics which are used to select variables, and VSIDS is an example of a classic heuristic
+ - see Section \ref{sec:CDCL_intro}.
+VSIDS attempts to determine and preferably select the most influential variables in the learnt clauses of the problem, however other heuristics are possible.
+
+SLS processes tend to occasionally get stuck in local minima or otherwise directly solve the problem by encountering a global minimum with all clauses satisfied - see Section \ref{sec:SLS_intro}.
+Insofar as the SLS process actually solves the problem, trivially this solution should be accounted for and the CDCL process should be updated to avoid resolving the same solution.
+However, even if the SLS only manages to get stuck in a local minimum it is still potentially of interest for the SLS to direct the search of the CDCL process towards these local minima so that the CDCL procedure can eliminate them from its search.
+%%
+After eliminating a local minimum communicated by an SLS instance, the CDCL process can then also potentially direct that SLS process away from that local minimum, to search for other minima.
+%%
+In this way the CDCL procedure can detect and direct the SLS away from the local minimum which it finds, and the SLS can direct the CDCL procedure towards fruitful (or potentially fruitful) areas of the search space; and thus the SLS and the CDCL procedure can mutually assist each other in finding a solution.
+
+The variable suggestions which the SLS gives to CDCL procedure will potentially be relevant depending on where in the search space the CDCL search is, particularly what variables it has assigned and what depth it is at in its branching process.
+The depth and the variables assigned by the CDCL also constrain the SLS search for local minima within that remaining space and thus determine the appropriateness of the suggestions it offers to back to the CDCL.
+
+As the SLS and the CDCL procedures execute, it is advantageous for the CDCL to advise the SLS process of the variables which the CDCL has assigned (i.e. its {\em prefix}) and then take variable suggestions from the SLS, after the SLS has had some time to resolve into a local minimum.
+Thus, the SLS is constrained to search in a solution space that is consistent with the most recent assignment prefix is has received from the CDCL process. 
+The SLS keeps a buffer of variable assignments that are most likely to characterise the local minimum in which it is stuck, which it then sends to the CDCL procedure as variable suggestions.
+
+In our \dagster system, a CDCL search is coupled to a pool of local searches, and communicates with them in a {\em round robin} fashion, sending new prefixes when it encounters evenly-spaced depths in its decision tree.
+When the CDCL procedure backtracks, it communicates with and takes advice from the local search that is most relevant to the backtrack depth.
+
+An illustration of this schema is shown in Figure \ref{fig:dpll_with_sls}, where we have illustrated the branching process of a CDCL procedure, with historically investigated branches shown in grey.
+The active branch is shown in black.
+Conflicts that the CDCL procedure has encountered on the active branch are shown as crosses.
+Horizontal blue lines indicate where each of 4 different local searches have received a prefix corresponding to the decisions on the branch up to that line.
+
+The use of assisting SLS processes to report solutions and provide suggestions to the CDCL procedure has been identified with increased performance of the CDCL procedure, but the optimal configuration may be problem-dependent.
+\dagster\  supports configuration parameters for the number of SLS processes per CDCL process, the size of the suggestion buffer being provided to the CDCL procedure, and the search depth interval at which the SLS processes should be allocated.
+ 
+\begin{figure}
+\centering
+    \begin {tikzpicture}
+
+
+\draw[fill=black,draw=none] (0.0,-0.0) circle (0.06);
+\draw[line width=1pt,black] (0.0,-0.0) -- (0.45,-0.35);
+\draw[fill=black,draw=none] (0.45,-0.35) circle (0.06);
+\draw[line width=1pt,black] (0.45,-0.35) -- (0.9,-0.7);
+\draw[line width=1pt,black] (0.45,-0.35) -- (0.0,-0.7);
+\draw[fill=white,draw=none] (0.0,-0.7) circle (0.27);
+\draw[fill=black,draw=none] (0.9,-0.7) circle (0.06);
+\draw[line width=1pt,black] (0.9,-0.7) -- (1.35,-1.0499999999999998);
+\draw[line width=1pt,black] (0.9,-0.7) -- (0.45,-1.0499999999999998);
+\draw[fill=white,draw=none] (0.45,-1.0499999999999998) circle (0.27);
+\draw[fill=black,draw=none] (1.35,-1.0499999999999998) circle (0.06);
+\draw[line width=1pt,black] (1.35,-1.0499999999999998) -- (0.9,-1.4);
+\draw[line width=1pt,black] (1.35,-1.0499999999999998) -- (1.8,-1.4);
+\draw[fill=white,draw=none] (1.8,-1.4) circle (0.27);
+\draw[fill=black,draw=none] (0.9,-1.4) circle (0.06);
+\draw[line width=1pt,black] (0.9,-1.4) -- (0.45,-1.75);
+\draw[line width=1pt,black] (0.9,-1.4) -- (1.35,-1.75);
+\draw[fill=white,draw=none] (1.35,-1.75) circle (0.27);
+\draw[fill=lightgray,draw=none] (0.45,-1.75) circle (0.06);
+\draw[line width=1pt,lightgray] (0.45,-1.75) -- (0.9,-2.0999999999999996);
+\draw[fill=lightgray,draw=none] (0.9,-2.0999999999999996) circle (0.06);
+\draw[line width=1pt,lightgray] (0.9,-2.0999999999999996) -- (1.35,-2.4499999999999997);
+\draw[line width=1pt,lightgray] (0.9,-2.0999999999999996) -- (0.45,-2.4499999999999997);
+\draw[fill=white,draw=none] (0.45,-2.4499999999999997) circle (0.27);
+\draw[fill=lightgray,draw=none] (1.35,-2.4499999999999997) circle (0.06);
+\draw[line width=1pt,lightgray] (1.35,-2.4499999999999997) -- (1.8,-2.8);
+\draw[line width=1pt,lightgray] (1.35,-2.4499999999999997) -- (0.9,-2.8);
+\draw[fill=white,draw=none] (0.9,-2.8) circle (0.27);
+\draw[fill=lightgray,draw=none] (1.8,-2.8) circle (0.06);
+\draw[line width=1pt,lightgray] (1.8,-2.8) -- (2.25,-3.15);
+\draw[line width=1pt,lightgray] (1.8,-2.8) -- (1.35,-3.15);
+\draw[fill=white,draw=none] (1.35,-3.15) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.25,-3.15) circle (0.06);
+\draw[line width=1pt,lightgray] (2.25,-3.15) -- (2.7,-3.5);
+\draw[line width=1pt,lightgray] (2.25,-3.15) -- (1.8,-3.5);
+\draw[fill=white,draw=none] (1.8,-3.5) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-3.5) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-3.5) -- (3.15,-3.8499999999999996);
+\draw[line width=1pt,lightgray] (2.7,-3.5) -- (2.25,-3.8499999999999996);
+\draw[fill=white,draw=none] (2.25,-3.8499999999999996) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-3.8499999999999996) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-3.8499999999999996) -- (3.6,-4.199999999999999);
+\draw[line width=1pt,lightgray] (3.15,-3.8499999999999996) -- (2.7,-4.199999999999999);
+\draw[fill=white,draw=none] (2.7,-4.199999999999999) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.6,-4.199999999999999) circle (0.06);
+\draw[line width=1pt,lightgray] (3.6,-4.199999999999999) -- (3.15,-4.55);
+\draw[line width=1pt,lightgray] (3.6,-4.199999999999999) -- (4.05,-4.55);
+\draw[fill=white,draw=none] (4.05,-4.55) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-4.55) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-4.55) -- (3.6,-4.8999999999999995);
+\draw[line width=1pt,lightgray] (3.15,-4.55) -- (2.7,-4.8999999999999995);
+\draw[fill=white,draw=none] (2.7,-4.8999999999999995) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.6,-4.8999999999999995) circle (0.06);
+\draw[line width=1pt,lightgray] (3.6,-4.8999999999999995) -- (4.05,-5.25);
+\draw[line width=1pt,lightgray] (3.6,-4.8999999999999995) -- (3.15,-5.25);
+\draw[fill=white,draw=none] (3.15,-5.25) circle (0.27);
+\draw[fill=lightgray,draw=none] (4.05,-5.25) circle (0.06);
+\draw[line width=1pt,lightgray] (4.05,-5.25) -- (4.5,-5.6);
+\draw[line width=1pt,lightgray] (4.05,-5.25) -- (3.6,-5.6);
+\draw[fill=white,draw=none] (3.6,-5.6) circle (0.27);
+\draw[fill=lightgray,draw=none] (4.5,-5.6) circle (0.06);
+\draw[line width=1pt,lightgray] (4.5,-5.6) -- (4.05,-5.949999999999999);
+\draw[line width=1pt,lightgray] (4.5,-5.6) -- (4.95,-5.949999999999999);
+\draw[fill=white,draw=none] (4.95,-5.949999999999999) circle (0.27);
+\draw[fill=black,draw=none] (0.45,-1.75) circle (0.06);
+\draw[line width=1pt,black] (0.45,-1.75) -- (0.0,-2.0999999999999996);
+\draw[fill=black,draw=none] (0.0,-2.0999999999999996) circle (0.06);
+\draw[line width=1pt,black] (0.0,-2.0999999999999996) -- (-0.45,-2.4499999999999997);
+\draw[line width=1pt,black] (0.0,-2.0999999999999996) -- (0.45,-2.4499999999999997);
+\draw[fill=white,draw=none] (0.45,-2.4499999999999997) circle (0.27);
+\draw[fill=black,draw=none] (-0.45,-2.4499999999999997) circle (0.06);
+\draw[line width=1pt,black] (-0.45,-2.4499999999999997) -- (0.0,-2.8);
+\draw[line width=1pt,black] (-0.45,-2.4499999999999997) -- (-0.9,-2.8);
+\draw[fill=white,draw=none] (-0.9,-2.8) circle (0.27);
+\draw[fill=black,draw=none] (0.0,-2.8) circle (0.06);
+\draw[line width=1pt,black] (0.0,-2.8) -- (0.45,-3.15);
+\draw[line width=1pt,black] (0.0,-2.8) -- (-0.45,-3.15);
+\draw[fill=white,draw=none] (-0.45,-3.15) circle (0.27);
+\draw[line width=1pt,blue] (-0.7,-2.9499999999999997) -- (0.7,-2.9499999999999997);
+\draw[fill=black,draw=none] (0.45,-3.15) circle (0.06);
+\draw[line width=1pt,black] (0.45,-3.15) -- (0.9,-3.5);
+\draw[line width=1pt,black] (0.45,-3.15) -- (0.0,-3.5);
+\draw[fill=white,draw=none] (0.0,-3.5) circle (0.27);
+\draw[fill=black,draw=none] (0.9,-3.5) circle (0.06);
+\draw[line width=1pt,black] (0.9,-3.5) -- (1.35,-3.8499999999999996);
+\draw[line width=1pt,black] (0.9,-3.5) -- (0.45,-3.8499999999999996);
+\draw[fill=white,draw=none] (0.45,-3.8499999999999996) circle (0.27);
+\draw[fill=black,draw=none] (1.35,-3.8499999999999996) circle (0.06);
+\draw[line width=1pt,black] (1.35,-3.8499999999999996) -- (1.8,-4.199999999999999);
+\draw[line width=1pt,black] (1.35,-3.8499999999999996) -- (0.9,-4.199999999999999);
+\draw[fill=white,draw=none] (0.9,-4.199999999999999) circle (0.27);
+\draw[fill=black,draw=none] (1.8,-4.199999999999999) circle (0.06);
+\draw[line width=1pt,black] (1.8,-4.199999999999999) -- (1.35,-4.55);
+\draw[line width=1pt,black] (1.8,-4.199999999999999) -- (2.25,-4.55);
+\draw[fill=white,draw=none] (2.25,-4.55) circle (0.27);
+\draw[line width=1pt,blue] (1.1,-4.35) -- (2.5,-4.35);
+\draw[fill=black,draw=none] (1.35,-4.55) circle (0.06);
+\draw[line width=1pt,black] (1.35,-4.55) -- (1.8,-4.8999999999999995);
+\draw[line width=1pt,black] (1.35,-4.55) -- (0.9,-4.8999999999999995);
+\draw[fill=white,draw=none] (0.9,-4.8999999999999995) circle (0.27);
+\draw[fill=lightgray,draw=none] (1.8,-4.8999999999999995) circle (0.06);
+\draw[line width=1pt,lightgray] (1.8,-4.8999999999999995) -- (2.25,-5.25);
+\draw[fill=lightgray,draw=none] (2.25,-5.25) circle (0.06);
+\draw[line width=1pt,lightgray] (2.25,-5.25) -- (2.7,-5.6);
+\draw[line width=1pt,lightgray] (2.25,-5.25) -- (1.8,-5.6);
+\draw[fill=white,draw=none] (1.8,-5.6) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-5.6) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-5.6) -- (3.15,-5.949999999999999);
+\draw[line width=1pt,lightgray] (2.7,-5.6) -- (2.25,-5.949999999999999);
+\draw[fill=white,draw=none] (2.25,-5.949999999999999) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-5.949999999999999) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-5.949999999999999) -- (2.7,-6.3);
+\draw[line width=1pt,lightgray] (3.15,-5.949999999999999) -- (3.6,-6.3);
+\draw[fill=white,draw=none] (3.6,-6.3) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-6.3) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-6.3) -- (2.25,-6.6499999999999995);
+\draw[line width=1pt,lightgray] (2.7,-6.3) -- (3.15,-6.6499999999999995);
+\draw[fill=white,draw=none] (3.15,-6.6499999999999995) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.25,-6.6499999999999995) circle (0.06);
+\draw[line width=1pt,lightgray] (2.25,-6.6499999999999995) -- (2.7,-7.0);
+\draw[line width=1pt,lightgray] (2.25,-6.6499999999999995) -- (1.8,-7.0);
+\draw[fill=white,draw=none] (1.8,-7.0) circle (0.27);
+\draw[fill=lightgray,draw=none] (2.7,-7.0) circle (0.06);
+\draw[line width=1pt,lightgray] (2.7,-7.0) -- (3.15,-7.35);
+\draw[line width=1pt,lightgray] (2.7,-7.0) -- (2.25,-7.35);
+\draw[fill=white,draw=none] (2.25,-7.35) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.15,-7.35) circle (0.06);
+\draw[line width=1pt,lightgray] (3.15,-7.35) -- (3.6,-7.699999999999999);
+\draw[line width=1pt,lightgray] (3.15,-7.35) -- (2.7,-7.699999999999999);
+\draw[fill=white,draw=none] (2.7,-7.699999999999999) circle (0.27);
+\draw[fill=lightgray,draw=none] (3.6,-7.699999999999999) circle (0.06);
+\draw[line width=1pt,lightgray] (3.6,-7.699999999999999) -- (3.15,-8.049999999999999);
+\draw[line width=1pt,lightgray] (3.6,-7.699999999999999) -- (4.05,-8.049999999999999);
+\draw[fill=white,draw=none] (4.05,-8.049999999999999) circle (0.27);
+\draw[fill=black,draw=none] (1.8,-4.8999999999999995) circle (0.06);
+\draw[line width=1pt,black] (1.8,-4.8999999999999995) -- (1.35,-5.25);
+\draw[fill=black,draw=none] (1.35,-5.25) circle (0.06);
+\draw[line width=1pt,black] (1.35,-5.25) -- (0.9,-5.6);
+\draw[line width=1pt,black] (1.35,-5.25) -- (1.8,-5.6);
+\draw[fill=white,draw=none] (1.8,-5.6) circle (0.27);
+\draw[line width=1pt,black] (1.72,-5.68) -- (1.8800000000000001,-5.52);
+\draw[line width=1pt,black] (1.72,-5.52) -- (1.8800000000000001,-5.68);
+\draw[fill=black,draw=none] (0.9,-5.6) circle (0.06);
+\draw[line width=1pt,black] (0.9,-5.6) -- (1.35,-5.949999999999999);
+\draw[line width=1pt,black] (0.9,-5.6) -- (0.45,-5.949999999999999);
+\draw[fill=white,draw=none] (0.45,-5.949999999999999) circle (0.27);
+\draw[line width=1pt,black] (0.37,-6.029999999999999) -- (0.53,-5.869999999999999);
+\draw[line width=1pt,black] (0.37,-5.869999999999999) -- (0.53,-6.029999999999999);
+\draw[line width=1pt,blue] (0.20000000000000007,-5.75) -- (1.6,-5.75);
+\draw[fill=black,draw=none] (1.35,-5.949999999999999) circle (0.06);
+\draw[line width=1pt,black] (1.35,-5.949999999999999) -- (0.9,-6.3);
+\draw[line width=1pt,black] (1.35,-5.949999999999999) -- (1.8,-6.3);
+\draw[fill=white,draw=none] (1.8,-6.3) circle (0.27);
+\draw[line width=1pt,black] (1.72,-6.38) -- (1.8800000000000001,-6.22);
+\draw[line width=1pt,black] (1.72,-6.22) -- (1.8800000000000001,-6.38);
+\draw[fill=black,draw=none] (0.9,-6.3) circle (0.06);
+\draw[line width=1pt,black] (0.9,-6.3) -- (0.45,-6.6499999999999995);
+\draw[line width=1pt,black] (0.9,-6.3) -- (1.35,-6.6499999999999995);
+\draw[fill=white,draw=none] (1.35,-6.6499999999999995) circle (0.27);
+\draw[line width=1pt,black] (1.27,-6.7299999999999995) -- (1.4300000000000002,-6.569999999999999);
+\draw[line width=1pt,black] (1.27,-6.569999999999999) -- (1.4300000000000002,-6.7299999999999995);
+\draw[fill=black,draw=none] (0.45,-6.6499999999999995) circle (0.06);
+\draw[line width=1pt,black] (0.45,-6.6499999999999995) -- (0.0,-7.0);
+\draw[line width=1pt,black] (0.45,-6.6499999999999995) -- (0.9,-7.0);
+\draw[fill=white,draw=none] (0.9,-7.0) circle (0.27);
+\draw[line width=1pt,black] (0.8200000000000001,-7.08) -- (0.98,-6.92);
+\draw[line width=1pt,black] (0.8200000000000001,-6.92) -- (0.98,-7.08);
+\draw[fill=black,draw=none] (0.0,-7.0) circle (0.06);
+\draw[line width=1pt,black] (0.0,-7.0) -- (0.45,-7.35);
+\draw[line width=1pt,black] (0.0,-7.0) -- (-0.45,-7.35);
+\draw[fill=white,draw=none] (-0.45,-7.35) circle (0.27);
+\draw[line width=1pt,black] (-0.53,-7.43) -- (-0.37,-7.27);
+\draw[line width=1pt,black] (-0.53,-7.27) -- (-0.37,-7.43);
+\draw[line width=1pt,blue] (-0.7,-7.15) -- (0.7,-7.15);
+\draw[fill=black,draw=none] (0.45,-7.35) circle (0.06);
+\draw[line width=1pt,black] (0.45,-7.35) -- (0.9,-7.699999999999999);
+\draw[line width=1pt,black] (0.45,-7.35) -- (0.0,-7.699999999999999);
+\draw[fill=white,draw=none] (0.0,-7.699999999999999) circle (0.27);
+\draw[line width=1pt,black] (-0.08,-7.779999999999999) -- (0.08,-7.619999999999999);
+\draw[line width=1pt,black] (-0.08,-7.619999999999999) -- (0.08,-7.779999999999999);
+\draw[fill=black,draw=none] (0.9,-7.699999999999999) circle (0.06);
+\draw[line width=1pt,black] (0.9,-7.699999999999999) -- (1.35,-8.049999999999999);
+\draw[line width=1pt,black] (0.9,-7.699999999999999) -- (0.45,-8.049999999999999);
+\draw[fill=white,draw=none] (0.45,-8.049999999999999) circle (0.27);
+\draw[line width=1pt,black] (0.37,-8.129999999999999) -- (0.53,-7.969999999999999);
+\draw[line width=1pt,black] (0.37,-7.969999999999999) -- (0.53,-8.129999999999999);
+\draw[fill=black,draw=none] (1.35,-8.049999999999999) circle (0.06);
+\draw[line width=1pt,black] (1.35,-8.049999999999999) -- (0.9,-8.399999999999999);
+\draw[line width=1pt,black] (1.35,-8.049999999999999) -- (1.8,-8.399999999999999);
+\draw[fill=white,draw=none] (1.8,-8.399999999999999) circle (0.27);
+\draw[line width=1pt,black] (1.72,-8.479999999999999) -- (1.8800000000000001,-8.319999999999999);
+\draw[line width=1pt,black] (1.72,-8.319999999999999) -- (1.8800000000000001,-8.479999999999999);
+
+
+    \end {tikzpicture}
+\caption[CDCL branching process with SLS depths]{Illustration of CDCL branching process with SLS suggestion processes working on various branch cuts at various depths (blue)}
+\label{fig:dpll_with_sls}
+\end{figure}
+
+
+
+
+
+
+\subsection{Clause Simplification}\label{sec:simplification}
+
+In the CDCL procedure new clauses are learnt and added to the SAT problem when the solver reaches a conflict.
+Depending on the problem, the CDCL procedure can unfortunately become slowed as it becomes bloated with storing and considering new conflict clauses.
+In the worst case, the number of conflict clauses generated will be exponential~\cite{DBLP:journals/corr/LonlacN17,6984546}.
+Thus it is advantageous to involve a management process of purging or simplifying these learnt clauses.
+
+Some heuristics and measures have been investigated to judge the quality of conflict clauses in order to determine and subsequently purge the least valuable clauses~\cite{DBLP:journals/corr/LonlacN17,6984546}.
+These measures score the value of the learnt clauses and the solving procedure periodically purges a proportion of the lowest scoring conflict clauses.
+The frequency of the purging events and the proportion of clauses that are purged are important to the efficiency of the solver.
+(For instance, well-known SAT solvers {\textsc MiniSAT} and {\textsc Glucose} delete half of the learnt clauses at each purge event.)
+
+In addition to dropping irrelevant or weak clauses, there is the question of when and/or how learnt clauses might be simplified, and different techniques have been proposed for this
+purpose \cite{ijcai2017-98}.
+One of the most basic approaches to simplifying learnt clauses is clause `minimisation' or `strengthening', where different techniques are used to 
+identify and remove redundant literals in the learnt clauses.\cite{10.1007/978-3-642-02777-2_23}
+
+One of the more basic approaches of identifying and removing redundant literals from learnt clauses is considered by \cite{DBLP:conf/sat/WieringaH13}
+ where learnt clauses are passed to a separate strengthener process where any redundant variables are identified and removed by a separate unit-propagating SAT solving process, before being 
+passed back and reintegrated into the original CDCL procedure.
+Particularly the procedure is inspired by the ``vivification'' clause simplification procedure \cite{DBLP:conf/ecai/PietteHS08} where for any learnt clause $c = \{l_0,l_1,\dots\}$
+each of the literals $l_i$ are in turn are assigned to be false, and a unit-propagation SAT procedure is run to determine if the resulting problem is UNSAT.
+if the resulting problem is determined to be UNSAT, then any literals not assigned to be false are identified to be redundant and can be removed.
+
+Minimising and simplifying conflict clauses improves the performance of the CDCL process, particularly as smaller clauses are smaller in memory and enhance the likelihood of unit propagation.
+However, this clause minimisation process consumes computing power and thus competes with the computing resources that might otherwise be allocated to CDCL itself.
+One of the most natural ways of avoiding this tradeoff is to perform the minimisation process in parallel to the CDCL on a separate compute core (such as implemented by \cite{DBLP:conf/sat/WieringaH13}). It has also been shown that clause minimisation can be effective even in serial with the CDCL procedure as well.\cite{ijcai2017-98}
+
+Within the design of \dagster, it is considered as an option whether or not to have a separate clause simplification process in conjunction with the CDCL procedure.
+Particularly, we incorporated code developed by the authors of \cite{DBLP:conf/sat/WieringaH13} the reducing process called \textsc{MiniRed/GlucoRed}. 
+\footnote{Bronze winner of international SAT competition 2013 open track competition}
+
+
+\section{\dagster\ in more detail}\label{sec:dagster_structure_composition}
+
+The specification and relationship between subproblems and how they are connected is specified in a DAG file, which is then input into the solver which then attempts to solve each subproblem in an effective way.
+
+\subsection{DAG File Specification}\label{sec:dag_file}
+
+The specification of what parts of a SAT problem should be sectioned into subproblems and what variables should be passed between these subproblems is specified in a DAG file.
+An example of a DAG file is shown next to its associated DIMACS CNF file in Figure \ref{fig:cnf_dag_example}, where the DAG file has a header and multiple sections.
+
+\begin{enumerate}[noitemsep]
+\item	The DAG file begins with a header "DAG-FILE"
+\item	then the next line identifies the number of nodes (or subproblems) in the dag, in this case 4 nodes indexed $0,1,2,3$.
+\item	The next part begins with a header "GRAPH:", and then identifies what links there exist between the nodes one per line, and what variables get communicated along those links.
+For instance, the first link is between node $0$ and node $2$, where the only variables of interest in the solutions of node $0$ that get passed to node $2$ are the values of variables $1,3$,
+as the variable $2$ in the clauses of node $0$ no longer belong to the rest of the program.
+Other links include: from node $1$ to $2$ and $2$ to $3$, where variables $3,4$ and $4$ get passed respectively.
+\item	Then there is a section (beginning with "CLAUSES:") which identifies what clauses belong to which nodes (or subproblems), the clauses are indexed in the order that they appear in the CNF.
+The example indicates that clauses indexed $0$ and $1$ belong to node $0$ (ie. the clauses $2\lor 1$,$\neg 2\lor 3$) etc. 
+\item	and finally there is a "REPORTING:" section, which identifies what variables we are interested in a satisfying valuation. In our example we are reporting variables $4,6,7$. 
+\end{enumerate}
+
+
+In this example program it is possible to walk-through the execution of the \dagster\  program:
+\begin{itemize}[noitemsep]
+\item	We consider the possible solutions from node $0$ (with clauses $2\lor 1$,$\neg 2\lor 3$) as $1\land \neg 2\land 3$, $\neg 1\land 2\land 3$, $1\land 2\land 3$, $1\land \neg 2\land \neg 3$, 
+however since variable $2$ is irrelevant to the rest of the problem then the messages that get passed to node $2$ are: $1\land 3$, $1\land \neg 3$, $\neg 1\land 3$.
+\item	We consider the possible solutions from node $1$ (with clauses $5\lor \neg 4$,$\neg 3$) as $\neg 3\land 5\land 4$,$\neg 3\land 5\land \neg 4$,$\neg 3\land \neg 5\land \neg 4$, however 
+since variable $5$ is irrelevant to the rest of the problem then the messages that get passed to node $2$ are: $\neg 3\land 4$,$\neg 3\land \neg 4$.
+\item	We now consider the resolution between the messages from nodes $0$ and $1$ into node $2$, as $1\land \neg 3\land 4$,$1\land \neg 3\land \neg 4$.
+\item	We now consider the output from node $2$ (with clauses $4\lor 3$) to the inputs given to it resolved from nodes $0$ and $1$, in this case input $1\land \neg 3\land 4$ satisfies the clause and
+is a solution, however since variables $1$ and $4$ are discarded, the message $4$ is passed onto node $3$; the input $1\land \neg 3\land \neg 4$ does not satisfy the node's clauses and has no solution
+resulting in no other messages passed onto node $3$.
+\item	We now consider the output from node $3$ (with clauses $4\lor\neg 6\lor 7$,$\neg 4\lor 6$) to the inputs given to it from node $2$, in this case the input $4$ is given, and for this input
+the solutions $4\lor 6\lor\neg 7$ and $4\lor 6\lor 7$ are its output, which in turn are the solution of the entire problem; and those values are reported as output.
+\end{itemize}
+
+It is also possible to confirm that these outputs are appropriate solutions to the original CNF in Figure \ref{fig:cnf_dag_example} where the possible solutions (with all variables included)
+of the original CNF are $1\land\neg 2\land\neg 3\land 4\land 5\land 6\land 7$ and $1\land\neg 2\land\neg 3\land 4\land 5\land 6\land\neg 7$.
+
+This minimal worked example provides a concrete illustration of the essential components of the \dagster\  algorithm, particularly the importance of an algorithm to generate solutions for a specific
+node, and the method of resolving solutions together for input into another node.
+
+
+
+\begin{figure}
+\centering
+\begin{minipage}{0.2\textwidth}
+\begin{tikzpicture}
+	\node [fill=white, draw=black, shape=circle] (0) at (0.7, -1.4) {0};
+	\node [fill=white, draw=black, shape=circle] (1) at (-0.7, -1.4) {1};
+	\node [fill=white, draw=black, shape=circle] (2) at (0, 0) {2};
+	\node [fill=white, draw=black, shape=circle] (3) at (0, 1.4) {3};
+	\draw [fill=none, ->] (0) to (2);
+	\draw [fill=none, ->] (1) to (2);
+	\draw [fill=none, ->] (2) to (3);
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\centering
+\begin{Verbatim}[frame=single, label=CNF file]
+p cnf 7 7
+2 1 0
+-2 3 0
+5 -4 0
+-3 0
+4 3 0
+4 -6 7 0
+-4 6 0
+\end{Verbatim}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\centering
+\begin{Verbatim}[frame=single, label=DAG file]
+DAG-FILE
+NODES:4
+GRAPH:
+0->2:1,3
+1->2:3,4
+2->3:4
+CLAUSES:
+0:0,1
+1:2,3
+2:4
+3:5,6
+REPORTING:
+4,6,7
+\end{Verbatim}
+\end{minipage}
+
+\caption[Hand-worked CNF and DAG file examples]{Example \dagster\  inputs of a CNF and DAG file. The directed graph described in the DAG file is depicted graphically on the left-hand side.}\label{fig:cnf_dag_example}
+\end{figure}
+
+
+
+
+\subsection{DAG Decompositions and Parallel Search with \dagster}
+
+To aid understanding, it may be helpful to provide an informal illustration of the kinds of problems and how they might best be related to an appropriate DAG.
+The motivation of the \dagster\  tool was to solve planning-type problems and this is a natural illustration of the kinds of problems which \dagster\  is designed to solve.
+
+Particularly we might understand a DAG structure between nodes $0,1,2,3$ as might be graphed in Figure \ref{fig:cnf_dag_example}.
+In this figure, we might consider that nodes $0$ and $1$ are parts of the problem that are naturally solved in parallel and are predominantly independent of each other.
+The intersection of their solutions are then passed to node $1$, whose outputs are then passed as constraints to node $2$ whereby we might imagine nodes $1$ and $2$ are problems which are naturally
+solved in sequence.
+
+An illustration of the kind of problem that these nodes might correspond is parts of a planning procedure, particularly we might imagine a procedure of travelling to another country being
+composed of subtasks which bear relations between them.
+We might imagine that nodes $0$ and $1$ relate to the relatively independent subtasks of how to pack your luggage, and problem of choosing modes of transport to the airport.
+In this way the problems of nodes $0$ and $1$ relate to subproblems that are relatively independent, in that the way you pack your luggage would (most often) be rather independent of the possible
+ways that you could navigate to the airport.
+The intersection of solutions to nodes $0$ and $1$ feeds into node $2$, which may be the subtask of choosing an airline flight, which would depend on the result of a choice of transport (node $1$) and
+be dependent on the way in which the luggage was packed (output from node $0$); perhaps the transport constrains your arrival time at the airport, and the luggage packing constrains your flight by
+luggage weight and dimensional restrictions.
+Consequently the output of node $2$, informs which flight you can take, and subsequently constrains the solutions of node $3$ which might be the subtask of choosing your in-flight meal.
+
+Although this illustration is simplistic, it illustrates the fact that problems can have a natural structure and how this might correspond to elements of a DAG decomposition of the problem.
+%It also illustrates that this structure can be exploited. Particularly it is noticed that solving this problem in the forward direction is most natural and sensible, wheras
+%solving it in the reverse direction (or wholistically) is potentially more difficult.
+
+Some general directions are:
+\begin{enumerate}
+\item	In a sequence it is better for more constrained problems to occur first, in that the output from the more constrained problem should bind the solutions from the less constrained problem
+\item	subproblems that are mostly (or entirely) independent should occur in parallel
+\item	partitions between the clauses that define the nodes of the problem should correspond with meaningful subproblems - 
+which are somewhat difficult (not trivially easy), generate few solutions (as opposed to voluminously many) and naturally constrain further subproblems.
+\end{enumerate}
+
+
+\subsubsection{Where can I find DAGs?}
+
+
+There are a range of schemes from the literature which provide recipes for computing a decomposition given the object to be decomposed~\cite{conf/ictai/HabetPT09,NEURIPS2019_6e62a992}.
+We also note that lookahead mechanisms, for example as described for cube and conquer approaches to Boolean SAT~\cite{cube_and_conquer1}, provide a decomposition that can be represented using a DAG schematic. 
+However the most natural source of DAGs for specific problems arises from considering the structure that is naturally inherent and recognised in the problem itself; rather than generated via recipe.
+
+An example class of problem that has always been a focus of this initiative is bounded model checking of safety properties. 
+In this setting, a range of literature has already contemplated and described dependency structures between problem variables that can be expressed using a DAG.
+%%
+In particular we have the concept of a {\em dependency graph}, also sometimes called {\em causal} graph~\cite{Knoblock94,WilliamsN97}.
+A dependency graph expresses dependencies between problem variables in terms of the ability of one variable to impact the value of another in time -- I.e., in a discrete event system setting.
+For some classes of problems such graphs expose small subproblems with few interconnections, with the subproblems’ size independent of parameters determining the overall problem size.
+These graphs can be computed quickly (in linear time), and provided exactly the schematic we desire to represent a larger overall problem about a transition system model in terms of a series of abstract subproblems and their refinements.
+
+
+\subsection{Scheduling Search Processes}\label{sec:configuration}
+
+Fundamentally \dagster\  is a parallel SAT solver, and the compute cores allocated to \dagster\  are each given a specific role.
+\dagster\  obeys a Master/Worker dichotomy, where the Master keeps track of the work that needs to be done and allocates appropriate work to the Workers, who
+report back to Master the results of their computations.
+
+The first and most natural description of the process occurs from the Master's perspective. The Master coordinates what workers should be working on what parts of the DAG.
+When \dagster\  begins it sets the workers onto the initial leaf nodes of the DAG (for instance nodes $0$ and $1$ in Figure \ref{fig:cnf_dag_example})
+and these workers will gradually generate solutions for those nodes, the Master will then record these solutions and from them generate new messages that will be given to workers to
+initiate and constrain work on further nodes (for instance node $2$).
+%For each of the further nodes there will need to be run multiple times with slightly different computations depending on the solutions that are passed from the previous nodes.
+In this way, solutions to earlier nodes seed computational runs on further nodes, and the Master process coordinates and keeps track of all the work that is yet to be done and has been done.
+It does this through a compact representation of the logic of these solutions embedded in Binary Decision Diagrams (BDDs)
+particularly using the CUDD library\footnote{see: \url{https://davidkebo.com/cudd}} for BDD manipulation and generation.
+
+\dagster\  is allowed to run in multiple `modes' identifying the resources which the workers are allocated.
+Worker processes are grouped in worker groups, which are given work from Master.
+In the simplest operation of \dagster, mode $m=0$, each worker group is a single core running a CDCL process, and when the Master passes a message to the worker process it loads the 
+CNF associated with the node it is to work on.
+Any solutions generated by the CDCL search are then reported back to Master and serve to seed computation on further nodes.
+When the CDCL procedure has finished generating all solutions for a message it then requests further work from the Master process.
+
+In more complicated operational mode $m=1$, each worker group is a single core running a CDCL process and an additional $k$ processes running the SLS \gnoveltyp\ procedure.
+The Master gives the CDCL process the message identifying what node of the DAG it is to be working on and what constraints it is to have, and the CDCL procedure passes the information
+to the SLS processes which then initialise and process the problem as well.
+The \gnoveltyp\ processes give variable suggestions to the CDCL procedure as well as report solutions as they discover them in conjunction to the CDCL procedure.
+As before, when the CDCL procedure has verified that all solutions have been generated, it stops the work of the SLS processes and requests further work from the Master.
+
+In a yet more complicated operational mode, $m=2$, each worker group is a single running CDCL process, an additional $k$ SLS processes, and an additional clause strengthener process.
+As before, the Master's message is given to the CDCL procedure, the SLS(s) and the strengthener process, and the strengthener process assists the CDCL procedure by strengthening
+the conflict clauses that the CDCL procedure generates.
+
+There is yet another mode $m=3$ where each Worker is a single CDCL process with an associated clause strengthener process.
+
+In these three operational modes $m=0,1,2,3$ each worker group has different numbers of processes in a worker group that is visible to the Master process and which the Master interacts with
+
+\begin{enumerate}
+\item	Mode zero: each worker group is a single CDCL process (particularly \tinisat)
+\item	Mode one: each worker group is composed of a single CDCL process, and $k$ SLS processes
+\item	Mode two: each worker group is composed of a single CDCL process, assisted by another strengthener process, and $k$ SLS processes
+\item	Mode three: each worker group is composed of a single CDCL process, assisted by another strengthener process
+\end{enumerate}
+
+An illustration of the elements of the modes are depicted in Figure \ref{fig:dagster_organisation}.
+
+The choice of operational mode for \dagster\  is selected by command line argument, with mode zero as the default.
+Additionally, \dagster\  has command line configuration identifying the way in which the Master will coordinate the worker groups.
+Particular configuration specifies whether Master will preferentially allocate messages that are depth-first in the DAG in an attempt to race to a solution for the problem, 
+or alternatively to allocate breadth-first and solve all layers of the DAG structure more systematically.
+In this context there is also additional configuration regarding whether \dagster\  will terminate as soon as it finds a solution to the whole problem, or if it should attempt to generate
+all solutions to the problem.
+The optimal choice of these options will be expected to depend on the particular problem which \dagster\  is presented with.
+
+
+\begin{figure}
+\centering     
+\begin{tikzpicture}[xscale=0.65,yscale=-0.65]
+
+\node (master)	at (-4.0,1.0)	[align=center] {Master};
+
+\node (worker_group_label1)	at (2.5,0.5)	[above,gray] {Worker group 1};
+\draw [gray]  (1.0,0.5) -- (14.0,0.5) -- (14.0,7.0) -- (1.0,7.0) -- cycle ;
+\node (strengthener1)	at (3.0,1.5)	[align=center] {Strengthener1};
+\node (tinisat1)		at (3.0,4.0)	[align=center] {TiniSAT1};
+\node (gnovelty11)	at (6.0,4.0)	[align=center] {gNovelty1,1};
+\node (gnovelty12)	at (9.0,4.0)	[align=center] {gNovelty1,2};
+\node (gnovelty13)	at (12.0,4.0)	[align=center] {gNovelty1,3};
+\draw [-,out=0,in=180,looseness=0.35] (master.east) to (-0.5,4.0);
+\draw [->,out=0,in=180,looseness=0.75] (-0.5,4.0) to node[above,pos=0.3]{\footnotesize messages} (tinisat1);
+\draw [-,out=90,in=0,looseness=1.55] (tinisat1) to (2.0,5.5);
+\draw [->,out=180,in=90,looseness=1.05] (2.0,5.5) to  (master.south);
+\draw [-,out=90,in=0,looseness=0.90] (gnovelty11.south) to (2.0,5.5);
+\draw [-,out=90,in=0,looseness=0.70] (gnovelty12.south) to (2.0,5.5);
+\draw [-,out=90,in=0,looseness=0.65] (gnovelty13.south) to node[below,pos=0.5]{\footnotesize solutions} (2.0,5.5);
+\draw [->,out=315,in=270,looseness=1.35] (tinisat1) to (gnovelty11.north);
+\draw [->,out=320,in=270,looseness=1.05] (tinisat1) to (gnovelty12.north);
+\draw [->,out=320,in=270,looseness=0.85] (tinisat1) to node[above,pos=0.5]{\footnotesize prefix} (gnovelty13.north);
+\draw [<->,out=270,in=90,looseness=1.55] (tinisat1) to node[right,pos=0.8]{\footnotesize clauses} (strengthener1.south);
+
+\node (worker_group_label2)	at (2.5,8.0)	[above,gray] {Worker group 2};
+\draw [gray]  (1.0,8.0) -- (14.0,8.0) -- (14.0,14.5) -- (1.0,14.5) -- cycle ;
+\node (strengthener2)	at (3.0,9.0)	[align=center] {Strengthener2};
+\node (tinisat2)		at (3.0,11.5)	[align=center] {TiniSAT2};
+\node (gnovelty21)	at (6.0,11.5)	[align=center] {gNovelty2,1};
+\node (gnovelty22)	at (9.0,11.5)	[align=center] {gNovelty2,2};
+\node (gnovelty23)	at (12.0,11.5)	[align=center] {gNovelty2,3};
+\draw [-,out=0,in=180,looseness=0.35] (master.east) to (-0.5,11.5);
+\draw [->,out=0,in=180,looseness=0.75] (-0.5,11.5) to node[above,pos=0.3]{\footnotesize messages} (tinisat2);
+\draw [-,out=90,in=0,looseness=1.55] (tinisat2) to (2.0,13.0);
+\draw [->,out=180,in=90,looseness=1.05] (2.0,13.0) to  (master.south);
+\draw [-,out=90,in=0,looseness=0.90] (gnovelty21.south) to (2.0,13.0);
+\draw [-,out=90,in=0,looseness=0.70] (gnovelty22.south) to (2.0,13.0);
+\draw [-,out=90,in=0,looseness=0.65] (gnovelty23.south) to node[below,pos=0.5]{\footnotesize solutions} (2.0,13.0);
+\draw [->,out=315,in=270,looseness=1.35] (tinisat2) to (gnovelty21.north);
+\draw [->,out=320,in=270,looseness=1.05] (tinisat2) to (gnovelty22.north);
+\draw [->,out=320,in=270,looseness=0.85] (tinisat2) to node[above,pos=0.5]{\footnotesize prefix} (gnovelty23.north);
+\draw [<->,out=270,in=90,looseness=1.55] (tinisat2) to node[right,pos=0.8]{\footnotesize clauses} (strengthener2.south);
+
+\node (worker_group_label3)	at (2.5,15.5)	[above,gray] {Worker group 3};
+\draw [gray]  (1.0,15.5) -- (14.0,15.5) -- (14.0,22.0) -- (1.0,22.0) -- cycle ;
+\node (strengthener3)	at (3.0,16.5)	[align=center] {Strengthener3};
+\node (tinisat3)		at (3.0,19.0)	[align=center] {TiniSAT3};
+\node (gnovelty31)	at (6.0,19.0)	[align=center] {gNovelty3,1};
+\node (gnovelty32)	at (9.0,19.0)	[align=center] {gNovelty3,2};
+\node (gnovelty33)	at (12.0,19.0)	[align=center] {gNovelty3,3};
+\draw [-,out=0,in=180,looseness=0.35] (master.east) to (-0.5,19.0);
+\draw [->,out=0,in=180,looseness=0.75] (-0.5,19.0) to node[above,pos=0.3]{\footnotesize messages} (tinisat3);
+\draw [-,out=90,in=0,looseness=1.55] (tinisat3) to (2.0,20.5);
+\draw [->,out=180,in=90,looseness=1.05] (2.0,20.5) to  (master.south);
+\draw [-,out=90,in=0,looseness=0.90] (gnovelty31.south) to (2.0,20.5);
+\draw [-,out=90,in=0,looseness=0.70] (gnovelty32.south) to (2.0,20.5);
+\draw [-,out=90,in=0,looseness=0.65] (gnovelty33.south) to node[below,pos=0.5]{\footnotesize solutions} (2.0,20.5);
+\draw [->,out=315,in=270,looseness=1.35] (tinisat3) to (gnovelty31.north);
+\draw [->,out=320,in=270,looseness=1.05] (tinisat3) to (gnovelty32.north);
+\draw [->,out=320,in=270,looseness=0.85] (tinisat3) to node[above,pos=0.5]{\footnotesize prefix} (gnovelty33.north);
+\draw [<->,out=270,in=90,looseness=1.55] (tinisat3) to node[right,pos=0.8]{\footnotesize clauses} (strengthener3.south);
+
+\end{tikzpicture}
+\caption[Messages between components in \dagster\ ]{Relationship and messages between and within the Master and worker groups within \dagster\  mode$2$ operation}\label{fig:dagster_organisation}
+\end{figure}
+
+\pagebreak
+\section{Empirical Studies}\label{sec:experiments}
+
+There are many other sources of decomposed problems, particularly where the process of generating the problem also gives its structure.
+An example of this is the Pentomino problems considered in Section \ref{sec:pentominos}, which is an example of a tiling problem where the problem is naturally distinct between different tiling regions.
+Different problems naturally give rise to different methods of decomposing them into structures, and it is possible to experiment with possible decompositions for any given problem.
+In the following sections we report on various experimental results which has been generated with \dagster\ for different problems.
+
+Particularly we consider the following experiments:
+
+\begin{itemize}
+\item	Section \ref{section:section1}: parallel solution of small hard problems
+\item	Section \ref{sec:pentominos}: parallel solution of larger hard problems, particularly Pentomino problems
+\item	Section \ref{section:costas_arrays}: a divide-and-conquer solution to the Costas array problem
+\item	Section \ref{section:gensat_problems}: a two part decomposition of random SAT problems to accelerate their solution process, with SLS assistance
+\item	Section \ref{sec:easy_large_problems}: solving easy large problems in parallel, demonstrating how \dagster can solve problems in sequence that are bigger than the computer has memory to hold together
+\item	Section \ref{sec:easy_connected_problems}: connected easy-5-SAT problems, showing that SLS assistance can speed up solution process
+\item	Section \ref{section:software_verification}: software verification problems
+\end{itemize}
+
+
+
+\subsection{Model Counting in Parallel - Hard Satisfiable Random Formulae}\label{section:section1}
+
+Here, we examine the performance of \dagster\ at counting models in a hard synthetic example that exhibits a single solution.
+One simple case of verifying the parallel performance of \dagster\ is to test the performance solving small-hard SAT problems which are entirely disjoint.
+%%
+Particularly it is expected that as the number of small-hard problems increases then the time \dagster\ should take in solving these should be a function of the time it takes to solve any single one of the subproblems, and the ratio of the number of multiprocessing cores to the number of subproblems which need to be solved.
+
+The SGEN1 script\cite{10.1145/1671970.1671972}\footnote{SGEN1: \url{http://www.cs.qub.ac.uk/~i.spence/sgen/}} distributed with \dagster\ was used to generate small-hard subproblems comprising $95$ variables and featuring one unique solution.
+Such problems take our baseline CDCL procedure, \tinisat, about half a second to solve and also prove that no further solutions exists.
+%%
+Our repository includes a custom script for conjoining subproblems of that type into one super-problem described by a accompanying DAG.
+Figure~\ref{fig:dag_example4315} gives a depiction of this type of super-problem.
+The performance of \dagster\ at solving this arrangement of subproblems was measured.
+We examined the wall-time performance of \dagster\ as we scale the number of cores as a fraction of the time it took a vanilla CDCL procedure in \tinisat\ to solve the problem without having to also prove that no further solution exists.
+
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=-1.03,scale=1.1]
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (1) at (0, 1) {8};
+	
+	%\node [fill=white, draw=black, shape=circle, minimum size=6mm] (2) at (-4, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (3) at (-3, 0) {1};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (4) at (-2, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (5) at (-1, 0) {3};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (6) at (0, 0) {4};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (7) at (1, 0) {5};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (8) at (2, 0) {6};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (9) at (3, 0) {7};
+	%\node [fill=white, draw=black, shape=circle, minimum size=6mm] (10) at (4, 0) {10};
+
+	
+	%\draw [fill=none, ->] (2) to (1);
+	\draw [fill=none, ->] (3) to (1);
+	\draw [fill=none, ->] (4) to (1);
+	\draw [fill=none, ->] (5) to (1);
+	\draw [fill=none, ->] (6) to (1);
+	\draw [fill=none, ->] (7) to (1);
+	\draw [fill=none, ->] (8) to (1);
+	\draw [fill=none, ->] (9) to (1);
+	%\draw [fill=none, ->] (10) to (1);
+\end{tikzpicture}
+\caption[An example DAG for conjoined small-hard problems]{An example DAG for conjoined small-hard problems, where disjoint subproblems are processed in parallel and their solutions joined together at the final node}\label{fig:dag_example4315}
+\end{figure}
+
+
+The runtime of search on  super-problems with varying numbers of subproblems, in different computational environments where we vary the number of available cores, is shown in Figures~\ref{fig:performance_graph1}~and~\ref{fig:performance_graph2}.
+%%
+From Figure~\ref{fig:performance_graph1} we can see that as the number of subproblems increases the time it takes \dagster\ to solve the problem as a fraction of the time it takes the baseline CDCL procedure, \tinisat, to solve the problem decreases -- I.e., \dagster\ is significantly faster.
+Particularly, it is possible to note that the trend-line is approximately hyperbolic, indicating that the computational overhead of using \dagster\ goes to zero as the number of subproblems increases.
+Also, the speed of \dagster\ is pseudo-linearly increasing for large numbers of subproblems from Figure \ref{fig:performance_graph2} which is expected.
+The reader should also not that here, \dagster\ is solving a more difficult problem compared to the CDCL baseline.
+It has to find the one satisfying valuable, and then further prove that no further solutions exists.
+
+We also notice that increasing the number of cores available to \dagster\ solving the problem increases performance, but only upto a certain point.
+Particularly it was noticed that $64$ cores performed significantly worse than $32$ cores.
+
+The invocation to run the experiments is to be found within the code repository:
+
+\begin{Verbatim}[frame=single]
+/experiment_scripts/conjoined_experiment/runme.sh
+\end{Verbatim}
+
+Experimenting with with small-hard problems in parallel we were able to verify that \dagster\ offers significant parallel advantage, as is expected by its design - these experiments were performed on the `Etna' machine - see Section \ref{sec:cpu_section}.
+
+\input{figs/computing_times_1.tex}
+\input{figs/computing_times_2.tex}
+
+%\clearpage
+
+
+\subsection{A Large Satisfiable Problem - Pentominoes}\label{sec:pentominos}
+
+A tiling problem was extended as a benchmark for \dagster\ from a recreational puzzle solving YouTube channel\footnote{Cracking the Cryptic, YouTube video: \url{youtube.com/watch?v=S2aN-s3hG6Y}}, as shown in Figure \ref{fig:pentomino_puzzle1}, where the challenge is to fill a grid with Pentominoes (5 connected blocks) such that no pentomino crosses a boldened black line, and that no pentominoes of the same shape (counting reflections/rotations) touch each other.
+
+\input{figs/pentomino1.tex}
+
+A generator of these kind of problems was coded to randomly generate hard 15x15 pentomino problems, involving a process of:
+\begin{enumerate}
+\item	Randomly filling a 15x15 grid with pentominoes
+\item	Bolden the outline of those pentominoes, and removing them
+\item	Iteratively removing a random boldened line segments while the puzzle is uniquely solvable, until no more such removals are possible.
+\end{enumerate}
+
+This process was shown to become slow to generate problems larger than 25x25, and so larger pentomino problems were generated by cascading these 15x15 subproblems side-by-side together in a grid pattern, such as shown in Figure \ref{subproblem2}.
+In this way, the grid of pentomino problems constitutes a larger problem which has logically distinct parts and where each subproblem is logically related only to its immediate neighbours: above, below, left and right; and because every pentomino subproblem is uniquely solvable then also this larger pentomino problem is also uniquely solvable.
+
+For these large pentomino problems a DAG would be generated embodying a solution process of solving from the top left diagonally through to the bottom right, as shown in Figure \ref{fig:dag_example1215}.
+In these particular problems the size of the grid of 15x15 pentomino subproblems would determine the maximum branching of the parallel process and thus the efficiency of the solving in parallel.
+
+\input{figs/pentomino2.tex}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=-1.03,scale=1.1]
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (1) at (0, 0) {1};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (2) at (1, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (4) at (2, 0) {4};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (7) at (3, 0) {7};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (3) at (0, 1) {3};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (5) at (1, 1) {5};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (8) at (2, 1) {8};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (11) at (3, 1) {11};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (6) at (0, 2) {6};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (9) at (1, 2) {9};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (12) at (2, 2) {12};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (14) at (3, 2) {14};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (10) at (0, 3) {10};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (13) at (1, 3) {13};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (15) at (2, 3) {15};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (16) at (3, 3) {16};
+	
+	\draw [fill=none, ->] (1) to (3);
+	\draw [fill=none, ->] (2) to (5);
+	\draw [fill=none, ->] (4) to (8);
+	\draw [fill=none, ->] (7) to (11);
+	
+	\draw [fill=none, ->] (3) to (6);
+	\draw [fill=none, ->] (5) to (9);
+	\draw [fill=none, ->] (8) to (12);
+	\draw [fill=none, ->] (11) to (14);
+	
+	\draw [fill=none, ->] (6) to (10);
+	\draw [fill=none, ->] (9) to (13);
+	\draw [fill=none, ->] (12) to (15);
+	\draw [fill=none, ->] (14) to (16);
+	
+	\draw [fill=none, ->] (1) to (2);
+	\draw [fill=none, ->] (2) to (4);
+	\draw [fill=none, ->] (4) to (7);
+	
+	\draw [fill=none, ->] (3) to (5);
+	\draw [fill=none, ->] (5) to (8);
+	\draw [fill=none, ->] (8) to (11);
+	
+	\draw [fill=none, ->] (6) to (9);
+	\draw [fill=none, ->] (9) to (12);
+	\draw [fill=none, ->] (12) to (14);
+	
+	\draw [fill=none, ->] (10) to (13);
+	\draw [fill=none, ->] (13) to (15);
+	\draw [fill=none, ->] (15) to (16);
+\end{tikzpicture}
+\caption{An example DAG for a 4x4 pentomino superproblem}\label{fig:dag_example1215}
+\end{figure}
+
+For these problems we tested the performance of \dagster\ for different numbers of processor cores, against the \tinisat\ and \lingeling\ CDCL baselines for different sized problems, the results are shown in Figure \ref{fig:performance_graph46461}.
+In this figure, we see that \dagster\ is upto an order of magnitude faster (in the median) for these problems than serial sat solvers, but that increasing the number of cores does not necessarily improve performance.
+Specifically we suspect that this is because the DAGs of these problems (such as per instance in Figure \ref{fig:dag_example1215}) do not support sufficiently many parallel processing streams to take advantage of higher parallel processing cores.
+The Pentomino problems were also run with the strengthener module enabled, and the results show little difference in runtime on these problems as shown in Figure \ref{fig:performance_graph4646ddd1} - in this context enabling strengthener module slowed the runtime by 4.8\% across the data.
+We note that the enabling of different modules within the \dagster\ tool gives variable results depending on the structure and kind of problem.
+
+\input{figs/computing_times_4.tex}
+\input{figs/computing_times_7.tex}
+
+These Pentomino problems verified the functioning of \dagster\ (particularly in Figure \ref{fig:performance_graph46461}) in providing speedup due to parallelisation in solving larger structured problems with coupled subproblems. 
+The invocation to run these experiments is to be found by executed the following commands within the code repository:
+\begin{Verbatim}[frame=single]
+experiment_scripts/Pentomino/runme.sh
+experiment_scripts/Pentomino2/runme.sh
+\end{Verbatim}
+These experiments were performed on the `Etna' and `Whale' machines respectively - see Section \ref{sec:cpu_section}.
+
+
+%\clearpage
+\subsection{Counting Models in Parallel - Costas Arrays}\label{section:costas_arrays}
+
+A Costas array is a set of $n$ points in an $n\times n$ array such that each column and row contains exactly one point and each of the $n(n-1)/2$ displacement vectors between the points are distinct; Costas arrays are well known and have various applications, and the process of using search techniques to solve for them is known to be challenging.
+Specifically there is an open question about whether any Costas arrays exist notably for sizes 32x32 and 33x33.
+Searching processes have revealed that there are none of specific sub-classes of Costas arrays of those sizes \cite{748721}, which has invited some to predict that Costas arrays of those sizes exist \cite{conf/ciss/RussoEB10}.
+Notwithstanding, searching processes has been conducted at least upto size 29x29 \cite{DBLP:journals/amco/DrakakisIRW11}.
+
+
+As an example, consider the following 6x6 Costas array in Table~\ref{table:costas1}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+                         &                          & \cellcolor[HTML]{333333} &                          &                          &                          \\ \hline
+                         &                          &                          &                          & \cellcolor[HTML]{333333} &                          \\ \hline
+                         &                          &                          &                          &                          & \cellcolor[HTML]{333333} \\ \hline
+\cellcolor[HTML]{333333} &                          &                          &                          &                          &                          \\ \hline
+                         &                          &                          & \cellcolor[HTML]{333333} &                          &                          \\ \hline
+                         & \cellcolor[HTML]{333333} &                          &                          &                          &                          \\ \hline
+\end{tabular}
+\caption{An example 6x6 Costas array}\label{table:costas1}
+\end{table}
+From this example Costas array we can see that there is exactly one filled-in cell for every column and row; additionally we can see that the vector displacement between any of the filled-in cells is unique and that there are no two sets of cells that have the same spacing between them. Particularly if we we tabulate all of the $n(n-1)/2$ displacements between pairs of nodes in Table~\ref{table:costas2} we can see that all the displacements values along each of the rows are unique.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|l|llll}
+\cline{2-6}
+                                 & \textbf{1} & \multicolumn{1}{l|}{\textbf{2}} & \multicolumn{1}{l|}{\textbf{3}} & \multicolumn{1}{l|}{\textbf{4}} & \multicolumn{1}{l|}{\textbf{5}} \\ \hline
+\multicolumn{1}{|l|}{\textbf{1}} & +2         & \multicolumn{1}{l|}{-5}         & \multicolumn{1}{l|}{+4}         & \multicolumn{1}{l|}{-3}         & \multicolumn{1}{l|}{+1}         \\ \hline
+\multicolumn{1}{|l|}{\textbf{2}} & -3         & \multicolumn{1}{l|}{-1}         & \multicolumn{1}{l|}{+1}         & \multicolumn{1}{l|}{-2}         &                                 \\ \cline{1-5}
+\multicolumn{1}{|l|}{\textbf{3}} & +1         & \multicolumn{1}{l|}{-4}         & \multicolumn{1}{l|}{+2}         &                                 &                                 \\ \cline{1-4}
+\multicolumn{1}{|l|}{\textbf{4}} & -2         & \multicolumn{1}{l|}{-3}         &                                 &                                 &                                 \\ \cline{1-3}
+\multicolumn{1}{|l|}{\textbf{5}} & -1         &                                 &                                 &                                 &                                 \\ \cline{1-2}
+\end{tabular}
+\caption{The displacements of the example 6x6 Costas array \ref{table:costas1}, organised by horizontal distance in rows, by horizontal offset in columns}\label{table:costas2}
+\end{table}
+
+Costas arrays are known to exist for many sizes, and for every Costas array, there are potentially 8 symmetry mappings of the same array that are also Costas arrays (by rotations and flip, ie. the Dihedral group), Costas arrays have been enumerated by size such as given by the online encyclopedia of integer sequences (OEIS): \url{https://oeis.org/A008404} and \url{https://oeis.org/A001441}.
+
+The investigative question therefore is: if we can encode the Costas problem into SAT, and then decompose the resulting SAT problem for accelerated solving using \dagster.
+Particularly the SAT encoding of the Costas problem was produced with optional symmetry breaking constraints to break Dihedral mappings, particularly with lex-leader symmetry breaking, and a more simplified and less total symmetry breaking as found in \cite{conf/ciss/RussoEB10}.
+From this SAT problem we considered primarily two different ways of decomposing the SAT problem.
+\begin{enumerate}
+\item	Inspired by the construction of such tables as Table~\ref{table:costas2}, we considered a decomposition of iteratively constructing Costas arrays from the bottom of the table up. This decomposition proved to be poor performing as a combinatorial number of intermediate solutions between depths were created
+\item	Taking a much simpler approach of decomposing the problem into two parts, the first being placing the first three columns of the Costas array, and the second part of the problem being that the rest of the Costas array would be filled in. This proved to be more effective decomposition of the problem. See Figure \ref{fig:dag_example121}.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+	\node [fill=white, draw=black, shape=circle] (0) at (0, 0) {0};
+	\node [fill=white, draw=black, shape=circle] (1) at (1, 0) {1};
+	\draw [fill=none, ->] (0) to (1);
+\end{tikzpicture}
+\caption{A simplified DAG structure for the Costas decomposition}\label{fig:dag_example121}
+\end{figure}
+
+The performance of \dagster\ at solving Costas problems for different sized Costas arrays is given in Figure \ref{fig:performance_graph3}.
+In this figure the time taken to count all the Costas arrays of a given size is plotted against the size of the problem for different numbers of cores against the time taken to do the same thing running the serial baseline CDCL procedure implemented in \tinisat\ (shown in black).
+From this figure we can see that for larger sized Costas arrays that \dagster\ shows significantly improved performance in solving the Costas model counting problem, where the performance increases with the number of cores.
+However it is also noticed that for smaller and easier Costas problems (of size $n\times n$ where $n<10$) that the parallel overhead of using \dagster\ is the primary determinant of the solution time, where the greater the number of cores the larger the overhead and the slower the process.
+
+With this simulation we can verify that \dagster\ can be used to speedup solving performance on the types of problems which are geometrically difficult and resemble research-interesting questions.
+
+\input{figs/computing_times_3.tex}
+
+It was also interesting whether the strengthener module would improve performance on Costas array solving, and to investigate this the strengthener module was added for different sized Costas array problems for different core counts.
+The resulting performance is shown in Figure \ref{fig:performance_graph46fwfwfasfs461}. where we can see that the strengthener module does not notably improve performance, and slows the execution by about 4.8 percent.
+
+\input{figs/computing_times_9.tex}
+
+
+The Costas simulations that produced the data shown in Figures \ref{fig:performance_graph3} and \ref{fig:performance_graph46fwfwfasfs461} can be invoked from the \dagster\ repository by executing:
+\begin{Verbatim}[frame=single]
+experiment_scripts/costas/run.sh
+experiment_scripts/costas2/run.sh
+\end{Verbatim}
+And particularly from these figures, we can see that \dagster\ can accelerate the solution of Costas model counting particularly by parallelism. These experiments were performed on the `Etna' machine by default, as well as the `Gadi` machine where noted - see Section \ref{sec:cpu_section}.
+
+%\clearpage
+\subsection{Accelerating Unsatisfiability Proofs via Parallelisation}\label{section:gensat_problems}
+
+Empirical studies of the Boolean satisfiability problem late last century identified and studied a notion of empirically {\em hard} problems.
+The earliest works studied formulae occurring in conjunctive normal form with all disjunctive clauses having a fixed length $k$.
+A range of studies of this ``{\em $k$-Satisfiability}'' problem have been undertaken treating different values of $k$, and other more flexible concepts of structural invariants.
+Taking $k=3$ and studying sets of pseudo-random problems researchers found that so-called ``hard'' problems occur when the ratio of the count of clauses to the count of problem variables is approximately $4.26$~\cite{cheeseman:etal:1991}. 
+Here we present a small study of pseudo-random $3$-Satisfiability using the problem distributions associated with Dubois et al. (2000)\cite{dubois:etal:2000}.
+
+Somewhat trivially---i.e., primarily due to a portfolio effect---the hybrid search implemented in \dagster\ outperforms CDCL baselines in hard satisfiable random instances.
+For satisfiable $3$-Satisfiability the best solution procedure is a local search~\cite{pham:etal:2008}. 
+Our hybrid configuration of  \dagster\ allows any number of such searches to be scheduled to run more-or-less independently in parallel on your cluster.
+Thus, not only is this parallel system better than CDCL here, courtesy of implementing a local search, it is also faster than running a serial local search procedure, because the expected walltime to a solution being emitted is at the lower end of the runtime distribution of that stochastic procedure.
+Here, we focus on the more interesting setting, accelerating search in a family of unsatisfiable $3$-Satisfiability problems.
+
+In our first result, we accelerate the walltime performance of the default implementation of CDCL in \tinisat, by leveraging the hybrid search mode, using the local search to generate a complete set of relatively easy UNSAT subproblems that can be solved independently in parallel.
+A comparison of runtime of \dagster\ as compared with the serial CDCL procedure in \tinisat\ is given in Figure~\ref{fig:3UNSAT_140random}. 
+Specifically, we can decompose the problem using a 2 node DAG in which the ``source'' node indexes $94\%$ of clauses, and this communicates solutions to a ``sink'' node that includes all the clauses from the concrete problem at hand.
+What is communicated is a small prefix of the total subproblem valuation. 
+The problem at the source node, with only  $94\%$ of clauses, is easily satisfiable using a local search, and indeed the hybrid procedure can quickly enumerate all solutions to that subproblem and subsequently the CDCL procedure can prove that no further solutions exists.
+The problem of proving that the concrete problem in unsatisfiable, for each of the valuations associated with the source node subproblem, is extremely easy.
+
+%\input{figs/3UNSAT_140random.tex}
+
+\input{figs/computing_times_5.tex}
+
+In conclusion, our hybrid solver can, by virtue of local search, easily enumerate the solutions to an underconstrained subproblem, and by virtual of parallelism quickly eliminate those solution candidates using systematic search. 
+
+%\clearpage
+\subsection{Model Counting in Parallel - Easy Large Satisfiable Random Formulae}\label{sec:easy_large_problems}
+
+It is also possible to verify that \dagster\ can solve problems which are large in comparison with available memory, particularly we consider solving large-easy SAT problems which are entirely disjoint and in parallel, similar to the scheme implemented in Section \ref{section:section1}.
+It is verified that as the number of large-easy problems increases the memory that \dagster\ should take in solving these should be less than the size of the CNF file of all those problems combined; and in this way it is verifiable that \dagster\ can solve problems which are larger than the amount of memory on the machine.
+This is accomplished by splitting the CNF of the larger problem into parts corresponding to subproblems, which are loaded sequentially and solved in turn in accordance with the DAG.
+
+Particularly a 5MB random-7-SAT problem was generated, and multiple copies of the same problem were concatenated to form a parallel DAG - as previously shown in Figure \ref{fig:dag_example4315}).
+In this way the maximum size of any subproblem was 5MB, whereas the CNF of the problem would be many multiples of 5MB.
+
+The memory consumed by \dagster\ running these problems against the size of the CNF of these problems for different numbers of cores is shown in figures \ref{fig:memory_consumption}.
+From Figure \ref{fig:memory_consumption} we can see that the memory used is a barely a fraction of the size of the CNF, which doesn't vary considerably with the number of cores.
+From this experiment it can be verified that \dagster\ can tackle problems which are large with respect to the available memory.
+The experiment was performed on the `Etna' machine - see section \ref{sec:cpu_section}.
+
+The invocation to run these experiments is to be found by the following command within the code repository:
+
+\begin{Verbatim}[frame=single]
+experiment_scripts/sequential_random_sat/runme.sh
+\end{Verbatim}
+
+
+\input{figs/computing_times_6.tex}
+
+\subsection{Model Counting in Parallel - Easy Connected Satisfiable Random Formulae}\label{sec:easy_connected_problems}
+
+We have already investigated the potential of using \dagster\ to solve ``hard'' random disjoint problems in parallel, however we can also investigate the possibility of non-disjoint problems being solved in parallel.
+For this purpose we built a monolithic formula by connecting a series of easy random-$5$-SAT formulae, with each subformula being randomly generated with a clause-to-variable ratio of $10/1$.
+Each adjacent pair in the series of subformulae have some variables overlapping.
+Specifically, the monolithic formula was generated with $5$ variables in common between any successive pair of subformulae.
+The DAG relating subformulae is as per Figure~\ref{fig:dag_example431asf5}, thus giving a chain of subformulae.
+For this case we considered the runtime of \dagster\ both with and without \gnoveltyp\ assistance.
+
+The resulting runtime (first quartile, median and third quartile) was compared with and without the \gnoveltyp\ assistance against the number of subformulae in Figure \ref{fig:performance_graph46asfs461}.
+The \gnoveltyp\ assistance does provide some minor acceleration of walltime performance in these instances.
+%%
+%%Particularly the shape of the figure---i.e., a runtime performance peak at $n=22$ subformulae and the a trough at around $n=25$---is indicative that the overlap between adjacent subformulae variables  does provide some constrainedness to CDCL processes in solving further problem parts, but only upto a point.
+%% As the chain becomes longer, the problem is increasingly less likely to be satisfiable, and therefore more work is needed by the CDCL. 
+
+The invocation to run this experiment is to be found by the following command within the code repository:
+\begin{Verbatim}[frame=single]
+experiment_scripts/sequential_random_sat2/runme.sh
+\end{Verbatim}
+
+The simulation was performed with a maximum of $14$ cores on the `Whale' machine - see Section \ref{sec:cpu_section}.
+In addition to the results of Section \ref{section:gensat_problems}, this experiment also demonstrated possible speedup utilising \gnoveltyp\ assistance in \dagster.
+
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=-1.03,scale=1.1]	
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (1) at (-3, 0) {1};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (2) at (-2, 0) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (3) at (-1, 0) {3};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (4) at (0, 0) {4};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (5) at (1, 0) {5};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (6) at (2, 0) {6};
+	\node [fill=white, draw=black, shape=circle, minimum size=6mm] (7) at (3, 0) {7};
+
+	\draw [fill=none, ->] (1) to (2);
+	\draw [fill=none, ->] (2) to (3);
+	\draw [fill=none, ->] (3) to (4);
+	\draw [fill=none, ->] (4) to (5);
+	\draw [fill=none, ->] (5) to (6);
+	\draw [fill=none, ->] (6) to (7);
+\end{tikzpicture}
+\caption[DAG for 7 conjoined random-5-SAT problems]{DAG for 7 conjoined random-5-SAT problems, where the set of preceeding subproblem solutions constrain solutions to succeeding problems.}\label{fig:dag_example431asf5}
+\end{figure}
+
+
+\input{figs/computing_times_8.tex}
+
+
+\clearpage
+\subsection{Decomposing Software Verification Problems for \dagster}\label{section:software_verification}
+
+In this section we present results for a recipe which produces a decomposition of a SAT formula associated with a software security problem.
+We show that by using this decomposition \dagster\ is able to find a solution to the problem faster than our familiar serial baseline, \tinisat, or the {\em de facto} SAT solver for this setting, namely {\textsc MiniSAT}.
+Prior to presentation of our experimental results, we give context on the tool used to generate the SAT formulae and the actual security problem we have examined.
+
+Software is pervasive and critical in the functioning of our modern society, both corporately and personally. Motivated by this, the field of software security has become essential. Many different techniques exist to find bugs in programs, one of which frames this task as a model checking problem. Model checking formalises the problem as determining whether a system, our program in this case, satisfies a set of requirements -- E.g., no null dereferences. The bounded model checking (BMC) problem can be used to address some software security problems, and it does so by looking for violations of the property within a certain limited search {\em depth}. In the case of system {\em safety properties}, if an upper bound---called a {\em completeness threshold}---on the required depth is derived and used, then this method can demonstrate that no violations of the property will ever occur. Otherwise this method is only be able to find the presence of violations, and not prove their absence. BMC operates by translating the statement of a security problem about a system into a (Boolean) SAT problem, and so, a SAT solver is used as the solution engine.
+
+We use the tool {\textsc CBMC} to translate the problem of finding bugs into a SAT problem. {\textsc CBMC} implements BMC for C and C++ programs, and generates a corresponding SAT query associated with the software verification task at hand.
+It takes a program, which we want to verify certain properties about, and broadly speaking it passes it through 3 stages to result in the SAT formula.
+We will work through the example code in Figure \ref{ex1_code} to illustrate the process.\footnote{Our provided example is by no means exhaustive of the capability {\textsc CBMC}. That tool can also perform other safety checks in relation to memory and array bounds etc. Our example will only consider an assertion that the user wants to be satisfied.}
+\begin{enumerate}
+    \item In the first stage, the given C/C++ program is converted into a GOTO program, which consists of equivalent goto statements for any code that performs a jump; E.g., loops, if statements, jumps etc. This results in a GOTO program that only has: {\em (i)}  guarded goto instructions, {\em (ii)} goto instructions, {\em (iii)} assignments, and {\em (iv)} assertions and labels.
+    \item In the second stage, the loops in the GOTO program are unwound and the program is converted into single static assignment (SSA) form. The loop unwinding corresponds with bounding the depth of the system execution. In SSA form, variables can only be assigned once, and so-called $\phi$ functions are inserted eagerly at merge points in the control flow graph. As a result, numerous copies/instances of the same variable in the program are created for each step that the variable is re-assigned. Additionally, variables are created for the $\phi$ functions that determine which of the previous instances of the variable are now being referred to -- I.e., what control flow is being reasoned about. An example of this conversion can be seen in Figure \ref{ex1_ssa}, where $\phi$ nodes have been expanded into a form that uses the C ternary operator "?:".
+    \item In the final stage, the SSA form is converted into a set of conjoined constraints, by turning assignments into equalities and forming the conjunction of all them. The result of running this final stage in our example is depicted in Figure \ref{ex1_formula}. Observe that the property to be checked is negated, which in this case means we check to see if $\mbox{crash}\_5 = 1$. The conjoined constraints are then converted into a SAT formula by a process known as bit-blasting.
+\end{enumerate}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=6cm]{./figs/ex1_code.png}
+  \caption{Example code in C.}
+  \label{ex1_code}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=6cm]{./figs/ex1_ssa.png}
+  \caption{Conversion of code into SSA form.}
+  \label{ex1_ssa}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=6cm]{./figs/ex1_formula.png}
+  \caption{Resultant formula from conversion.}
+  \label{ex1_formula}
+\end{figure}
+
+We are able to produce a decomposition for this program by using a recipe that considers the formula as it is represented in SSA form. The resulting decomposition that we create will have four DAG nodes, as seen in Figure~\ref{ex1_dag}.
+The first Node contains clauses that relate to calculating the goal and determining the values that $\mbox{guard}\#1$ and $\mbox{guard}\#2$ should be assigned, in order to set the crash flag to {\em true}.
+When \dagster\ is operating given this DAG, the guard values will be communicated as messages to search scheduled at subproblems at Nodes two and three.
+Those subproblems are characterised by clauses that described the required values for $a$ and $b$, separately. Note that these variable values are independent of one another, and that the \dagster\ search will calculate the required variable assignment independently in parallel.
+The final Node will merge the results of Nodes two and three, and confirm that they cohere to form a solution.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+	\node [fill=white, draw=black, shape=circle,align=center] (0) at (0, 3) {crash4\\ crash5};
+	\node [fill=white, draw=black, shape=circle,align=center] (1) at (3, 3) {guard$\#$2\\ b\_2};
+	\node [fill=white, draw=black, shape=circle,align=center] (2) at (0, 0) {guard$\#$1\\ b\_1};
+	\node [fill=white, draw=black, shape=circle,align=center] (3) at (3, 0) {Merge\\Node};
+	\draw [fill=none, ->] (0) to (1);
+	\draw [fill=none, ->] (0) to (2);
+	\draw [fill=none, ->] (1) to (3);
+	\draw [fill=none, ->] (2) to (3);
+\end{tikzpicture}
+  \caption{DAG for example code.}
+  \label{ex1_dag}
+\end{figure}
+
+Using the same recipe, we can produce a decomposition for a program with three independent conditionals depicted in Figure~\ref{ex2_code}, which will result in three separate sub-problems, depicted in Figure~\ref{ex2_dag}.
+In this program there are three possible places the program can crash, which occur if any of the flag variables $a$, $b$, or $c$, are set to 1.
+The DAG produced by our recipe has been represented in Figure~\ref{ex2_dag}. Node 0 contains the assertion that one of the crashes must occur.
+Nodes 1 and 2 contain the computation done to set one of the flags.
+Node 3 contains the same clauses\footnote{This is due to the assertion being a logical disjunction, and how the recipe works.} as Node 0, and thus is equivalent to Node 0.
+
+We performed experiments on programs which had an identical structure to the independent program in Figure~\ref{ex2_code}.
+One example had three independent conditionals, and the other two independent conditionals.
+In the case of two independent conditionals, the Node 3 in Figure~\ref{ex2_dag} was removed by the recipe.
+To make the problem more difficult, we modified the example to use an implementation of the AES-128 encryption scheme.
+In this modification each of the flags could only be set if the correct message was found so that the encryption of the message resulted in an identical cipher text.
+This amounts to reversing the AES encryption, a difficult problem to solve. This resulting programs had an identical DAG structure to Figure~\ref{ex2_code}.
+We limited our recipe to only exposing the structure from the main function, thus do not expose any decompositional structure that exists in the implementation of AES.
+
+\begin{figure}[!ht]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+
+  \includegraphics[width=6cm]{./figs/ex2_code.png}
+  \caption{3 independent conditionals.}
+  \label{ex2_code}
+
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+    \begin{tikzpicture}
+        \node [fill=white, draw=black, shape=circle,align=center] (0) at (0, 1.5) {0};
+        \node [fill=white, draw=black, shape=circle,align=center] (1) at (1.5, 0) {1};
+        \node [fill=white, draw=black, shape=circle,align=center] (2) at (1.5, 1.5) {2};
+        \node [fill=white, draw=black, shape=circle,align=center] (3) at (1.5, 3) {3};
+        \node [fill=white, draw=black, shape=circle,align=center] (4) at (3, 1.5) {4};
+        \draw [fill=none, ->] (0) to (1);
+        \draw [fill=none, ->] (0) to (2);
+        \draw [fill=none, ->] (0) to (3);
+        \draw [fill=none, ->] (1) to (4);
+        \draw [fill=none, ->] (2) to (4);
+        \draw [fill=none, ->] (3) to (4);
+    \end{tikzpicture}
+  \caption{DAG for the problem with 3 independent conditionals.}
+  \label{ex2_dag}
+    \end{minipage}
+\end{figure}
+
+To produce the below results, \dagster\ was run in the default mode zero with no enumeration, and with restarts turned off in the CDCL searches.
+We found that with restarts on, \dagster\ performed poorly for these programs that used AES. We compared our results with \tinisat\footnote{Restarts remained on for TiniSAT, since all runs without restarts for this problem resulted in a runtime of over five minutes.}, the CDCL procedure that \dagster\ uses in mode 0, and with {\textsc MiniSAT} which has an entirely different backtracking procedure than \tinisat.
+Our comparison with \tinisat\ provides a good platform to judge the decomposition since \dagster\ uses \tinisat, and the main difference is that \tinisat\ is working on the monolithic SAT formula but \dagster\ is able to distribute the search.
+
+The results for the AES program with two crashes, and also with three crashes, are in Table \ref{table:aes_indep}.
+%%
+This experiment was run on the `Luke' machine described in Section~\ref{sec:cpu_section}.
+%%
+Anything that went over five minutes was recorded as a {\em time out}, denoted ``T.O.'' in the table.
+%%
+Both \tinisat\ and \dagster\ were executed on identical input CNFs.
+There seems to be an ideal number of processors for \dagster\ to use when distributing the search according to this decomposition; $4$ processors for two crashes, and $6$ processors for three crashes.
+%%
+The results showcase a significant improvement when using \dagster, where multiple CDCL processes are running independently in parallel, instead of using \tinisat, which is just working on the monolithic CNF.
+As can be seen in Table \ref{table:aes_indep}, \tinisat\ {\em timed out} on both runs, whereas \dagster\ took $21.9$ seconds (two crashes) and $24.2$ seconds (three crashes), respectively.
+Furthermore, \dagster outperformed {\textsc MiniSAT}, only slightly with two crashes, but using only a third of the reported {\textsc MiniSAT} runtime for three crashes (using 6 processors).
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{c|cccc|cl}
+    \textbf{Solver} & \multicolumn{4}{c}{\dagster} & \tinisat & {\textsc MiniSAT} \\
+     &  8 Proc & 6 Proc & 4 Proc & 2 Proc & 1 Proc  & 1 Proc \\
+    \hline
+    Two Crashes & 26.6 & 21.9 & 20.2 & T.O & T.O & 22.8    \\
+    \hline
+    Three Crashes & 30.4 & 24.2 & 40.8 & T.O & T.O & 78.5    \\
+    \hline
+\end{tabular}
+    \caption{The runtimes (in seconds) for evaluated solvers on CNFs associated with Independent AES programs.}
+    \label{table:aes_indep}
+\end{table}
+
+%% \begin{table}[h]
+%% \begin{tabular}{c|cccccl}
+%% \textbf{Solver}                                                                            & \begin{tabular}[c]{@{}c@{}}\dagster\\ 8 Proc\end{tabular} & \begin{tabular}[c]{@{}c@{}}\dagster\\ 6 Proc\end{tabular} & \begin{tabular}[c]{@{}c@{}}\dagster\\ 4 Proc\end{tabular} & \begin{tabular}[c]{@{}c@{}}\dagster\\ 2 Proc\end{tabular} & \tinisat & {\textsc MiniSAT} \\ \hline
+%% \textbf{\begin{tabular}[c]{@{}c@{}}Wall time for\\ Two Crashes\\ (seconds)\end{tabular}}   & 26.6                                                     & 21.9                                                     & 20.2                                                     & T.O                                                      & T.O     & 22.8    \\
+%% \textbf{\begin{tabular}[c]{@{}c@{}}Wall time for\\ Three Crashes\\ (seconds)\end{tabular}} & 30.4                                                     & 24.2                                                     & 40.8                                                     & T.O                                                      & T.O     & 78.5   
+%% \end{tabular}
+%%     \caption{The runtimes for evaluated solvers on CNFs associated with Independent AES programs.}
+%%     \label{table:aes_indep}
+%% \end{table}
+
+Consequently, the multiple focused searches of \dagster\ perform better than the one unfocused \tinisat\ search and indicate that decomposition is a fruitful path to improve the runtime of solving SAT problems related to software security.
+
+\section{Conclusion and Future Work}
+
+ 
+The central software artefact produced in our project is a tool we have called \dagster.
+Over the next 12 months we shall support the continued development and expanded the features and use cases of the tool. 
+
+The \dagster\ tool implements a number of search-based solution procedures for the Boolean SAT problem, including both systematic and local search procedures.
+These have been integrated to operate in tandem, as a parallel hybrid search.
+The \dagster\ tool takes as input a Boolean SAT problem, and a schematic description of the compositional structure of the SAT.
+The tool operates in an HPC environment, and  distributes the search effort to solve the given problem according to the provided compositional structure.
+It is able to operate on very large problems, and has been shown to accelerate Boolean SAT queries and model counting on a number of scenarios.
+
+Particularly possibilities of continuing and future investigations include:
+\begin{itemize}
+\item Using machine learning and probing in parallel computing environments to produce variable and value selection rules for systematic search.  
+\item Using machine learning for portfolio optimisation specifically in the \dagster\ setting, where we would locally optimise portfolios with respect to features of subproblems. 
+\item Parallel distributed Property Directed Reachability (PDR) using the \dagster\ architecture. This substantial subproject is being pursued in tandem to the reported exercises, and will be reported on separately  in December 2021. 
+\item Design, implementation, and release of a checkpointing functionality in the \dagster\ tool. For context, at present a search exercise in an HPC environment orchestrated by \dagster\ cannot be interrupted, paused, and then restarted. Checkpointing will allow for progress to be saved, interrogated, and for a search activity to be paused and recommenced at some later time. 
+\item Adding a feature to \dagster\ which can emit UNSAT certificates in a standard format. This is a familiar functionality of many serial SAT tools that run on PCs.  
+\item Design, implementation, and testing of incremental search functionality. When a search process is repeatedly invoked on a family of related formulae, there are opportunities to re-use knowledge accumulated in successive searches. Presently that knowledge is being discarded by \dagster, and moreover the practicality of \dagster\ is limited in this setting by a substantial startup cost associated with commencing and recommencing searches.
+\end{itemize}
+
+\section{Assets used in Empirical Studies}\label{sec:cpu_section}
+
+The following details the CPU information and available RAM of the machines used to run the experiments.
+
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|c|p{7cm}|}
+\hline
+vendor id       & AuthenticAMD \\\hline
+cpu family      & 23 \\\hline
+model           & 49 \\\hline
+model name      & AMD Ryzen Threadripper 3990X\\\hline
+stepping        & 0 \\\hline
+microcode       & 0x8301039 \\\hline
+cpu MHz         & 2198.798 \\\hline
+cache size      & 512 KB \\\hline
+siblings        & 128 \\\hline
+cpu cores       & 64 \\\hline\hline
+Memory RAM      & 131856952 kB\\\hline
+\end{tabular}
+\caption{CPU information of the Etna machine}\label{cpu:etna}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|c|p{7cm}|}
+\hline
+vendor id       & GenuineIntel \\\hline
+cpu family      & 6 \\\hline
+model           & 85 \\\hline
+model name      & Intel(R) Xeon(R) Gold 6134 CPU @ 3.20GHz \\\hline
+stepping        & 4 \\\hline
+microcode       & 0x2006b06 \\\hline
+cpu MHz         & 1200.170 \\\hline
+cache size      & 25344 KB \\\hline
+siblings        & 16 \\\hline
+cpu cores       & 8 \\\hline\hline
+Memory RAM      & 97506008 kB\\\hline
+\end{tabular}
+\caption{CPU information of the Whale machine}\label{cpu:whale}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|c|p{7cm}|}
+\hline
+vendor id       & GenuineIntel \\\hline
+cpu family      & 6 \\\hline
+model           & 85 \\\hline
+model name      & Intel(R) Xeon(R) Gold 6252 CPU @ 2.10GHz \\\hline
+stepping        & 7 \\\hline
+microcode       & 0x5003102 \\\hline
+cpu MHz         & 2836.313 \\\hline
+cache size      & 36608 KB \\\hline
+siblings        & 48 \\\hline
+cpu cores       & 24 \\\hline\hline
+Memory RAM      & 196464272 kB\\\hline
+\end{tabular}
+\caption{CPU information of the Goedel machine}\label{cpu:goedel}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|c|p{7cm}|}
+\hline
+vendor id       & GenuineIntel \\\hline
+cpu family      & 6 \\\hline
+model           & 85 \\\hline
+model name      & Intel(R) Xeon(R) Platinum 8274 CPU @ 3.20GHz \\\hline
+stepping        & 7 \\\hline
+microcode       & 0x5002f01 \\\hline
+cpu MHz         & 3799.866 \\\hline
+cache size      & 36608 KB \\\hline
+siblings        & 48 \\\hline
+cpu cores       & 24 \\\hline\hline
+Memory RAM      & 197733300 kB\\\hline
+\end{tabular}
+\caption{CPU information of the Gadi machine}\label{cpu:gadi}
+\end{table}
+
+
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|c|p{7cm}|}
+\hline
+vendor id       & GenuineIntel \\\hline
+cpu family      & 6 \\\hline
+model           & 158 \\\hline
+model name      & Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz \\\hline
+stepping        & 13 \\\hline
+microcode       & 0xea \\\hline
+cpu MHz         & 2300 \\\hline
+cache size      & 16384 KB \\\hline
+siblings        & 16 \\\hline
+cpu cores       & 8 \\\hline\hline
+Memory RAM      & 32649348 kB\\\hline
+\end{tabular}
+\caption{CPU information of the Luke machine}\label{cpu:luke}
+\end{table}
+
+
+\pagebreak
+\renewcommand{\refname}{\spacedlowsmallcaps{References}} % For modifying the bibliography heading
+\bibliographystyle{unsrt}
+\bibliography{bib.bib} % The file containing the bibliography
+\end{document}

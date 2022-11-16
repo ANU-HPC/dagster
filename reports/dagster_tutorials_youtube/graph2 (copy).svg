@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="208pt" height="260pt" viewBox="0.00 0.00 208.00 260.00">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 256)">
+<title>G</title>
+<!--<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-256 204,-256 204,4 -4,4"/>-->
+<!-- 3 -->
+<g id="node1" class="node">
+<title>3</title>
+<ellipse fill="none" stroke="#000000" cx="90" cy="-234" rx="27" ry="18"/>
+<text text-anchor="middle" x="90" y="-229.8" font-family="Times,serif" font-size="14.00" fill="#000000">3</text>
+</g>
+<!-- &#45;5 -->
+<g id="node2" class="node">
+<title>-5</title>
+<ellipse fill="none" stroke="#000000" cx="63" cy="-162" rx="27" ry="18"/>
+<text text-anchor="middle" x="63" y="-157.8" font-family="Times,serif" font-size="14.00" fill="#000000">-5</text>
+</g>
+<!-- 3&#45;&gt;&#45;5 -->
+<g id="edge1" class="edge">
+<title>3-&gt;-5</title>
+<path fill="none" stroke="#000000" d="M83.3258,-216.2022C80.2524,-208.0064 76.5384,-198.1024 73.1305,-189.0145"/>
+<polygon fill="#000000" stroke="#000000" points="76.3858,-187.7274 69.5974,-179.593 69.8315,-190.1853 76.3858,-187.7274"/>
+</g>
+<!-- 4 -->
+<g id="node6" class="node">
+<title>4</title>
+<ellipse fill="none" stroke="#000000" cx="118" cy="-18" rx="27" ry="18"/>
+<text text-anchor="middle" x="118" y="-13.8" font-family="Times,serif" font-size="14.00" fill="#000000">4</text>
+</g>
+<!-- 3&#45;&gt;4 -->
+<g id="edge6" class="edge">
+<title>3-&gt;4</title>
+<path fill="none" stroke="#000000" d="M93.2182,-216.0337C95.0409,-205.5449 97.2909,-192.0449 99,-180 105.6479,-133.1476 111.7128,-78.4332 115.1231,-46.0852"/>
+<polygon fill="#000000" stroke="#000000" points="118.6169,-46.3257 116.1748,-36.0161 111.6548,-45.5984 118.6169,-46.3257"/>
+</g>
+<!-- 6 -->
+<g id="node3" class="node">
+<title>6</title>
+<ellipse fill="none" stroke="#000000" cx="63" cy="-90" rx="27" ry="18"/>
+<text text-anchor="middle" x="63" y="-85.8" font-family="Times,serif" font-size="14.00" fill="#000000">6</text>
+</g>
+<!-- &#45;5&#45;&gt;6 -->
+<g id="edge2" class="edge">
+<title>-5-&gt;6</title>
+<path fill="none" stroke="#000000" d="M63,-143.8314C63,-136.131 63,-126.9743 63,-118.4166"/>
+<polygon fill="#000000" stroke="#000000" points="66.5001,-118.4132 63,-108.4133 59.5001,-118.4133 66.5001,-118.4132"/>
+</g>
+<!-- &#45;4 -->
+<g id="node4" class="node">
+<title>-4</title>
+<ellipse fill="none" stroke="#000000" cx="27" cy="-18" rx="27" ry="18"/>
+<text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00" fill="#000000">-4</text>
+</g>
+<!-- &#45;5&#45;&gt;&#45;4 -->
+<g id="edge3" class="edge">
+<title>-5-&gt;-4</title>
+<path fill="none" stroke="#000000" d="M48.8771,-146.2844C40.7465,-136.1468 31.3099,-122.2347 27,-108 20.9346,-87.9673 21.2169,-64.2566 22.8645,-46.2023"/>
+<polygon fill="#000000" stroke="#000000" points="26.3683,-46.3604 23.9883,-36.0363 19.4107,-45.5912 26.3683,-46.3604"/>
+</g>
+<!-- 6&#45;&gt;&#45;4 -->
+<g id="edge4" class="edge">
+<title>6-&gt;-4</title>
+<path fill="none" stroke="#000000" d="M54.2854,-72.5708C50.0403,-64.0807 44.8464,-53.6929 40.1337,-44.2674"/>
+<polygon fill="#000000" stroke="#000000" points="43.237,-42.6477 35.6343,-35.2687 36.976,-45.7782 43.237,-42.6477"/>
+</g>
+<!-- 6&#45;&gt;4 -->
+<g id="edge7" class="edge">
+<title>6-&gt;4</title>
+<path fill="none" stroke="#000000" d="M75.4804,-73.6621C82.5124,-64.4564 91.4347,-52.7764 99.2883,-42.4953"/>
+<polygon fill="#000000" stroke="#000000" points="102.28,-44.3446 105.569,-34.2733 96.7172,-40.0953 102.28,-44.3446"/>
+</g>
+<!-- 2 -->
+<g id="node5" class="node">
+<title>2</title>
+<ellipse fill="none" stroke="#000000" cx="173" cy="-90" rx="27" ry="18"/>
+<text text-anchor="middle" x="173" y="-85.8" font-family="Times,serif" font-size="14.00" fill="#000000">2</text>
+</g>
+<!-- 2&#45;&gt;4 -->
+<g id="edge5" class="edge">
+<title>2-&gt;4</title>
+<path fill="none" stroke="#000000" d="M160.5196,-73.6621C153.4876,-64.4564 144.5653,-52.7764 136.7117,-42.4953"/>
+<polygon fill="#000000" stroke="#000000" points="139.2828,-40.0953 130.431,-34.2733 133.72,-44.3446 139.2828,-40.0953"/>
+</g>
+</g>
+</svg>

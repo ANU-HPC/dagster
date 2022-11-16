@@ -1,0 +1,818 @@
+\documentclass[10pt,a4paper,oneside,headinclude,footinclude,BCOR5mm]{scrartcl}
+
+\input{structure.tex}
+\hyphenation{Fortran hy-phen-ation}
+\usepackage{makecell}
+\usepackage{fancyvrb}
+\usepackage{tikz}
+\usepackage{tikzscale}
+\usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage{xspace}
+
+
+\usetikzlibrary{snakes,arrows,shapes}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{arrows}
+\usepgfplotslibrary{fillbetween}
+
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage{wrapfig}
+\usepackage{amsmath}
+\usepackage{placeins}
+
+
+\newcommand{\dagster}{\textsc{Dagster}\xspace}
+\newcommand{\tinisat}{\textsc{TiniSAT}\xspace}
+\newcommand{\lingeling}{\textsc{Lingeling}\xspace}
+\newcommand{\gnoveltyp}{\textsc{gNovelty$+$}\xspace}
+\newcommand{\modezero}{C\xspace}
+\newcommand{\modeone}{CL\xspace}
+\newcommand{\modetwo}{CS\xspace}
+\newcommand{\modethree}{CSL\xspace}
+
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
+
+
+
+
+\title{Dagster: Parallel SAT}
+\subtitle{Checkpointing and Performance\\ Progress Against Project Activities}
+\author{\spacedlowsmallcaps{Mark Burgess$^*$, Charles Gretton,}\\\spacedlowsmallcaps{Luke Croak, Tom Willingham}}
+\date{\today}
+
+\begin{document}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+
+
+\renewcommand{\sectionmark}[1]{\markright{\spacedlowsmallcaps{#1}}} % The header for all pages (oneside) or for even pages (twoside)
+%\renewcommand{\subsectionmark}[1]{\markright{\thesubsection~#1}} % Uncomment when using the twoside option - this modifies the header on odd pages
+\lehead{\mbox{\llap{\small\thepage\kern1em\color{halfgray} \vline}\color{halfgray}\hspace{0.5em}\rightmark\hfil}} % The header style
+\pagestyle{scrheadings} % Enable the headers specified in this block
+
+
+\maketitle % Print the title/author/date block
+
+
+\section*{Abstract}
+
+
+\dagster\ is a parallel SAT solver that implements a new approach to scheduling interdependent (Boolean) SAT search activities in high-performance computing (HPC) environments.
+%%
+In this report we outline new usability features that have been added to \dagster in 2022, including a {\em checkpointing} functionality that allows users to suspend a distributed search, and then later resume that seamlessly.
+We also describe recent performance enhancements that have been integrated in \dagster, including the integration of the {\textsc MiniSAT} algorithm as a choice of CDCL procedure, and a range of algorithm optimisations.
+We also outline new user interface modules to configure and monitor \dagster\ processes.
+%%
+The performance enhancements and algorithm integration are showcased via a series of case studies, particularly, in updated pentomino and Costas array problems, where we compare the performance of the latest version of \dagster\ against an array of state-of-the-art systems.
+We also consider a new case study, showing how \dagster\ can be used to solve a Bounded Model Checking (BMC) problem using a new abstraction hierarchy.
+
+
+\blfootnote{All Authors: \textit{School of Computing, Australian National University, Canberra, Australia.}}
+\blfootnote{$^*$Corresponding Author: \url{mark.burgess@anu.edu.au}}
+\blfootnote{We would also like to credit Josh Milthorpe, who was previous a core part of the \dagster\ project}
+
+%\let\thefootnote\relax\footnotetext{* \textit{Department of Biology, University of Examples, London, United Kingdom}}
+%\let\thefootnote\relax\footnotetext{\textsuperscript{1} \textit{Department of Chemistry, University of Examples, London, United Kingdom}}
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+\setcounter{tocdepth}{2} % Set the depth of the table of contents to show sections and subsections only
+\tableofcontents % Print the table of contents
+\listoffigures % Print the list of figures
+\listoftables % Print the list of tables
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+%----------------------------------------------------------------------------------------
+%	INTRODUCTION
+%----------------------------------------------------------------------------------------
+
+
+
+
+
+\section{Introduction}
+
+\dagster\ is a parallel structured high-performance computing (HPC) Boolean SAT solver that implements a new approach to scheduling interdependent search activities in HPC environments.
+This system allows practitioners to solve challenging problems by efficiently distributing search effort across computing nodes in a customizable way.
+%%
+Our solver takes as input a set of disjunctive clauses (i.e., DIMACS CNF) and a labelled directed acyclic graph (DAG) structure describing how the clauses are decomposed into a set of interrelated search problems.
+%%
+Component problems are solved using standard systematic backtracking search, which may optionally be coupled to (stochastic dynamic) local search and/or clause-strengthening processes.
+%%
+A number for performance and usability improvements have been made to \dagster\ in recent times, and in this report we examine the performance gains realised in combinatorial case study examples, particularly the model counting of Costas arrays, and in finding solutions in large pentomino tiling problems.
+%%
+We also explore a case study that develops a novel workflow for Bounded Model Checking using the compositional approach to distribute search using \dagster.
+
+We outline a range of changes and contributions to the \dagster\ project, before considering the case studies.
+We conclude with a summary of future work and directions.
+
+\subsection{Summary of New Contributions}
+
+Since the last report on the state of the \dagster\ system we have implemented a range of new features and performance improvements that we summarise below.
+In Section~\ref{sec:casestudies} we evaluate the performance of the latest version of \dagster, contrasting the performance of our parallel system with state-of-the-art parallel SAT tools described in recent scientific literature. 
+
+Primary improvements to the \dagster\ system include:
+
+\begin{itemize}
+\item	Detailed in Section \ref{sec:tui_wizard}, to improve usability we have developed a {\em Text User Interface} (TUI) wizard for configuring \dagster.
+  
+\item	Detailed in Section \ref{sec:tui_monitoring}, to improve usability with regard to monitoring search performance, we developed a new TUI monitoring tool for  interpreting the logs generated by \dagster. Logging information is now displayed by the TUI in a human readable graphical format. Using the TUI users can monitor search progress and performance of \dagster.
+  
+\item	Detailed in Section \ref{sec:checkpointing}, is the introduction of checkpoint functionality, whereby \dagster\ takes regular checkpoints of its search progress. A \dagster\ search can now be resumed in the event of a search being suspended, or the event of a system crash.
+  
+\item	Detailed in Section \ref{sec:minisat_integration}, we developed a new modular interface for integrating systematic search procedures. We have used that interface to integrate the \textsc{MiniSAT} \textsc{CDCL} procedure into \dagster.
+  
+\item	Detailed in Section \ref{sec:negative_literal_purging}, we developed an operational mode, called {\em negative literal purging}, whereby only positive literals are communicated between subprocesses. When admissible given the compositional structure of the problem at hand, this provides an important performance optimisation, reducing the size of solutions recorded and messages between subprocesses.
+  
+\item	Detailed in Section \ref{sec:literal_trimming}, we created a new solution-length reporting optimisation in \dagster, to improve performance. Solutions recorded and communicated between processing elements are now shortened, by workers, in a more effective manner. Workers remove literals that are are logically redundant to satisfying the target subproblem, with an explicit bias towards reporting positive literals.
+  
+\item	Detailed in Section \ref{sec:dynamic_restarting}, we developed a new geometric restarting strategy in the default CDCL procedure, implemented to accelerate the performance of \dagster\ search processes in model counting workflows. This new strategy improves solver performance by reducing the time the solver spends proving that no further model exist in counting scenarios, and has minimal impact on  the efficiency of enumerating solutions.
+
+\item	Detailed in Section \ref{sec:memory_operation}, we developed a new (and optional) memory optimisation mode, whereby representations of subproblems are generated on demand by subprocesses, rather than all being represented explicitly in memory.
+
+\item	Detailed in Section \ref{sec:neighbourhood_calculation}, we developed some additional performance gains achieved in the variable neighbourhood calculation and lookup processes in the SLS modules.
+  
+\end{itemize}
+
+\section{New Contributions}
+
+\subsection{Usability Feature: TUI Initialisation Interface}\label{sec:tui_wizard}
+
+The \dagster\ system is initialised by command line, with arguments detailing the inputs and configuration options adopted by the solver.
+Currently there are many options supported in the \dagster\ system, 24 in all, and these options are specified by alphabetic command line switches.
+Of the 26 letters in the alphabet, all but 2 are now assigned, and the relationship between what letters match to what configuration option is not user friendly.
+%%
+%There are several approaches to remedy this problem, one of which is requiring the users to use long-style argument specification on the command line.
+%While this would make the relationship between the configuration option and the command line argument more intuitive, it would also clutter the command line.
+A more user friendly approach, is to design an interface that guides any new users through the process to configure \dagster\ appropriately, and explains the uses and abuses of each configuration option. %%That is the approach we have taken.
+
+A guided interface has now been implemented as a separate program from \dagster\ proper, and is bundled with the latest release in order to guide users through the configuration options available, and to output the appropriately formatted command line string to initiate a desired \dagster\ run.
+Thus, \dagster\ can be compiled and run irrespective of whether users wish to employ our new optional guided interface module. 
+An emitted command line string can be copied and re-input into the command line, to kick-off the program with those options at a desired time (such as may be shared with colleagues for experimental reproducibility), or the interface can directly invoke a \dagster\ run in the users environment.
+
+There were several options available for the coding of a guided interface module and a Text User Interface (TUI) was deemed appropriate. This was particularly because a TUI is able to be run in a console, and thus able to run on local computers with and without graphical operating systems, it is also highly compatible with running on remote systems via remote shell.
+%%
+The TUI interface was configured to display a nested set of configuration options that are topically described in a hierarchical fashion.
+As the \dagster\ system continues to mature, the command line interface and options available are expected to change and grow, and so the interface module was coded quickly and for ease of modification and adaptation using Python programming language, utilising the {\textsc UrWID} widget library.\footnote{\url{https://urwid.org/}}
+%%
+
+The resulting TUI configuration wizard interface is shown in Figure \ref{fig:tui_wizard}.  
+In this interface there are check boxes and nested windows of configuration options, that enable and explain the various options which are possible in \dagster.
+The user uses the keyboard and arrow keys to navigate around the interface, and input appropriate arguments.
+Additionally, a submemu can be expanded by hitting the `enter' key on the appropriate menu button.
+The `?' key can be hit to bring up a dialogue box explaining any highlighted item.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.85\textwidth]{figs/tui2.png}
+\caption[The \dagster TUI configuration wizard interface]{The \dagster TUI configuration wizard interface. This demonstrates the description of the Dynamic Local Search option the user can select, for the local search helper processes. }\label{fig:tui_wizard}
+\end{figure}
+
+
+The TUI configuration interface must be run in an environment with an appropriate version of Python, with appropriate libraries installed (particularly the UrWid library), and can be initialised from the command:
+
+\begin{Verbatim}[frame=single]
+python ./wizard.py
+\end{Verbatim}
+
+This TUI configuration wizard allows a more user friendly way of beginning and configuring a \dagster\ run.
+
+\subsection{Usability Feature: TUI Monitoring Interface}\label{sec:tui_monitoring}
+
+We provide an new interface that allows users to monitor a \dagster\ run, and to assist in diagnosing any issue that might arise.
+%%
+\dagster\ emits log messages while it is running.
+For example, logs can be to standard error (\textit{stderr}), standard output (\textit{stdout}) and/or to appropriate log files (as configured by Google Logging library (GLOG) environment variables).
+%%
+The verbosity of logging is defined by an environment variable (\texttt{GLOG\_v}), and the log messages hold many kinds of messages, such as: timing information, debugging hints, message counts, worker process status updates, and various possible error messages.
+At verbosity $2$ or higher, the log messages are sufficient to give all the most relevant information about the progress of a run.
+In principle, parsing these logs allows users to check on the health of a \dagster\ solution process, and allows inspection and diagnoses of bottlenecks, or of stalling between subproblem nodes of the DAG.
+%%
+However, scanning through log files to ascertain the overall state of the \dagster\ system dynamics is not a user friendly process.
+Thus, a program to automate this task was seen to be desirable, and is now provided with the latest \dagster\ release.
+
+In order to diagnose the overall state of the \dagster\ system progress in solving a problem, the most relevent information is about the progress of the workers in generating/processing the messages passed between DAG nodes.
+The depiction of the DAG with messages flowing between nodes, and the progress workers have made on nodes, constitutes a summary of overall \dagster\ progress that is amenable to graphical representation.
+For the reasoning as given in Section \ref{sec:tui_wizard}, we developed a separate graphical TUI module that parses the relevant log files, and pulls out the most relevant information for graphical display.
+It is able to provide a graphical view of the DAG, along with statistics about worker progress and any relevant error messages.
+
+A section of the TUI is shown in Figure \ref{fig:tui_monitoring}.
+From this interface, we can see on the left hand side a text based graphical viewer of the DAG nodes, by their index, and the connections between them.
+Next to that, we can see that there are three worker processes actively working on various DAG nodes.
+Also rendered is the exact number of messages/solutions passed between each of the nodes of the DAG -- I.e., specifically the number of solutions ingested, completed, and output to subsequent nodes for processing.
+%%
+For each node, the TUI also reports the timing statistics for how long it takes for each worker process to complete a message,  including the average (and standard deviation) of seconds it takes to find one (or any) solutions for each of the messages, along with  how long it takes for workers to prove that there are no further messages before completing the message.
+At the bottom of the TUI we render the miscellaneous log messages, which can be useful for error diagnosis.
+
+Figure \ref{fig:tui_monitoring} depicts the interface when rendering runtime information related to the DAG shown in Figure \ref{fig:pentomino_dag_3x3}.
+Here, Node 0 connects to Nodes 1 and 3, Node 1 connects to Nodes 2 and 4, etc.
+The reader can see that there are three worker processes working concurrently on Nodes 1, 2 and 6.
+Node 0 has fully completed one message inwards, and has completed giving 3 messages of output.
+These output messages have been given to Nodes 1 and 3, with Node 3 taking one of these to produce an output message that has been given to Node 6 -- I.e., which is currently being worked upon, etc.
+%%
+Below this we can see an update from the worker logs, identifying themselves as working on Nodes 1,2 and 6.
+The master process also periodically logs timing information related to workers on assigned nodes, the interface here reporting their performance when working on Nodes 1 and 3. 
+%%
+The TUI also renders a  Master health-status field, which is currently blank, indicating it is normal; and an `Exit' button.
+%%
+The 'unparsed' console message field will contain messages that have not been interpreted and rendered elsewhere in the TUI. Serious error messages will be rendered here, in case a serious error occurs.
+
+We note that the DAG shown in Figure \ref{fig:pentomino_dag_3x3}, and the problem that is being run in this instance, as shown in Figure \ref{fig:tui_monitoring}, is actually a pentomino problem whose generation is explained in later Section \ref{sec:experiment_pentominos}.
+
+The sequence of commands used to generate the screenshot shown in Figure \ref{fig:tui_monitoring} was as follows.
+First, there was Google logging library (GLOG) environment variables specifying that it was to output logs to \textsc{stderr}, and at log level $3$.
+\dagster\ was initialised with $4$ processes (1 master and 3 workers), and to pipe standard error to a file named `log\_output.txt':
+
+\begin{Verbatim}[frame=single]
+export GLOG_logtostderr=true
+export GLOG_v=5
+mpirun -n 4 ./dagster <DAG> <CNF> 2> log_output.txt
+\end{Verbatim}
+
+Secondly, in a separate shell, the following call was used to initialise the TUI monitoring program to parse the \dagster\ generated log file.
+
+\begin{Verbatim}[frame=single]
+python ./viewer.py <DAG> log_output.txt
+\end{Verbatim}
+
+The particular CNF and DAG file which was used was a pentomino problem generated as per Section \ref{sec:experiment_pentominos}, consisting of solving an 3x3 array of pentomino tiles.
+
+
+
+The monitoring process allows a visualisation of how \dagster\ is progressing throughout the problem solution process.
+However, the interface is primarily passive, consisting of monitoring the logs and outputting relevant information to the screen for users to see.
+In order to change the way the \dagster\ program is running, pausing it and/or halting it, it is necessary to store the progress and/or potentially reinitialise the \dagster\ system with that progress established.
+To do this, there is a necessity of being able to store the progress that \dagster\ has completed, via `checkpointing'.
+
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=-0.91,scale=1.02]
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (0) at (0, 0) {0};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (3) at (1, 0) {3};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (6) at (2, 0) {6};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (1) at (0, 1) {1};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (4) at (1, 1) {4};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (7) at (2, 1) {7};
+	
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (2) at (0, 2) {2};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (5) at (1, 2) {5};
+	\node [fill=white, draw=black, shape=circle, minimum size=8mm] (8) at (2, 2) {8};
+	
+	\draw [fill=none, ->] (0) to (3);
+	\draw [fill=none, ->] (0) to (1);
+	\draw [fill=none, ->] (1) to (4);
+	\draw [fill=none, ->] (1) to (2);
+	\draw [fill=none, ->] (2) to (5);
+	
+	\draw [fill=none, ->] (3) to (6);
+	\draw [fill=none, ->] (3) to (4);
+	\draw [fill=none, ->] (4) to (7);
+	\draw [fill=none, ->] (4) to (5);
+	\draw [fill=none, ->] (5) to (8);
+	
+	\draw [fill=none, ->] (6) to (7);
+	\draw [fill=none, ->] (7) to (8);
+	
+\end{tikzpicture}
+\caption[DAG for a 3x3 pentomino superproblem]{DAG for a 3x3 pentomino superproblem - Decomposition A, further described in Section \ref{sec:experiment_pentominos}}\label{fig:pentomino_dag_3x3}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{figs/tui3.png}
+\caption{The \dagster TUI monitoring interface}\label{fig:tui_monitoring}
+\end{figure}
+
+
+\FloatBarrier
+\pagebreak
+\subsection{Usability and Performance Feature: Checkpointing}\label{sec:checkpointing}
+
+One primary design aspect of \dagster\ is the ability to initialise, monitor, and process hard and/or difficult SAT problems.
+In the process of solving long-running SAT problems, the priorities for HPC usage can motivate the user to interrupt the \dagster\ run, also the system can potentially crash.
+%%
+This motivates the need for a backup functionality, which is coded in \dagster\ as a checkpoint functionality.
+The checkpointing functionality allows \dagster\ to store its progress, thereby enabling reinitialisation from a checkpoint, as desired.
+
+The checkpointing functionality is initialised in the Master process, as the master not only holds the details of what work needs to be (and has been) done, but is therefore also most able to have responsibility for monitoring and backing up (and/or reloading) that work.
+%%
+The checkpointing functionality of \dagster\ is optional, and configurable.
+Master can be configured to dynamically format and dump all the relevant progress data to a series of custom files, with dumps occurring at equal time increments.
+These files are written, and then periodically overwritten, in a round-robin fashion by \dagster, so that there always is a sequence of recent checkpoints of progress.
+These checkpoints that \dagster\ produces can be then loaded back up into \dagster, from the command line, in the event that a search is interrupted to be later resumed.
+
+The checkpoints hold all of the logical information relevant to a solution process, and are not tied to any specific configurations of the \dagster system.
+In this way, a checkpoint generated on one system can be loaded into \dagster on a different system with a completely different configuration of search processes, and types of search.
+%%Alternatively, it is possible to reload a \dagster checkpoint back into \dagster with a different configuration of settings, potentially speeding up a solution process without discarding existing progress.
+The primary constraint on the flexibility of the checkpoint functionality, is that checkpoints generated when the Master is using BDD representation of system progress, are incompatible with checkpoints generated when Master process is using tables to represent messages and system progress - and vice versa.
+This incompatibility arises because these two representations are fundamentally different, and not directly compatible.
+
+The new checkpointing functionality is exposed by command line options, where the user is able to specify: {\em (i)}  where the checkpoint files are to be placed and named, {\em (ii)} how often checkpoint files should be generated (if at all), and {\em (iii)} what (if any) checkpoint file should be loaded on initialisation.%% are specifications provided to \dagster at boot by commandline.
+
+
+\subsection{Performance Feature: \\Interface for Integrating Systematic Search Algorithms(e.g., CDCL)} %%Module CDCL interface: and integration of \textsc{MiniSAT}}
+\label{sec:minisat_integration}
+
+\dagster\ was originally built with all the CDCL worker processes implementing a systematic search based on
+\textsc{TiniSAT}~\cite{huang2007tinisat,huang:and:veloso:2007}.
+Modifications to the \textsc{TiniSAT} algorithm were made to support the interaction with local search processes, that  provide search guidance and solutions, and with possible strengthener processes that dynamically simplified \tinisat's learned clauses.
+%%
+%%However in much earlier versions of the \dagster\ system, before the integration of SLS and strengthener processes and interactions, the \dagster\ system was more modular and provided an interface for any CDCL solver to be integrated into \dagster\.
+%%This modularity was eventually discarded with the interaction of these new elements.
+%%
+Recent experimentation with pentomino problems---see results in Section \ref{sec:experiment_pentominos}---motivated us to enable \dagster\ to more easily support different search algorithms.
+For example, \tinisat\ is less effective than an alternative CDCL solver, namely \textsc{MiniSAT}~\cite{een2003extensible}, at pentomino problems. Therefore, being able to parametrically select to use  \textsc{MiniSAT}, rather than \textsc{TiniSAT}, as the base systematic search procedure is motivated. %%  it was hypothesized and then consequently proved that if \dagster\ was integrated with \textsc{MiniSAT} then there would be performance improvements.
+
+\dagster\ was modified to incorporate \textsc{MiniSAT} as an option for the worker processes, and the modular interface implemented for these purposes can also support the integration of other CDCL solvers.
+The modular interface more readily allows any CDCL solver to now be integrated with \dagster, by inheriting a virtual class in \textsc{C++} with appropriately overloaded methods.
+In this way we anticipate that it should be easily possible to incorporate further CDCL solvers as options into the \dagster\ system.
+We have yet to support all the integrations between subsolver types for such interactions, such as local search based guidance and strengthening of learnt clauses. 
+
+
+\subsection{Performance Feature: Negative Literal Purging}\label{sec:negative_literal_purging}
+
+Many SAT problems, and subproblems, feature solutions that are entirely (and immediately) derivable by an assignment over positive literals only.
+%%
+Such a fact is evident in our experiments, particularly the Costas and pentomino problems in Sections \ref{sec:experiment_costas} and \ref{sec:experiment_pentominos}, where the relevant information between subproblems consists entirely of where the points/pentominoes are, and thus from the positive literals in a solution valuation, all the negative information about where the points/pentominoes are not is then immediately implied.
+%%
+By having workers eliminate negative literals from solution records, the messages between processing elements can be greatly minimised.
+In order to experiment and take advantage of this fact, we created a new \dagster\ mode for having workers purge negative literal information from messages and solution records.
+In this way a lot of communication overhead in these problems is reduced, resulting in a material runtime performance enhancement. 
+
+A consequence of this option is that \dagster\ is potentially unsound, because purging of negative variable information along the arcs of the DAG may mean a loss of solution information in specific problem cases where negative information is necessary.
+%%
+In principle, binary variables and their participation in a SAT problem can be coded negatively, or positively, just as effectively.
+This new mode of operation effectively primes \dagster\ to take advantage of a particular bias in the way that people tend to code problems into SAT - particular that positive information is usually coded positively, and that negative variable evaluations are often consequences of that.
+
+The unsafe purging just described was seen to be effective at improving solution times in pentomino problems (see Section~\ref{sec:experiment_pentominos}), however a safer alternative approach was sought.
+Described next in Section~\ref{sec:literal_trimming}, an approach compliant with soundness and completeness is described, which is  computationally more expensive than the negative literal purging approach just described.
+ 
+
+\subsection{Performance Feature: Literal Trimming}\label{sec:literal_trimming}
+
+CDCL solvers by default (such as \tinisat\ and \textsc{MiniSAT}) report a valuation over all the variables when they find a satisfying valuation.
+However, this full valuation is potentially overspecified, as a subset of those variables may be able to satisfy the CNF.
+%%
+For example, consider the CNF shown in Figure \ref{fig:example_cnf}.
+The valuation $[1,-2,3,-4,5,6,7]$  solves this CNF, however there is redundancy as more variables are assigned than is necessary to satisfy the CNF.
+%%
+Specifically, the valuation $[1,3,5,6,7]$ satisfies the CNF without specifying the truth values of variables $2$ and $4$, and a shortened valuation such as this encompases a solution to the CNF with thoes variables specified any way. %%and therefore encompass the information that any of the four valuations of those variables is also a solution.
+%%
+In this way, the shorter the subproblem solutions encountered by \dagster\, the less work \dagster\ potentially has to do in enumerating the span of subproblem solutions.
+Thus, with shorter valuations, \dagster\ is able to compute and record a smaller and more succinct representation of a set of solutions, thereby performing less search and using less system memory. 
+%%
+%%in enumerating all the satisfying solutions to a subproblem, and the less overspecified, the more solution space each message covers, and thus allows \dagster\ to enuemerate across possible solutions more effectively with fewer messages of shorter length.
+
+The \dagster\ workers (optionally) implement a solution trimming procedure, where after a worker generates a solution to a given subproblem, it then analyses what variables can be removed from that solution such as to leave the SAT problem immediately satisfied irrespective of which way those trimmed variables would be assigned.
+%In this way, a trimmed solution represents multiple solutions at once, and minimises the number and size of solutions communicated in the \dagster\ system, allowing more effective solving.
+%
+Previously, \dagster\ workers implemented a more rudimentary trimming system, eliminating all variables which were not present in the first satisfied variable of every CNF clause (considered in turn).
+%%
+%%Specifically,  every variable which was the first satisfied variable in every clause, and excluding any remainders.
+To contrast the new approach with our historical trimming approach, consider the valuation $[1,-2,3,-4,5,6,7]$ to the problem in Figure~\ref{fig:example_cnf}.
+%%
+Previously, a \dagster\ worker would take the first clause, $(2\; 1\; 0)$, and conclude that $1$ must not be trimmed because it is the first literal that satisfies this first clause.
+Then, that worker would take the second clause, $(-2\; 3\; 0)$, and conclude that $-2$ could not be trimmed because it was the first variable which satisfied the second clause.
+The worker would continue thusly, concluding that the valuation $[1,-2,3,-4,5,7]$ was sufficiently trimmed with the only exclusion being the assignment to $6$.
+%%
+Our new trimming algorithm prioritises trimming of negative literals in a valuation, owing to the bias of human SAT encodings, that positive literals are generally more informative.
+%%
+With reference to the total valuation provided by the underlying search procedure, the new algorithm scans through each clause in turn, maintaining a monotonically increasing list of literals in the solution valuation it will report, as follows:%%, it would consider each clause in turn and:
+\begin{enumerate}
+\item	If the clause is not already satisfied by an element in the reporting list, then
+\item	If there is a positive literal in the total valuation which satisfies the clause, then the worker adds the positive literal with the lowest absolute value to the reporting list.
+\item	Otherwise, the worker adds the lowest absolute value indexed negative literal to the reporting list.
+\end{enumerate}
+
+After iterating over all clauses, only the literals in the reporting list are recorded as the discovered solution.
+Continuing with the example from Figure~\ref{fig:example_cnf}, the run of this trimming algorithm,  given a total valuation $[1,-2,3,-4,5,6,7]$, would take the first clause $(2\; 1\; 0)$, and see that $1$ would be the lowest absolute value positive valuation in the solution to keep to satisfy the clause.
+Processing the second clause, $(-2\; 3\; 0)$, and it finds that  $3$ is the smallest absolute value positive literal satisfying the clause, which also satisfies clause $(4\; 3\; 0)$.
+For clause $(5\; -4\; 0)$, literal $5$ is added to the reporting list, etc.
+%%
+The reported solution by a worker is $[1,3,5,6,7]$, which is the total valuation excluding the assignments to the two variables $2$ and $4$.
+It is both more effective as a trimming algorithm, and also has a direct bias towards keeping positively valued literals.
+
+The optional inclusion of this trimming algorithm, is marginally more computationally expensive than the negative literal purging process described in Section~\ref{sec:negative_literal_purging}, but unlike that approach is provably sound and complete.
+
+
+\begin{figure}
+\begin{Verbatim}[frame=single, label=CNF file]
+p cnf 7 6
+2 1 0
+-2 3 0
+5 -4 0
+4 3 0
+4 -6 7 0
+-4 6 0
+\end{Verbatim}
+\caption{An example CNF file}\label{fig:example_cnf}
+\end{figure}
+
+\subsection{Performance Feature: Geometric Restarting Strategy}\label{sec:dynamic_restarting}
+
+The efficiency of systematic backtracking search to solve the SAT decision problem is premised on a restarting strategy~\cite{marques2021conflict}.
+A backtracking decision procedure is said to restart when the current variable assignments being investigated are abandoned, and the search directed to start again with zero assignments made.
+The benefit of restarting has been demonstrated theoretically, with restarting noted as the feature that enables a clause learning search to polynomially simulate the powerful general resolution procedure~\cite{pipatsrisawat:darwiche:2011,hertel:etal:2008,buss2021proof}.
+In practice, mechanisms for restarting are also recognised as important~\cite{gomes:etal:1998,armin:hans:2008,audemard2012refining,biere2015evaluating}, with adaptive search policies characterised by restarting featuring in all performant algorithms. 
+%%
+The default CDCL algorithm implemented by \dagster\ systematic search processes---which is based on the {\textsc TiniSAT} algorithm---was indeed motivated by the recognition of the importance and the study of restarting~\cite{huang:2007}.
+That base procedure offers a great deal of flexibility, regarding what restarting mechanisms researchers can implement, investigate and study.
+We discuss a new restarting mechanism we have implemented in that default systematic search of \dagster.
+
+Prior to describing our new restarting mechanism, it is worth motivating the need for our new approach.
+When using \dagster\ to solve \#SAT problems, search processes use the same CDCL algorithm to drive both: {\em (i)}  model enumeration, and {\em (ii)} the exercise of proving that no further models exists -- i.e., performing an UNSAT proof, which is ideally done using a distinct restarting mechanism~\cite{oh2015between}.
+We note that, even when the underlying \dagster\ query is to solve a SAT decision problem, and not a \#SAT counting problem, due to the compositional structure of the associated DAG the query can still pose subproblems that require subproblem model enumeration. 
+Our new restarting mechanism adapts the frequency of restarting, so that when enumeration becomes difficult the search rapidly shifts towards an aggressive restarting approach that is relatively efficient at proving UNSAT.
+We find that our dynamic approach dramatically improves the efficiency of proving UNSAT, and of discovering ``hard-to-find'' models in a counting problem.
+Specifically, our new ``geometric'' restarting approach is very important for the best results we document for the Costas case study below.
+
+With geometric restarting, the search implements restarts based on a dynamic probability-of-not-restarting (PnR) value.
+Whenever a search discovers a new satisfying model to the subproblem it is assigned, the PnR value is set to its initial value, $1$.
+Whenever $n$ conflicts are encountered,\footnote{Value $n$ is a hyperparameter set to $800$ by default.} the PnR is updated to be its current value multiplied by a discount factor $0 \leq \alpha <1$.\footnote{Value $\alpha$ is a hyperparameter set to $.95$ by default.}
+Thus, if the search is not fruitful the probability of restarting approaches $1$, geometrically, and whenever the search yields a satisfying model this is reset to $0$.
+Prior to the PnR being updated, a restart event is triggered with probability $\rho=(1 - \text{PnR})$.
+
+To our knowledge we are the first to consider this dynamic restarting mechanism, and note that it is peculiar to our setting, where a systematic search is assigned to enumerate models to subformulae in the context of a larger monolithic search exercise.
+Our new search mechanism is motivated to accelerate the enumeration process, and to free up search processes relatively quickly when no more subproblem models are available. 
+
+
+\subsection{Performance Feature: Alternative Modes of Memory Operation}\label{sec:memory_operation}
+
+\dagster\ takes a CNF and DAG file as input, specifying the problem and its decomposition respectively.
+The system can then handle this CNF file in different ways depending on configuration.
+
+Currently there are three configurations:
+\begin{enumerate}
+\item	The input CNF is loaded from file into the memory of every process, with all subproblems specified in the input DAG stored in memory.
+
+  
+\item	The input CNF is split into an array of CNF files, each corresponding to a subproblem from the input DAG. Workers only input and hold the CNF file of the subproblem they are working on.
+  
+\item	$\star$ {\textbf NEW}$\star$ The input CNF is scanned by all workers, with those storing only the clauses associated with the currently assigned subproblem.
+  
+\end{enumerate}
+
+Each of these modes strikes a balance between computing speed, and memory requirements for larger CNF problem instances.
+SAT problems in CNF can range from Kilobytes to Gigabytes, and when there are many workers each having copies and working on larger CNF subproblems, this can quickly exhaust the available memory.
+
+For the smallest CNF files, it is most efficient to choose Option~1 of these configurations.
+The whole CNF is loaded into the memory of every worker, and each worker does all possible preprocessing on their own copy of the CNF, involving splitting it into CNFs corresponding to all subproblems stored in memory.
+In this way, each worker has maximal speed in directly accessing and manipulating its own local information in memory, involving the full and split problem CNFs.
+Option~1 maximises speed, but comes at the cost of having a greater memory requirement for each worker process, and therefore the \dagster\ system overall.
+
+For the very largest CNF files, it is better to use the Option~2 configuration, where at no point is the whole problem CNF itself ever loaded into memory, but the \dagster\ system leans on file storage for the storage and manipulation of CNF parts.
+In this way CNF files potentially larger than the computer has memory can be handled and solved.
+This configuration option is ideal for larger CNF files, but comes at the cost of having to load and reload CNF subproblem files as the \dagster\ run progresses, requiring greater amount of runtime consumed by file IO operations.
+
+The new Option~3 configuration is a middle ground between the Options 1 and 2, where each worker parses and holds the original input CNF, but only the required target subproblem CNF is generated and stored in the worker's memory. In this way each worker operates in its own local memory space, but there is larger amount of IO and memory manipulation as the \dagster\ run progresses.
+
+
+
+\subsection{Performance Feature: SLS Neighbourhood Calculations}\label{sec:neighbourhood_calculation}
+
+Part of the startup process of the local search module, based on \gnoveltyp, is the process of calculating the sets of clauses connected to each variable, and the variables that are thereby neighbours in these clauses.
+In the process of the SLS operation, variable values are flipped, and the scores associated with each of the variables are updated.
+The score associated with a variable during search reflects the net number of clauses satisfied by a variable if it were to be flipped.
+When a variable is flipped this causes some clauses to be satisfied and others to become unsatisfied, thus influencing the score of the flipped neighbourhood of the flipped variable.
+%%
+For this process of updating the score of variables that are induced by a flip of one of them, it is expedient for the computer to have a store of what variables are a neighbour of each other.
+However, there are several issues creating this data store of variable neighbours, particularly as larger CNF files often feature several millions of variables, many of which may be neighbours of each other; and thus raw storage of this information can constitute Gigabytes of memory, consequently the process of calculating and/or accessing this information can become prohibitive.
+%%
+The creation of the variable neighbourhood data structure involves the insertion of many pairwise variable integers into a larger data set which preserves these pairs uniquely, and this information is then read many times over as the SLS progresses.
+For this purpose there is a range of possible data structures which can can be employed, each with potential tradeoffs.
+%%
+The following functions are included in the \dagster\ project which outlay different ways of calculating variable neighbourhood information.
+%We have implemented the following optimisations, related to the calculation and storage of neighbourhood information, which improve system performance over the tabular structures used in older versions of \dagster.
+
+\pagebreak
+\paragraph{Previous Implementation:}
+\begin{enumerate}
+\item Create an array with a Boolean flag for each variable.
+\item Then iterate over all the variables, one by one:
+\begin{itemize} 
+\item Scan through the clauses in which the variable occurs, and for each of the variable's neighbours, set the neighbour's flag in the array to be true.
+\item Scan through the array for all variables whose flag is set, to determine the neighbourhood of the variable, which is then stored more compactly as a static list.
+\item Clear the array of flags
+\end{itemize}
+\end{enumerate}
+
+This algorithm was previously implemented in the \dagster SLS routine, and while it is has constant insertion time (array look up and setting a flag), it also suffers from quadratic complexity in terms of the total number of variables, as each variable's neighbourhood is resolved by scanning over the array of flags, which has the size of the number of variables itself.
+This quadratic complexity was seen to be an immediate bottleneck on larger problems.
+However at the end of the algorithm, each variable has a static list of its neighbours, which is compact with a fast lookup.
+%%
+To ameliorate the issue of quadratic complexity in computation, we considered a different data structure to hold variable neighbourhood information, particularly we used the \textsc{C++} template library \textsc{set} to hold candidate variable neighbours and to purge duplicates, The first of two new implementations is as follows:
+
+\paragraph{New Implementation 1:}
+\begin{enumerate}
+\item Then iterate over all the variables, one by one:
+\begin{itemize} 
+\item Initialise an empty \textsc{set} structure
+\item For each clause in which the variable occurs, insert its neighbours into the set.
+\item Scan through the set for all the neighbours of the variable, and then store the neighbours more compactly as a static list.
+\end{itemize}
+\end{enumerate}
+
+This algorithm improves the quadratic complexity over total variables in the computation, with a logarithmic insertion cost (over the size of the set) throughout the iteration.
+This logarithmic insertion cost is an inherent part of the \textsc{C++} standard template \textsc{set} structure, which stores and manipulates data in red-black trees.
+This much improved algorithm made it possible to run \dagster's SLS modules with larger SAT problems, with many more variables.
+
+Unfortunately it was noted that the memory consumption of the \textsc{set} datastructure, and the logarithmic calculation time became prohibitive on larger problem instances.
+To remedy these observed problems, a second alternative algorithm was implemented, using duplicate data structure to improve speed and memory performance. The second new implementation is as follows:
+
+\paragraph{New Implementation 2:}
+\begin{enumerate}
+\item Create an array with a Boolean flag for each variable.
+\item Then iterate over all the variables, one by one:
+\begin{itemize} 
+\item Initialise an empty list structure
+\item For each clause in which the variable occurs, and for each neighbour in that clause, check if the neighbours flag is set in the array, if it is not then set its flag, and add it to the list.
+\item The list stores the  neighbourhood of the variable.
+\item Clear the array of flags
+\end{itemize}
+\end{enumerate}
+
+This implementation uses two data structures, a list and an array of flags, to hold neighbourhood information as it is being compiled, using the constant lookup time of the array of flags, to check uniqueness, and the list to store unique entries.
+The neighbourhood information is compiled directly as a list which is then used in the SLS routine.
+This implementation, uses linear operations for lookup, and insertion and compilation of information, without being as memory expensive as the \textsc{set} data structures.
+Using this optimised implementation, the \dagster's SLS routine was able to work for larger SAT instances.
+
+
+\section{Case Studies}\label{sec:casestudies}
+
+
+In the previous sections we highlighted all the newer features and changes to \dagster since the last report deliverable.
+The contributions include a range performance optimisations, new functionalities, operating modes, and user interfaces.
+Using these feature additions, we were able to improve the runtime performance on several problems documented in the previous report, particularly Costas array counting and pentomino problems.
+In these case studies, some of the features which we introduced proved to be useful in providing performance gains relative to other solvers.
+%%
+A range of other solvers were newly considered as performance comparisons against \dagster.
+These performance comparisons are primarily shown in Figures \ref{fig:costas_performance2} and \ref{fig:performance_graph46461}.
+%%
+In addition to extending these two familiar case studies, we also introduce a new case study not included in the previous report, particularly using \dagster\ in Bounded Model Checking (BMC) between different variable fidelities using abstraction invariant variable values.
+%In this new case study, we coded in \textsc{C} a bidirectional communication protocol and used CMBC to generate SAT CNF files.
+%The encoding was computed multiple times, each time using  different bit fidelities for the variables of the encoding.
+%We show that, using \dagster, the solutions to low fidelity compiled models can be communicated to subprocesses working on higher fidelity models, minimising the overall number of decisions needed to be made by the \dagster\ procedure to compute a solution to the highest fidelity, which corresponds to a faithful model of the underlying problem. %% abstraction invariant control flow variable values from lower fidelity models can be translated to the higher fidelity models yielding improved runtime performance, as we shall see.
+
+We consider three case studies:
+\begin{itemize}
+\item	In Section \ref{sec:experiment_costas}, we consider performance in parallel model counting of Costas arrays, contrasting \dagster\ performance against the state-of-the-art \textsc{DMC} parallel model counter, showing performance enhancement due to geometric restarting, and SLS \& Strengthener integration.
+  
+\item	In Section \ref{sec:experiment_pentominos}, we consider performance in solving generated pentomino problems, showing the performance enhancement provided by different decompositions, and the choice of \dagster's underlying CDCL solver against a wider range of state-of-the-art distributed and parallel SAT tools.
+  
+\item In Section \ref{sec:mc:bmc}, we show the performance enhancement in a  BMC case study, using \dagster's decomposition approach to carry abstraction invariant variable values between variable-fidelity models.
+\end{itemize}
+
+\pagebreak
+\subsection{Costas Arrays}\label{sec:experiment_costas}
+
+\paragraph{New features} of \dagster\ that are being used when generating the experimental data reported on for this case study are: {\em (i)} new efficient search neighbourhood representations as described in Section~\ref{sec:neighbourhood_calculation}, {\em (ii)} in Table~\ref{fig:costas_data_table} specifically, the reported runtime data is gathered with \dagster\ using the geometric restarting policy described in Section~\ref{sec:dynamic_restarting}, and {\em (iii)} we use the sound and complete approach to trimming solution literals described in Section~\ref{sec:literal_trimming}. $\qed$\\\rule{50pt}{5pt}
+
+
+A Costas array is a set of $n$ points in an $n\times n$ array such that each column and row contains exactly one point, and each of the $n(n-1)/2$ displacement vectors between the points are distinct.
+An example Costas array is shown in Figure~\ref{fig:costas1}. 
+%%
+Using search to solve for Costas arrays is known to be challenging, and searching processes have been conducted at least up to size $n=29$~\cite{DBLP:journals/amco/DrakakisIRW11,darakakis:etal:2008}.
+However, whether arrays exist at $n\in\{32,33\}$ is an open problem.
+As a number of Costas array subclasses at those sizes have been eliminated~\cite{748721}, it is conjectured (but not confirmed) that Costas arrays of those sizes do not exist~\cite{conf/ciss/RussoEB10}.
+
+
+\input{figs/costas_array.tex}
+
+For each size $n$, we can directly synthesise a CNF formula whose models are in one-to-one correspondence with the set of Costas arrays of size $n$, and Lex-leader constraints can be added to break the dihedral group symmetries (reflection and rotation) \cite{10.1007/11889205_46}.
+For the purpose of using SAT-search to count unique arrays for values of $n$ using \dagster,  we employ a simple DAG structure, Figure \ref{fig:dag_example121}, with two connected vertices. The first node is the placing of the first $m$ columns of the Costas array, and the second part is the placement of the remainder.
+
+
+The performance of \dagster at solving Costas problems for different sized Costas arrays $n$, and for different numbers of columns $m$ solved in the first node, for different numbers of cores and \dagster modes, is given in Figure~\ref{fig:costas_performance2}.
+Here, we also compare \dagster\ against the distributed model counter \textsc{DMC}~\cite{lagniez:etal:2018}, and against the performance of model counting by repeatedly calling \tinisat. 
+This figure shows the runtime results of including clause strengthening and/or local search helper processes, and also shows the effect of two different decompositions on the performance of Costas model counting.
+
+
+%\input{figs/computing_times_GADI1.tex}
+
+\input{figs/computing_times_GADI2.tex}
+
+In these figures, the time taken to count all the Costas arrays of a given size is plotted, and we can see that for larger sized Costas arrays, \dagster\ is significantly faster than \tinisat\ at solving the Costas model counting problem, and that performance can be improved further using \dagster's additional feature modes.
+For smaller and easier Costas problems (of size $n\le 12$) the parallel overhead of using \dagster\ is the primary determinant of the solution time, and \dagster\ performs worse than \tinisat which has minimal overhead; this overhead is most pronounced with the more granular decompositions that include more columns (e.g. for Costas-10, 3-column is worse than 2-column).
+However, for larger and harder Costas problems ($n>12$), it is seen that \dagster consistently outperforms \tinisat\ - the CDCL procedure which \dagster is employing; as well as outperforming the \textsc{DMC} model counter.
+Additionally, for large problems, having one local search (modes denoted with `L') and/or clause strengthening process (modes denoted with `S') per worker group complements the CDCL procedure to yield improved runtime.%, allowing larger Costas arrays to be computed more efficiently.
+
+Another advantage of using \dagster\ is that it allows easy experimentation about the decomposition employed. In our results, we have considered decomposition into contiguous blocks of columns (where the first node has the first $m$ columns, and the second node has the remainder), but we can also consider decompositions with interleaved columns.
+There are also many configurable variables related to restarting policy and variable selection controls.
+In particular, we considered a vanilla VSIDS heuristic \cite{DBLP:conf/dac/MoskewiczMZZM01} and a fixed geometrically increasing restart policy (as introduced in Section \ref{sec:dynamic_restarting}).
+In Table~\ref{fig:costas_data_table}, we can see how changing the index of the columns that \dagster\ decomposes the problem by can increase the runtime performance.
+
+
+
+\begin{table}
+\centering
+
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Size (n) & Cores & Columns & S & Runtimes  \\ \hline
+9 & 48 & \{4\} & & 5.527  \\ \hline
+ 10 & 2 & \{2,4\} & & 1.356  \\ \hline
+10 & 48 & \{2,4\} & & 5.191  \\ \hline
+11 & 2 & \{2,4\} & & 4.155  \\ \hline
+11 & 48 & \{2,4\} & & 5.642  \\ \hline
+12 & 48 & \{2,4\} & & 21.234  \\ \hline
+12 & 48 & \{2,4\} & & 7.267  \\ \hline
+12 & 48 & \{2,4\} & \checkmark & 7.419  \\ \hline
+13 & 2 & \{2,4,6\} & & 91.22  \\ \hline
+13 & 48 & \{2,4,6\} & & 8.427  \\ \hline
+13 & 48 & \{2,4,6\} & \checkmark & 10.242  \\ \hline
+14 & 2 & \{5,7,9\} & & 524.414  \\ \hline
+14 & 384 & \{5,7,9\} & & 16.562  \\ \hline
+14 & 383 & \{5,7,9\} & \checkmark & 12.118  \\ \hline
+15 & 384 & \{5,7,9,11\} & & 118.133  \\ \hline
+15 & 383 & \{5,7,9,11\} & \checkmark & 86.125  \\ \hline
+16 & 528 & \{5,7,9,11\} & & 275.127  \\ \hline
+16 & 527 & \{5,7,9,11\} & \checkmark & 235.25  \\ \hline
+\end{tabular}
+
+
+\vspace{4mm}
+\caption[Costas problem table of runtime values]{Runtimes for different Costas problems with decompositions with columns in the first DAG node, with and without Strengthener (S) - i.e. modes \modezero and \modetwo (w/ \tinisat\ cores); runtime in seconds, against cores and sizes. }\label{fig:costas_data_table}
+\end{table}
+
+
+\FloatBarrier
+\pagebreak
+\subsection{Pentominoes}\label{sec:experiment_pentominos}
+
+\paragraph{New features} of \dagster\ that are being used when generating the experimental data reported on for this case study are: {\em (i)}  we use the sound and complete approach to trimming solution literals described in Section~\ref{sec:literal_trimming}, and {\em (ii)} we contrast the runtime performance of \dagster\ using the systematic search algorithm based on {\textsc TiniSAT} with the performance using the algorithms from {\textsc MiniSAT}, thus using the new search interface described in Section~\ref{sec:minisat_integration}. $\qed$\\\rule{50pt}{5pt}
+
+\input{figs/pentomino_puzzle.tex}
+
+
+\input{figs/pentomino1_tiny.tex}
+%\input{figs/pentomino2.tex}
+
+We considered pentomino tiling problems where different tiling regions correspond to different sub-problems.
+The problems are to fill a grid area with pentominoes such that no pentomino crosses a bolded wall and no two pentominoes of the same shape (counting reflections/rotations) touch each other, an example pentomino problem is shown in Figure \ref{fig:pentomino_puzzle1}. We created a program to randomly generate hard 15 $\times$ 15 pentomino problems by:
+\begin{enumerate}
+\item Randomly filling a 15 $\times$ 15 grid with pentominoes, 
+\item Outlining those pentominoes with walls, and
+\item Iteratively remove a random wall segment such that the puzzle is still uniquely solvable, until no further removals are possible.
+\end{enumerate}
+
+We used this process to generate large pentomino problems by cascading 15 $\times$ 15 compatible sub-problems side-by-side together in a grid pattern.
+In this way, the grid of pentomino problems constitutes a larger problem with logically distinct parts, where each sub-problem is only constrained by its immediate neighbours. As every pentomino sub-problem is uniquely solvable, this larger pentomino problem is also uniquely solvable.
+
+We considered two DAG structures (A and B, in Figures~\ref{fig:dag_example1215} and \ref{fig:dag_example1216}) as possible processes of solving these pentomino problems: (A) from the top left diagonally through to the bottom right, and (B) solving the sub-problems in parallel by columns, and a final verification node.
+
+
+
+
+We measured the performance of \dagster\ (with \tinisat\ and \textsc{MiniSAT} CDCL cores, and both decompositions) against a range of solvers, including \tinisat\ , \lingeling\ and \textsc{MiniSAT} serial CDCL baselines, and some parallel baselines including \textsc{Painless-Mcomsps} \cite{LeFrioux:etal:2017}, \textsc{Paracooba}~\cite{heisinger:etal:2020}, \textsc{DMC}~\cite{lagniez:etal:2018} and \textsc{D-Syrup}~\cite{Audemard:etal:2017} solvers\footnote{Some solvers we compare with here are not model counting tools, and thus not reasonably used in Costas results.}. The results for different sized pentomino problems are shown in Figure \ref{fig:performance_graph46461} where we see a range of different performances, with \dagster\ (Decomposition B and \textsc{MiniSAT} core) outperforming other solvers.
+	
+\dagster\ demonstrates a speedup due to parallelization by solving a larger structured problems with coupled sub-problems, and that the strength of this effect depends on the decomposition and the number and type of CDCL cores used.
+The coupling between sub-problems creates leverage which \dagster\ exploits to provide the witnessed speedup, and the structure and arrangement of the solving process between the sub-problem elements (between Decompositions A and B) can create a large difference in the resulting performance.
+
+%On the largest pentomino problems ($15\times 15$) \textsc{D-Syrup} consumes a maximum of 75GB of memory, whereas \dagster consumes a maximum of 14GB using decomposition B. \dagster's small footprint follows from solving sub-problems separately and in turn.
+
+
+\input{figs/computing_times_5_new.tex}
+%\input{figs/computing_times_7.tex}
+%\input{figs/pentomino_memory_graph.tex}
+
+
+\FloatBarrier
+\pagebreak
+\subsection{Bounded Model Checking with Abstraction Invariants}\label{sec:mc:bmc}
+
+\paragraph{The New feature} of \dagster\ that is is used when generating the experimental data reported on for this case study is the sound and complete approach to trimming solution literals described in Section~\ref{sec:literal_trimming}. $\qed$\\\rule{50pt}{5pt}
+
+
+We now describe a model checking case study, showing how \dagster\ can be used with existing tools to interrogate the functioning of finite-state-machines and circuits, and in particular to verify that a particular error state of the machine can be reached.
+Our checking processes will be based on search performed by SAT reasoning, as exemplified in~\cite{DBLP:journals/ac/BiereCCSZ03}.
+A survey of approaches to model checking software systems is in~\cite{SurveySymExec-CSUR18}, and we note a wide range of systems exist in this setting, including \textsc{CBMC} \cite{DBLP:conf/tacas/ClarkeKL04,10.1007/978-3-642-54862-8_26}, \textsc{F-Soft} \cite{DBLP:journals/tcs/IvancicYGGA08}, \textsc{ESBMC} \cite{DBLP:journals/tse/CordeiroFM12}, \textsc{LLBMC} \cite{DBLP:conf/kbse/FalkeMS13}, and \textsc{ESBMC} \cite{10.1007/s10009-020-00571-2}.
+In our case study, we shall be using \textsc{CBMC} as the basis for generating structured SAT queries for \dagster. 
+%%In this paper we consider CMBC bounded model checking software as a means of generating SAT queries for falsifying a specific communication protocol.
+
+\newcommand{\pp}[1]{\ensuremath{\textsf{#1}}}
+
+Our case study considers the wireless security protocol for communication with a implantable low-power medical device described in~\cite{5759785}. %{\em Alwen Tiu} 
+{\em Alwen Tiu} determined {\em a priori} and by manual inspection that this protocol has a potential issue.
+The protocol is based on encrypted communication using a 32bit secret key $K$, shared between an implantable medical device (IMD) and a base-station (BASE).
+The IMD has a 32bit serial number $S$ that uniquely identifies it among other devices.
+Both the IMD and BASE have a 32bit message counter,  $A$ for the devise, and $B$ for BASE, with both counters initially set to zero.
+We use notation $X\&Y$ to denote bit string concatenation, and $\pp{Split}(A)$ to denote splitting a bit string A into two halves, and $\pp{Interleave}(A,B)$ to denote the result of interleaving $A$ and $B$ bit strings.
+We also write $\{A\}_K$ to denote the bit string $A$ encrypted with $K$. For a message transmitted from the BASE to the IMD, and be accepted (i.e., not "dropped"), the following is required:
+
+\begin{enumerate}
+    \item BASE has a 64bit message $X$ (larger messages either chunked and/or padded into 64bits)
+    \item BASE adds one to its message counter $B$
+    \item BASE produces a message\\ $M_1,M_2=\pp{Split}(\pp{Interleave}(X,S\&B))$
+    \item BASE sends the message $\{M_1\}_K\&\{M_2\}_K$ to IMD
+    \item IMD receives $\{M_1\}_K\&\{M_2\}_K$ and decrypts each part with $K$ then joins and de-interleaves to find $X,S,B$
+    \item IMD checks compatible $S$, if not match then drop message, it then checks message counter $B$ against its own counter $A$. If $B>A$ it accepts the message and sets $A$ to be equal to $B$, otherwise it drops the message
+\end{enumerate}
+
+From examining this protocol, we note there is a weakness. Particularly, an adversary can witnesses a message $\{M_1\}_K\&\{M_2\}_K$ from the BASE to the IMD, and then subsequently send a message $\{M_1\}_K\&\{M_1\}_K$ to the IMD. This message from the adversary will then causing the IMD's message counter $A$ to be incremented to $S$ (perhaps a large number), consequently causing the IMD to cease accepting legitimate messages from the BASE.
+This error state in the protocol is subject to model checking, which can be done using \dagster.
+
+We approach model checking this protocol compositionally, using \dagster, by appealing to a notion of process abstraction. 
+Specifically, intending to proceed with \textsc{CBMC}, we faithfully describe the protocol in the C programming language. 
+State variables describing the evolution of the protocol--e.g., whether an attacker or BASE is sending a message at timestep $i$---are of a fixed type. Variables encoding protocol registers, such as $A$, $B$, $X$, etc., being of a range of types, depending on where we are in an abstraction hierarchy. 
+State variables of a fixed type we call {\em abstraction invariant} (AI).
+Our abstraction hierarchy then considers the other variables at a range of fidelities, with 8-bit registers modelling protocol instructions at the highest level of abstraction (lowest fidelity) and 64-bit registers at the lowest level (highest fidelity).
+We see that the protocol is much easier to model check, in practice, at a high abstraction level, and so our approach takes assignments to AI variables from satisfying assignments to highly abstract models, and uses those to inform search at lower levels of abstraction.  
+%%
+A simulated run of the bidirectional communication from the base-station (BASE) to the medical-device (IMD) was written in C programming for different fidelities of their variables, and passed to the CBMC software to generate corresponding SAT instance problems with annotations for AI variables' bit values.\footnote{%Anonymous submission, link to sources to be given if accepted.} 
+Sourcecode:\\ \url{https://github.com/ThomWillingham/bmc-summer2122}}
+
+
+We use \textsc{CBMC} to generate CNF representations of the protocol at different fidelities, producing annotated formulae that identify AI variables and the relationships between AI variables in different fidelity models. 
+\dagster\ is used to automate the workflow, of solving the lower fidelity problem/s and then carrying across the AI variable values as constraints to the higher fidelity models - as indicated in the DAG shown in Figure \ref{fig:bmc_dag}.
+%%
+Here, we document the observed improvement in performance of this process, over running the higher fidelity models directly in a SAT solver. Our results are in Figure \ref{fig:performance_EMD}, where we can see that solving the 64 bit model using AI solutions from lower fidelity models results in a improvement in search performance.
+%%
+Particularly, in Figure~\ref{fig:performance_EMD} we can see that using AI variable information saves an order of magnitude on the number of conflicts encountered as well as a reduction of $\sim$5 times fewer variable assignments required.
+%%
+In this way AI information can be used to accelerate bounded model checking. The results presented here were achieved using \dagster\ in mode \modezero, with one CDCL \tinisat\ core.
+
+\input{figs/bmc_dag}
+
+
+
+
+\definecolor{bblue}{HTML}{4F81BD}
+\definecolor{rred}{HTML}{C0504D}
+\definecolor{ggreen}{HTML}{9BBB59}
+\definecolor{ppurple}{HTML}{9F4C7C}
+
+\begin{figure}
+\begin{tikzpicture}
+    \begin{axis}[
+        width  = 0.8*\textwidth,
+        height = 8cm,
+        major x tick style = transparent,
+        ybar=2*\pgflinewidth,
+        bar width=14pt,
+        ymajorgrids = true,
+        %ylabel = {Run time speed},
+        symbolic x coords={8 to 64,16 to 64,32 to 64,64},
+        xtick = data,
+        scaled y ticks = false,
+        enlarge x limits=0.25,
+        ymin=0,
+		%	legend pos=south east,
+        legend cell align=left,
+        legend style={
+                at={(1.05,0)},
+                anchor=south west,
+                column sep=1ex
+        },
+			ymode=log
+    ]
+        \addplot[style={bblue,fill=bblue,mark=none}]
+            coordinates {(8 to 64, 19510) (16 to 64,22572) (32 to 64,29965) (64,21155)};
+
+        \addplot[style={rred,fill=rred,mark=none}]
+             coordinates {(8 to 64,204886) (16 to 64,206391) (32 to 64,470801) (64,636041)};
+
+        \addplot[style={ggreen,fill=ggreen,mark=none}]
+             coordinates {(8 to 64,77) (16 to 64,140) (32 to 64,457) (64,418)};
+
+
+        \legend{decisions,variable assignments,conflicts}
+    \end{axis}
+\end{tikzpicture}
+\caption[EMD model checking performance graph]{The SAT performance of EMD model checking with propagation AIs between different fidelities of the problem, between 8/16/32 bit instances and the 64 bit instance, with the 64 bit instance without propagation for comparison}\label{fig:performance_EMD}
+\end{figure}
+
+
+\section{Conclusions and Future Work}
+
+
+We have outlined our new tool, \dagster, summarising some capabilities using two case studies: Costas arrays and pentomino tiling problems, and also demonstrating its use in bounded model checking.
+The \dagster\ tool implements a number of search-based solution procedures for the Boolean SAT problem, including both systematic and local search procedures.
+These have been integrated to operate in tandem, as a parallel hybrid search.
+The \dagster\ tool takes as input a Boolean SAT problem, and a schematic description of the compositional structure of the SAT.
+The tool operates in an HPC environment, and  distributes the search effort to solve the given problem according to the provided compositional structure.
+It is able to operate on very large problems, and has been shown to accelerate Boolean SAT queries and model counting on a number of scenarios.
+We have outlined a range of new features of the \dagster\ system since the last report deliverable.
+We plan to support the continued development and expanded the features of the tool.
+
+\FloatBarrier
+
+\pagebreak
+\renewcommand{\refname}{\spacedlowsmallcaps{References}} % For modifying the bibliography heading
+\bibliographystyle{unsrt}
+\bibliography{bib.bib} % The file containing the bibliography
+\end{document}

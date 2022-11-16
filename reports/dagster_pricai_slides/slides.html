@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>DAGSTER Tutorial3</title>
+		<link rel="stylesheet" href="revealjs/dist/reveal.css">
+		<link rel="stylesheet" href="revealjs/dist/theme/solarized.css">
+		<link rel="stylesheet" href="revealjs/plugin/highlight/monokai.css">
+
+<style>
+.slide-number {
+font-size: x-large !important;
+right: unset !important;
+left: 8px !important;
+}
+</style>
+	</head>
+	<body>
+
+		<div class="reveal">
+			<div class="slides">
+
+				<section>
+					<h2>Dagster: Parallel Structured Search with Case Studies</h2>
+					Mark Alexander Burgess, Charles Gretton,<br>Josh Milthorpe, Luke Croak,<br> Thomas Willingham, Alwen Tiu <br><br>
+Australian National University
+				</section>
+				
+				<section>
+					<h2> Summary </h2>
+					<div style="text-align: initial;">
+					Open Source HPC tool for SAT problems<br>
+					Inputs:<br>
+					<ul>
+						<li>Set of clauses (in DIMACS CNF format)</li>
+						<li>(Sub-)problem structure as graph</li>
+					</ul>
+					Processing:<br>
+					<ul>
+						<li>Solves subproblems in parallel</li>
+					</ul>
+					Output:<br>
+					<ul>
+						<li>Binary model/models</li>
+					</ul><br><br>
+					github.com/ANU-HPC/dagster
+					</div>
+
+				</section>
+				
+				<section>
+					<h2> (SAT)isfiability problems </h2>
+					<ul>
+						<li>A series of binary variables $x_1,x_2,\dots,x_n$</li>
+						<li>A set of constraints those variables must satisfy</li>
+						<li>A Solution is binary values that satisfy those constraints</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2> SAT problems </h2>
+					SAT problems often rendered as CNF:$$ (x_1\vee \neg x_2)\wedge(\neg x_2 \vee x_3) $$
+					which is represented as DIMACS CNF file:
+					
+					<pre style="
+    width: 200px;
+    margin: 20px;
+    display: inline-block;
+"><code data-trim data-noescape class="language-plaintext">
+						p cnf 3 2
+						1 -2 0
+						-2 3 0
+					</code></pre>
+				</section>
+				
+				<section>
+					<h2> SAT problems </h2>
+					Many kinds of SAT problems:<br>
+					<div style="width:200px; display:inline-block;">Tiling</div><img src="tiling1.svg" width="150"/><div style="width:100px; display:inline-block;"></div>
+					<img src="graph1.svg" width="150"/><div style="width:200px; display:inline-block;">Graph colouring</div><br>
+					<div style="width:200px; display:inline-block;">Planning</div><img src="planning.gif" width="150"/><div style="width:100px; display:inline-block;"></div>
+					<img src="concolic.svg" width="150"/><div style="width:200px; display:inline-block;">Bounded Model Checking</div>
+				</section>
+				
+				<section>
+					<h2> SAT decomposition </h2>
+					<ul>
+						<li>Logically Separate parts<br><img src="puzzle1.svg" width="150"/></li>
+						<li>Search Ordering<br><img src="plan.svg" width="150"/></li>
+					</ul>
+				</section>
+				
+				
+				<section>
+					<h2>Dagster approach: DAG</h2>
+					<pre style="
+    width: 200px;
+    margin: 20px;
+    display: inline-block;
+"><code data-trim data-noescape style="max-height:600px" class="language-plaintext">
+p cnf 6 8
+1 2 3 0
+3 4 5 0
+5 6 0
+-3 -5 0
+-2 3 -4 0
+-4 5 -6 0
+1 2 4 0
+3 4 -6 0
+					</code></pre><pre style="
+    width: 200px;
+    margin: 20px;
+    display: inline-block;
+"><code data-trim data-noescape style="max-height:600px" class="language-plaintext">
+DAG-FILE
+NODES:6
+GRAPH:
+0->1:1,2
+2->3:3,4
+1->4:1,2,3
+3->4:3,4,5
+5->4:5,6
+CLAUSES:
+0:0,4,6
+1:0,1,3,4,6
+2:1,3
+3:1,3,5,6,7
+4:0-7
+5:2,3,7
+REPORTING:
+1-6
+					</code></pre><img src="svg_out6.svg"/>
+				</section>
+				
+				
+				
+				<section>
+					<h2>Dagster approach: DAG</h2>
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   height="300"
+   width="300"
+   style="font-size:medium"
+   id="svg4"
+   sodipodi:docname="svg_out7.svg"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   viewBox="0 0 210 210">
+  <defs
+     id="defs8">
+     
+     
+    <linearGradient
+       id="my_gradient1"
+       inkscape:collect="always">
+      <stop offset="0%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="12.5%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="25%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="37.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="50%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="62.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="75%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="87.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD" dur="2.86s" repeatCount="indefinite"></animate></stop>
+      <stop offset="100%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA" dur="2.86s" repeatCount="indefinite"></animate></stop>
+    </linearGradient>
+     
+     
+    <linearGradient
+       id="my_gradient2"
+       inkscape:collect="always">
+      <stop offset="0%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="12.5%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="25%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="37.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="50%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="62.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="75%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="87.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD" dur="3s" repeatCount="indefinite"></animate></stop>
+      <stop offset="100%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA" dur="3s" repeatCount="indefinite"></animate></stop>
+    </linearGradient>
+     
+     
+    <linearGradient
+       id="my_gradient3"
+       inkscape:collect="always">
+      <stop offset="0%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="12.5%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="25%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="37.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="50%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="62.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="75%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="87.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD" dur="2.49s" repeatCount="indefinite"></animate></stop>
+      <stop offset="100%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA" dur="2.49s" repeatCount="indefinite"></animate></stop>
+    </linearGradient>
+     
+     
+    <linearGradient
+       id="my_gradient4"
+       inkscape:collect="always">
+      <stop offset="0%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="12.5%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="25%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="37.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="50%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="62.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="75%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="87.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD" dur="3.08s" repeatCount="indefinite"></animate></stop>
+      <stop offset="100%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA" dur="3.08s" repeatCount="indefinite"></animate></stop>
+    </linearGradient>
+     
+     
+    <linearGradient
+       id="my_gradient5"
+       inkscape:collect="always">
+      <stop offset="0%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="12.5%" stop-color="#DDDDDD">
+                <animate attributeName="stop-color" values="#000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="25%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="37.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000; #000000" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="50%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000; #000000" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="62.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA; #000000" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="75%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD; #AAAAAA" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="87.5%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA; #DDDDDD" dur="3.21s" repeatCount="indefinite"></animate></stop>
+      <stop offset="100%" stop-color="#000000">
+                <animate attributeName="stop-color" values="#DDDDDD; #AAAAAA; #000000; #000000; #000000; #000000; #000000; #000000; #AAAAAA" dur="3.21s" repeatCount="indefinite"></animate></stop>
+    </linearGradient>
+    <linearGradient xlink:href="#my_gradient1" id="gradient45" gradientUnits="userSpaceOnUse" x1="100" y1="55" x2="170" y2="110" />
+    <linearGradient xlink:href="#my_gradient2" id="gradient01" gradientUnits="userSpaceOnUse" x1="30" y1="110" x2="100" y2="110" />
+    <linearGradient xlink:href="#my_gradient3" id="gradient23" gradientUnits="userSpaceOnUse" x1="30" y1="165" x2="100" y2="165" />
+    <linearGradient xlink:href="#my_gradient4" id="gradient14" gradientUnits="userSpaceOnUse" x1="100" y1="110" x2="170" y2="110" />
+    <linearGradient xlink:href="#my_gradient5" id="gradient34" gradientUnits="userSpaceOnUse" x1="100" y1="165" x2="170" y2="110" />
+  </defs>
+  <path
+     style="stroke:url(#gradient01);stroke-width:10;fill-opacity:1"
+     d="m 30,110 70,0"
+     id="path1216"
+     inkscape:connector-curvature="0" />
+  <path
+     style="stroke:url(#gradient14);stroke-width:10;fill-opacity:1"
+     d="m 100,110 70,0"
+     id="path1230"
+     inkscape:connector-curvature="0" />
+  <path
+     style="stroke:url(#gradient45);stroke-width:10;fill-opacity:1"
+     d="m 100,55 70,55"
+     id="path1272"
+     inkscape:connector-curvature="0" />
+  <path
+     style="stroke:url(#gradient23);stroke-width:10;fill-opacity:1"
+     d="m 30,165 70,0"
+     id="path1320"
+     inkscape:connector-curvature="0" />
+  <path
+     style="stroke:url(#gradient34);stroke-width:10;fill-opacity:1"
+     d="m 100,165 70,-55"
+     id="path1374"
+     inkscape:connector-curvature="0" />
+  <circle
+     style="font-size:medium;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.69999993;stroke-opacity:1"
+     id="path1175-04"
+     cx="30"
+     cy="165"
+     r="21" />
+  <circle
+     style="font-size:medium;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.69999993;stroke-opacity:1"
+     id="path1175-2"
+     cx="100"
+     cy="165"
+     r="21" />
+  <circle
+     style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.69999999;stroke-opacity:1"
+     id="path1175"
+     cx="100"
+     cy="55"
+     r="21" />
+  <circle
+     style="font-size:medium;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.69999993;stroke-opacity:1"
+     id="path1175-4"
+     cx="170"
+     cy="110"
+     r="21" />
+  <circle
+     style="font-size:medium;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.69999993;stroke-opacity:1"
+     id="path1175-0"
+     cx="100"
+     cy="110"
+     r="21" />
+  <circle
+     style="font-size:medium;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.69999993;stroke-opacity:1"
+     id="path1175-8"
+     cx="30"
+     cy="110"
+     r="21" />
+  <text 
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.69999999;dominant-baseline:ideographic;text-anchor:middle;alignment-baseline:middle;"
+     x="30"
+     y="110"
+     id="text1650">0</text>
+  <text 
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.69999999;dominant-baseline:ideographic;text-anchor:middle;alignment-baseline:middle;"
+     x="100"
+     y="110"
+     id="text1644">1</text>
+  <text 
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.69999999;dominant-baseline:ideographic;text-anchor:middle;alignment-baseline:middle;"
+     x="100"
+     y="55"
+     id="text1638">5</text>
+  <text 
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.69999999;dominant-baseline:ideographic;text-anchor:middle;alignment-baseline:middle;"
+     x="100"
+     y="165"
+     id="text1656">3</text>
+  <text 
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.69999999;dominant-baseline:ideographic;text-anchor:middle;alignment-baseline:middle;"
+     x="30"
+     y="165"
+     id="text1662">2</text>
+  <text 
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.69999999;dominant-baseline:ideographic;text-anchor:middle;alignment-baseline:middle;"
+     x="170"
+     y="110"
+     id="text1632">4</text>
+</svg>
+				</section>
+				
+				
+				<section>
+					<h2>Case Study 1</h2>
+					Pentomino Tiling Problem<br>region splitting
+				</section>
+				
+				<section>
+					<h2> Pentominos Demonstration </h2>
+					<img src="2b1894b5a3aaaa46.svg" width="360"/><br>
+					<img src="pentominos.svg"/>
+				</section>
+				
+				<section>
+					<img src="3bb.svg" width="700"/>
+				</section>
+				
+				
+				<section>
+					<img src="4bb.svg" width="500"/>
+				</section>
+				
+				<section>
+					<h2>Example Usage</h2>
+				</section>
+				
+				
+				<section>
+					<h2>Case Study 2</h2>
+					Costas Arrays<br>partial solution splitting
+				</section>
+				
+				
+				<section>
+					<h2>Case Study: Costas Arrays</h2>
+					What is Costas Array?<br>
+					<img src="3b3333.svg"/><br>
+					<ul>
+						<li>One for every row & column</li>
+						<li>Displacement between any two is unique</li>
+					</ul>
+				</section>
+				
+				
+				
+				<section>
+					<h2>Case Study: Costas Arrays</h2>
+					Easily encoded in SAT.<br>
+					Add some symmetry breaking.<br>
+					Two stage solution.<br>
+					<img src="3b33332.svg"/>
+					<img width="500" src="zog2.svg"/><br>
+				</section>
+				
+				
+				<section>
+					<h2>Cast Study: Costas Arrays</h2>
+					Two stage dag
+<pre><code class="language-plaintext">DAG-FILE
+NODES:2
+GRAPH:
+0->1:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+CLAUSES:
+0:0-33
+1:0-589
+REPORTING:
+1-25
+</code></pre>
+
+
+				</section>
+				
+				
+				
+				<section>
+					<img src="54545454.svg"/>
+				</section>
+				
+				
+				
+				
+				
+				
+				<section>
+					<h2>Case Study 3</h2>
+					Protocol Model Checking<br>splitting by variable fidelity
+				</section>
+				
+				
+				<section>
+					<h2>Model Checking Programs</h2>
+					Can a program error state be reached?<br>
+					Annotate source, compile to SAT problem<br><br>
+					CBMC: <i>https://github.com/diffblue/cbmc</i>
+					<img src="CBMC1.svg" width="500"/>
+				</section>
+				
+				<section>
+					<h2>Example run</h2>
+					
+					<pre><code data-trim class="language-c">int main() {
+	int X_1;
+	X_1 = X_1 * X_1;
+	X_1 = (X_1 ^ 1936);
+	if ((X_1 & 47732)==0) {
+		__CPROVER_assert(0, "I did a booboo"); // Oh my error state!
+	}
+}
+					</code></pre>
+					
+					<pre><code data-trim class="language-plaintext">$ cbmc test.c
+CBMC version 5.10 (cbmc-5.10) 64-bit x86_64 linux
+Parsing test.c
+.......................
+Solving with MiniSAT 2.2.1 with simplifier
+1810 variables, 9230 clauses
+SAT checker: instance is SATISFIABLE
+Runtime decision procedure: 0.00649107s
+
+** Results:
+[main.assertion.1] I did a booboo: FAILURE
+
+** 1 of 1 failed (1 iteration)
+VERIFICATION FAILED
+					</code></pre>
+				</section>
+				
+				
+				<section>
+					<h2>Implied freedom</h2>
+					You can do SAT reasoning about logic which you can code (...in principle...)<br>
+					<br>
+					Including emulation of a communication protocol between actors.<br>Where an error state is where protocol is broken.
+				</section>
+				
+				<section>
+					<h2> Example Pseudocode </h2>
+<pre><code data-trim class="language-c">int main() {
+	Communicated_Data X_1;
+	X_1.append(Actor_1_communicate(X_1));
+	X_1.append(Actor_2_communicate(X_1));
+	X_1.append(Actor_3_intercept(X_1));
+	X_1.append(Actor_1_communicate(X_1));
+	X_1.append(Actor_3_recieve(X_1));
+	if (Actor_3_has_secret_key()) {
+		__CPROVER_assert(0, "Protocol broken");
+	}
+}
+					</code></pre><br>
+					<img src="zog3.svg" width="500"/>
+
+				</section>
+				
+				<section>
+					<h2> Bounded Model Checking with AI variables </h2>
+					Protocols can involve many elements<br>(packets, hashes, ids, etc)<br>
+					A hack may not depend on specific elements.<br>
+					<br>
+					<i>Approach:</i> resolve a hack at a lower level of variable resolution, and propagate to higher level.  
+					
+				</section>
+				
+				<section>
+					<img src="5bb.svg" width="900"/>
+				</section>
+				
+				<section>
+					<h2> Summary </h2>
+					<ul>
+						<li>Dagster is open source parallel SAT solver</li>
+						<li>solves based on DAG decomposition</li>
+						<li>Solves: Discrete/Tiling/Model-Checking problems</li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2>Thankyou</h2>
+					github.com/ANU-HPC/dagster<br><br>
+					mark.burgess@anu.edu.au
+				</section>
+				
+			</div>
+		</div>
+
+		<script src="revealjs/dist/reveal.js"></script>
+		<script src="revealjs/plugin/math/math.js"></script>
+		<script src="revealjs/plugin/highlight/highlight.js"></script>
+		<script src="revealjs/plugin/animate/plugin.js"></script>
+		<script src="revealjs/plugin/animate/svg.min.js"></script>
+		<script>
+			Reveal.initialize({ slideNumber: true,  plugins: [ RevealMath.KaTeX, RevealHighlight, RevealAnimate ] });
+		</script>
+		
+
+	</body>
+</html>

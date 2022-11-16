@@ -41,7 +41,7 @@ RUN wget https://github.com/google/glog/archive/v0.4.0.tar.gz \
 RUN wget http://davidkebo.com/source/cudd_versions/cudd-3.0.0.tar.gz\
     && tar -zxf cudd-3.0.0.tar.gz\
     && cd cudd-3.0.0\
-    && ./configure\
+    && ./configure --enable-dddmp\
     && make -j 8\
     && make install
 
