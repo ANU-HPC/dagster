@@ -9,7 +9,7 @@ Usage:
 
 python3 determinant.py SIZE BITS-PER-INT OUTPUT.cnf OUTPUT.map OUTPUT.dag
 
-SIZE: Size of matrix (square)
+SIZE: Dimension of the adjacency matrix (square)
 
 BITS-PER-INT: Number of bits to represents entries in matrix inverse.
 
