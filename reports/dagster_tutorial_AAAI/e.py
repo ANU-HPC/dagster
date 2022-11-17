@@ -95,15 +95,15 @@ class DagsterTutorial(Scene):
 		group2 = VGroup(heading3,o2).arrange(DOWN).next_to(group1,DOWN)
 		group3 = VGroup(heading4,o3).arrange(DOWN).next_to(group2,DOWN)
 		self.add(heading1)
-		self.play(FadeIn(heading1))
+		#self.play(heading1)
 		self.add(group1)
-		self.play(FadeIn(group1))
+		#self.play(group1)
 		self.add(group2)
-		self.play(FadeIn(group2))
+		#self.play(FadeIn(group2))
 		self.add(group3)
-		self.play(FadeIn(group3))	
-		self.wait(19)
-		self.play(FadeOut(heading1,group1,group2,group3))
+		#self.play(FadeIn(group3))	
+		#self.wait(19 + 4)
+		#self.play(FadeOut(heading1,group1,group2,group3))
 		self.remove(*[mob for mob in self.mobjects])
 		
 		#1m50s
@@ -126,7 +126,8 @@ class DagsterTutorial(Scene):
 		self.remove(*[mob for mob in self.mobjects])
 		
 		#2m23s
-		
+		myTemplate = TexTemplate()
+		myTemplate.add_to_preamble(r"\usepackage[english]{babel}\usepackage{amsmath}\usepackage{amssymb}\usepackage{tikz}\usepackage{verbatim}\usepackage{nicematrix}\usepackage{fancyvrb}\usepackage[hyphens]{url}\usepackage{xcolor}\usepackage{color}\usepackage{colortbl}\usepackage{xspace} % fix missing spaces after fancy commands e.g. \dagster\usepackage{makecell}\usepackage{fancyvrb}\usepackage{tikz}\usepackage{tikzscale}\usepackage{pgfplots}\usepackage{graphicx}\usepackage{todonotes}\usepackage{wrapfig}\usepackage{tikz}\usepackage{amsmath}\usepackage{subcaption}\usepackage[misc]{ifsym}\usepackage{nicematrix}")
 		tex = Tex('''
 \-\hspace{1cm}\\\\
 \\begin{figure}[]
@@ -164,7 +165,7 @@ REPORTING:
 \end{Verbatim}
 \end{minipage}
 \end{figure}
-\\vspace{3cm}''', font_size=26)
+\\vspace{3cm}''', tex_template=myTemplate, font_size=26)
 		self.add(tex)
 		self.play(Write(tex))		
 		self.wait(148)
@@ -199,6 +200,9 @@ REPORTING:
 		for l in graph_lines:
 			self.add(l)
 			self.play(Write(l,run_time=0.2))
+                
+		myTemplate = TexTemplate()
+		myTemplate.add_to_preamble(r"\usepackage[english]{babel}\usepackage{amsmath}\usepackage{amssymb}\usepackage{tikz}\usepackage{verbatim}\usepackage{nicematrix}\usepackage{fancyvrb}\usepackage[hyphens]{url}\usepackage{xcolor}\usepackage{color}\usepackage{colortbl}\usepackage{xspace} % fix missing spaces after fancy commands e.g. \dagster\usepackage{makecell}\usepackage{fancyvrb}\usepackage{tikz}\usepackage{tikzscale}\usepackage{pgfplots}\usepackage{graphicx}\usepackage{todonotes}\usepackage{wrapfig}\usepackage{tikz}\usepackage{amsmath}\usepackage{subcaption}\usepackage[misc]{ifsym}\usepackage{nicematrix}")
 		tex = Tex('''\\begin{figure}[]
 \\centering
 A=\\begin{equation*}\\begin{pNiceMatrix}[margin]
@@ -212,12 +216,13 @@ A=\\begin{equation*}\\begin{pNiceMatrix}[margin]
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0  \\\\
 1 & 0 & 0 & 1 & 0 & 0 & 1 & 0 & 0  \\\\
 \\end{pNiceMatrix}\\end{equation*}
-\\end{figure}''', font_size=20).set_x(1.5).set_y(+1.3)
+\\end{figure}''', tex_template=myTemplate, font_size=20).set_x(1.5).set_y(+1.3)
 		self.add(tex)
 		self.play(Write(tex))
+                
 		heading1 = Tex("What graphs has maximal $\det(A)$?", font_size=Font_latex1).set_y(-1.5)
 		heading2 = Tex("Similar to Hadamard's maximal determinant problem", font_size=Font_latex1).next_to(heading1,DOWN)
-		heading3 = Tex("Unanswered problem: \\url{https://mathoverflow.net/questions/386168/which-graphs-on-n-vertices-have-the-largest-determinant}", font_size=Font_latex1).next_to(heading2,DOWN)
+		heading3 = Tex("Unanswered problem: \\url{https://mathoverflow.net/questions/386168/which-graphs-on-n-vertices-have-the-largest-determinant}", tex_template=myTemplate, font_size=Font_latex1).next_to(heading2,DOWN)
 		self.add(heading1)
 		self.play(FadeIn(heading1))
 		self.add(heading2)
@@ -235,7 +240,7 @@ A=\\begin{equation*}\\begin{pNiceMatrix}[margin]
 		heading3 = Text("Solve for weaker condition, of locally maximal determinant", font_size=Font_text)
 		heading4 = Text(" to any 0-1 swap in A, consider, matrix determinant lemma:", font_size=Font_text)
 		group1 = VGroup(heading1,heading2,heading3,heading4).arrange(DOWN, center=False, aligned_edge=LEFT)
-		tex = Tex("$ \det(A+uv^T)=(1+v^TA^{-1}u)\det(A) $", font_size=Font_latex1).next_to(group1,DOWN)
+		tex = Tex("$ \det(A+uv^T)=(1+v^TA^{-1}u)\det(A) $", tex_template=myTemplate, font_size=Font_latex1).next_to(group1,DOWN)
 		self.add(group1)
 		self.play(FadeIn(group1))	
 		self.add(tex)
@@ -246,10 +251,10 @@ A=\\begin{equation*}\\begin{pNiceMatrix}[margin]
 		
 		#6m38s
 		
-		tex = Tex("$\\text{Matrix Determinant Lemma:}~~~\det(A+uv^T)=(1+v^TA^{-1}u)\det(A) $", font_size=Font_latex1).set_y(1)
-		tex2 = Tex("$\\text{Consider:}~~u=[0,0,1,0]^T=e_i~~~v=[0,1,0,0]^T=e_j$", font_size=Font_latex1).next_to(tex,DOWN)
-		tex3 = Tex('''\\begin{equation*}\\text{Then:}~~~uv^T=e_{i,j}~~~\\text{and:}~~v^TA^{-1}u=A^{-1}_{i,j}\\end{equation*}''', font_size=Font_latex1).next_to(tex2,DOWN)
-		tex4 = Tex("$\\text{Thus:}~~~ \det(A\pm e_{i,j})=(1\pm A^{-1}_{i,j})\det(A) $", font_size=Font_latex1).next_to(tex3,DOWN)
+		tex = Tex("$\\text{Matrix Determinant Lemma:}~~~\det(A+uv^T)=(1+v^TA^{-1}u)\det(A) $", tex_template=myTemplate, font_size=Font_latex1).set_y(1)
+		tex2 = Tex("$\\text{Consider:}~~u=[0,0,1,0]^T=e_i~~~v=[0,1,0,0]^T=e_j$", tex_template=myTemplate, font_size=Font_latex1).next_to(tex,DOWN)
+		tex3 = Tex('''\\begin{equation*}\\text{Then:}~~~uv^T=e_{i,j}~~~\\text{and:}~~v^TA^{-1}u=A^{-1}_{i,j}\\end{equation*}''', tex_template=myTemplate, font_size=Font_latex1).next_to(tex2,DOWN)
+		tex4 = Tex("$\\text{Thus:}~~~ \det(A\pm e_{i,j})=(1\pm A^{-1}_{i,j})\det(A) $", tex_template=myTemplate, font_size=Font_latex1).next_to(tex3,DOWN)
 		framebox1 = SurroundingRectangle(tex4,buff=0.1)
 		#group1 = VGroup(tex,tex2,tex3).arrange(DOWN, center=False, aligned_edge=LEFT)
 		#self.add(group1)
@@ -407,7 +412,9 @@ A=\\begin{equation*}\\begin{pNiceMatrix}[margin]
 		
 		#9m02s
 		
-		
+
+		myTemplate = TexTemplate()
+		myTemplate.add_to_preamble(r"\usepackage[english]{babel}\usepackage{amsmath}\usepackage{amssymb}\usepackage{tikz}\usepackage{verbatim}\usepackage{nicematrix}\usepackage{fancyvrb}\usepackage[hyphens]{url}\usepackage{xcolor}\usepackage{color}\usepackage{colortbl}\usepackage{xspace} % fix missing spaces after fancy commands e.g. \dagster\usepackage{makecell}\usepackage{fancyvrb}\usepackage{tikz}\usepackage{tikzscale}\usepackage{pgfplots}\usepackage{graphicx}\usepackage{todonotes}\usepackage{wrapfig}\usepackage{tikz}\usepackage{amsmath}\usepackage{subcaption}\usepackage[misc]{ifsym}\usepackage{nicematrix}")		
 		tex = Tex('''
 \\begin{minipage}{0.5\\textwidth}
 \centering
@@ -422,7 +429,7 @@ CLAUSES:
 REPORTING:
 1-25
 \\end{Verbatim}
-\\end{minipage}''', font_size=28)
+\\end{minipage}''', tex_template=myTemplate, font_size=28)
 		self.add(tex)
 		self.play(FadeIn(tex))		
 		self.wait(32)
@@ -439,7 +446,7 @@ REPORTING:
 		subtext2 = Text("- Costas Array Counting", font_size=Font_text)
 		subtext3 = Text("- Bounded Model Checking", font_size=Font_text)
 		group1 = VGroup(subtext0, subtext1, subtext2, subtext3).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(heading2,DOWN)
-		heading1 = Tex("Source Code: \\url{https://github.com/ANU-HPC/dagster}", font_size=Font_latex1).next_to(group1,DOWN)
+		heading1 = Tex("Source Code: \\url{https://github.com/ANU-HPC/dagster}", tex_template=myTemplate, font_size=Font_latex1).next_to(group1,DOWN)
 		
 		self.add(heading2)
 		self.play(FadeIn(heading2))		
