@@ -59,12 +59,18 @@ def view_dag_out(map_file, dag_out):
 
 	lines = dag_out.readlines()
 	dag_out.close()
-	solutions = [l.strip().split(" ") for l in lines]
-	solutions = [[map_file[int(ss)] for ss in s if int(ss)>0] for s in solutions]
+	
+	lines = [l.strip().split(" ") for l in lines]
+	solutions = []
+	for s in lines:
+		sol = [map_file[int(ss)] for ss in s if int(ss)>0 and int(ss) in map_file.keys()]
+		if sol not in solutions:
+			solutions.append(sol)
+	solutions = sorted(solutions)
 
 	for i,sol in enumerate(solutions):
 		print("")
-		print(lines[i])
+		#print(lines[i])
 		for y in range(N):
 			for x in range(N):
 				if "m_{}_{}".format(x,y) in sol:
