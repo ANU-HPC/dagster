@@ -8,10 +8,7 @@ ifeq (${CRAY_PLATFORM_NAME}, $(findstring ${CRAY_PLATFORM_NAME}, ${UNAME}))
         INCLUDES                = -I/sw/UNCLASSIFIED/glog-master/include -I/sw/UNCLASSIFIED/cudd-release/include \
                                   -I/sw/UNCLASSIFIED/zlib-1.2.11/include
         LDFLAGS                 = -L/sw/UNCLASSIFIED/glog-master/lib -L/sw/UNCLASSIFIED/cudd-release/lib \
-                                  -L/sw/UNCLASSIFIED/zlib-1.2.11/lib -lglog -lstdc++fs -lcudd -lz
-	#For some reason main.cpp is attempted to be compiled with CXX and no includes rather than the
-	#MPICXX line below, can't quite work out where make is coming up with this change
-	CXX			= CC $(INCLUDES) 
+                                  -L/sw/UNCLASSIFIED/zlib-1.2.11/lib -lglog -lstdc++fs -lcudd -lz 
 else
 	#Default variables
 	MPICXX                  = mpic++
@@ -34,6 +31,9 @@ dagster: $(OBJS) gnovelty/*.cc gnovelty/*.hh strengthener/*.cc strengthener/*.h 
 
 %.o: %.cpp %.h
 	$(MPICXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
+
+%.o: %.cpp
+	$(MPICXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
 	$(MAKE) -C strengthener clean
