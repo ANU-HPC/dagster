@@ -259,7 +259,7 @@ int main(int argc, char** argv){
   }
 
   //Recover what was still a Ramsey coloring
-  //for(auto x : local_skips){skips.erase(x);}
+  for(auto x : local_skips){skips.erase(x);}
 
 
   cerr<<"Colors :"<<cgraph.colors.size()<<endl;
