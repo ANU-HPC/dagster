@@ -36,11 +36,12 @@ void Problem::build_all_triangles(){
 	if (x == z && x == y){
 	  cerr<<"MONOCHROMATIC TRIANGLE :: "<<triangle<<endl;
 	  monochromatic_triangles.insert(triangle);
+	  if (T==0)triangles.insert(triangle);
 	} else{
-	  nonmonochromatic_triangles.insert(triangle);
-	  cerr<<"NONMONOCHROMATIC TRIANGLE :: "<<triangle<<endl;
+	  if (T==1)nonmonochromatic_triangles.insert(triangle);
+	  if (T==1)cerr<<"NONMONOCHROMATIC TRIANGLE :: "<<triangle<<endl;
 	}
-	triangles.insert(triangle);
+	if (T==1)triangles.insert(triangle);
       }
     }
   }

@@ -145,6 +145,7 @@ public:
   int levNa_begin, levNa_end, levNb_begin,levNb_end;
   int levNc_end;
   int Z = 4; // the number of edges in the second node
+  int T = 1; // Do we include the condition that "all triangles appear at all vertices" (1), or not (0)?
 };
 
 #endif

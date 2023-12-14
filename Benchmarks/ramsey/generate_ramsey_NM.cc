@@ -62,7 +62,7 @@ If not, see <http://www.gnu.org/licenses/>.
 Problem problem;
 
 int main(int argc, char** argv){
-  static char usage[] = "usage: -N [1..9]+[0..9]* (e.g. 5) (i.e. num vertices in clique) -M [1..9]+[0..9]* (e.g. 2) (i.e. num colours) -Z [0,N-2] (i.e. the number of edges in the 2nd node)\n";	
+  static char usage[] = "usage: -N [1..9]+[0..9]* (e.g. 5) (i.e. num vertices in clique) -M [1..9]+[0..9]* (e.g. 2) (i.e. num colours) -T [1|0] (i.e., do we include just no-monotonic condition [0] or all conditions for Ramsey coloring [1]) -Z [0,N-2] (i.e. the number of edges in the 2nd node)\n";	
   if ( argc < 4 ){
     cerr<<usage<<endl;
     exit(-1);
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
   extern char *optarg;
 
   char c;
-  while((c = getopt(argc, argv, "N:M:Z:")) != -1){
+  while((c = getopt(argc, argv, "N:M:T:Z:")) != -1){
     switch(c){
     case 'N':
       PARSE_ARGUMENT(problem.N,"-N:dimension")
@@ -85,6 +85,9 @@ int main(int argc, char** argv){
     case 'Z':
       PARSE_ARGUMENT(problem.Z,"-Z:edges")
       assert( problem.Z >= 0);
+      break;
+    case 'T':
+      PARSE_ARGUMENT(problem.T,"-T:tours")
       break;
     default:
       cerr<<usage<<endl;
