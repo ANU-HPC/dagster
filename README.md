@@ -1,6 +1,19 @@
+
 # Dagster - a Distributed Hybrid SAT Solver
 
-Dagster is a C++ implementation of a parallel decision procedure to solve Boolean SAT(isfiability) problems.
+Dagster is a C++ implementation of a parallel decision procedure to solve Boolean SAT(isfiability) and #SAT problems.
+
+[![Dagster Tutorials](https://img.youtube.com/vi/U2a-MZq7JB4/hqdefault.jpg)](https://www.youtube.com/@markburgess3860)
+
+## Papers
+
+ - Mark Alexander Burgess, Charles Gretton, Josh Milthorpe, Luke Croak, Thomas Willingham, Alwen Tiu:
+[Dagster: Parallel Structured Search.](https://doi.org/10.1609/aaai.v37i13.27060) AAAI 2023: 16404-16406
+
+ - Mark Alexander Burgess, Charles Gretton, Josh Milthorpe, Luke Croak, Thomas Willingham, Alwen Tiu:
+[Dagster: Parallel Structured Search with Case Studies.](https://doi.org/10.1007/978-3-031-20862-1\_6) PRICAI (1) 2022: 75-89
+
+## The Tool
 
 Dagster reads a SAT problem represented as a DIMACS CNF file and a decomposition of it into distinct subproblems with separate subsets of clauses for each part. The solutions to one subproblem serve as constraints for the next subproblem, constraining the order of execution. Once there is a chain of solutions for all subproblems, the original problem is solved.
 
