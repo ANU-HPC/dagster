@@ -28,12 +28,20 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "RangeSet.h"
 using namespace std;
 
+
+#define XOR_CLAUSE_FLAG INT_MIN
+#define IS_XOR_CLAUSE(i) (clauses[i][0] == XOR_CLAUSE_FLAG)
+#define XOR_CLAUSE_LEN(i) (cl[i] - 1)        // actual literal count
+#define XOR_CLAUSE_LITS(i) (&clauses[i][1])  // pointer to first real literal
+
+
 class Cnf {
 public:
-  int vc;	// var count
-  int cc;	// clause count
+  int vc;	        // var count
+  int cc;	        // clause count
   int **clauses;	// 2-dim. array with entries same as in cnf file
-  int *cl;	// clause length
+  int *cl;	        // clause length
+  
   bool dereferenced;
 
   Cnf();
