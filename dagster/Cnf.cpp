@@ -57,7 +57,7 @@ If not, see <http://www.gnu.org/licenses/>.
 //   p q 0
 //   -p -q 0
 // **************************************************************************************************************
-Cnf* Cnf::compile_xor_to_cnf() {
+Cnf* Cnf::compile_xor_to_cnf(bool odd_parity) {
   // XOR clause indicies
   vector<int> xor_indices;
   for (int i = 0; i < cc; i++)
@@ -130,14 +130,24 @@ Cnf* Cnf::compile_xor_to_cnf() {
 
         prev = a;  // chain: next step uses this aux as input
       } else {
-        // final step: prev XOR q = 1, encoded as 2 clauses
-        int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 3))
-        c1[0]=  prev; c1[1]=  q; c1[2]= 0;
-        new_clauses.push_back(c1);
+	if (odd_parity){
+	  // final step: prev XOR q = 1, encoded as 2 clauses
+	  int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 3))
+	  c1[0]=  prev; c1[1]=  q; c1[2]= 0;
+	  new_clauses.push_back(c1);
 
-        int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 3))
-        c2[0]= -prev; c2[1]= -q; c2[2]= 0;
-        new_clauses.push_back(c2);
+	  int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 3))
+          c2[0]= -prev; c2[1]= -q; c2[2]= 0;
+	  new_clauses.push_back(c2);
+	} else {
+	  int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 3))
+	  c1[0]=  prev; c1[1]= -q; c1[2]= 0;
+	  new_clauses.push_back(c1);
+	  
+	  int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 3))
+	  c2[0]= -prev; c2[1]=  q; c2[2]= 0;
+	  new_clauses.push_back(c2);
+	}
       }
     }
 
@@ -1221,7 +1231,7 @@ void Cnf::populate_from_clauses() {
     for (j = j_start; clauses[i][j] != 0; j++)
       if (abs(clauses[i][j]) > vc)
         vc = abs(clauses[i][j]);
-    cl[i] = j + (IS_XOR_CLAUSE(i) ? 1 : 0);
+    cl[i] = j;// + (IS_XOR_CLAUSE(i) ? 1 : 0);
   }
 }
 

@@ -424,8 +424,8 @@ SatSolver::SatSolver(
     string &heuristic_rotation_scheme,
     int phase)
   : CnfManager(cnf->compile_xor_to_cnf()) {
-this->phase = phase;
-this->decisions = 0;
+  this->phase = phase;
+  this->decisions = 0;
   this->communicator_sls = communicator_sls;
   this->communicator_strengthener = communicator_strengthener;
   this->decision_interval = decision_interval;
@@ -516,6 +516,10 @@ this->decisions = 0;
     MPI_Win_allocate(0, sizeof(int), MPI_INFO_NULL, *communicator_sls, &dummy, &window);
   
   sls_solution_request = NULL;
+
+
+  cnf->print();
+  //exit(-9);
 }
 
 
