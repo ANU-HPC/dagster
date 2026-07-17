@@ -35,6 +35,135 @@ If not, see <http://www.gnu.org/licenses/>.
 
 
 
+// compile all XOR constraints in-place to equivalent CNF clauses using Tseitin encoding with auxiliary variables
+// **************************************************************************************************************
+// Tseitin encoding in our context for XOR( x1  x2 ... xn ) is
+//
+// Introducing auxiliary variables a1...a(n-2) at vc+1..vc+n-2
+//
+// a1 = x1 XOR x2
+// a2 = a1 XOR x3
+// ...
+// a(n-2) = a(n-3) XOR x(n-1)
+// a(n-2) XOR xn = 1
+//
+// Each "a = p XOR q" is encoded as 4 clauses:
+//   p   q -a 0  -- TTF
+//   p  -q  a 0  -- TFT
+//  -p   q  a 0  -- FTT
+//  -p  -q -a 0  -- FFF
+//
+// The final step "p XOR q = 1" (no auxiliary) is 2 clauses:
+//   p q 0
+//   -p -q 0
+// **************************************************************************************************************
+void Cnf::compile_xor_to_cnf() {
+  // XOR clause indicies
+  vector<int> xor_indices;
+  for (int i = 0; i < cc; i++)
+    if (IS_XOR_CLAUSE(i))
+      xor_indices.push_back(i);
+  
+  if (xor_indices.empty()) // is pure CNF
+    return;
+
+  // Compile each XOR constraint to CNF
+  for (int xi = 0; xi < (int)xor_indices.size(); xi++) {
+    int i = xor_indices[xi];
+    int* lits = XOR_CLAUSE_LITS(i);   // pointer to real literals
+    int  len  = XOR_CLAUSE_LEN(i);    // number of real literals
+
+    if (len == 0)
+      continue; // Nothing to do. Trivially SAT empty XOR clause. We could in due course change the code to throw an exception in this case. 
+
+    if (len == 1) { // We are not expecting unit XOR clauses, but just in case...
+      free(clauses[i]);
+      TEST_NOT_NULL(clauses[i] = (int*)calloc(sizeof(int), 2))
+      clauses[i][0] = lits[0];
+      clauses[i][1] = 0;
+      cl[i] = 1;
+      continue; // done rewriting unit XOR as unit CNF clause
+    }
+
+    int num_aux = len - 2;  // number of auxiliary variables needed
+    int aux_start = vc + 1; // first auxiliary variable index
+    vc += num_aux;          // expand variable count
+
+    // free_occurence buffers since vc changed
+    free_occurence_and_neighborhood_buffers();
+
+    // build the CNF clauses for this XOR
+    // we will replace clauses[i] with the first new clause
+    // and add the rest via add_clause
+
+    // chain: prev = lits[0], then pair with lits[1..n-2] via aux vars,
+    // then pair final aux with lits[n-1]
+    int prev = lits[0];
+
+    // we accumulate all new clauses here first
+    vector<int*> new_clauses;
+
+    for (int k = 1; k < len; k++) {
+      int q = lits[k];
+      bool is_last = (k == len - 1);
+
+      if (!is_last) {
+        // introduce auxiliary variable a = prev XOR q
+        int a = aux_start + (k - 1);
+
+        // 4 clauses for a = prev XOR q
+        int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 4))
+        c1[0]=  prev; c1[1]=  q; c1[2]= -a; c1[3]= 0;
+        new_clauses.push_back(c1);
+
+        int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 4))
+        c2[0]=  prev; c2[1]= -q; c2[2]=  a; c2[3]= 0;
+        new_clauses.push_back(c2);
+
+        int* c3; TEST_NOT_NULL(c3 = (int*)calloc(sizeof(int), 4))
+        c3[0]= -prev; c3[1]=  q; c3[2]=  a; c3[3]= 0;
+        new_clauses.push_back(c3);
+
+        int* c4; TEST_NOT_NULL(c4 = (int*)calloc(sizeof(int), 4))
+        c4[0]= -prev; c4[1]= -q; c4[2]= -a; c4[3]= 0;
+        new_clauses.push_back(c4);
+
+        prev = a;  // chain: next step uses this aux as input
+      } else {
+        // final step: prev XOR q = 1, encoded as 2 clauses
+        int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 3))
+        c1[0]=  prev; c1[1]=  q; c1[2]= 0;
+        new_clauses.push_back(c1);
+
+        int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 3))
+        c2[0]= -prev; c2[1]= -q; c2[2]= 0;
+        new_clauses.push_back(c2);
+      }
+    }
+
+
+    free(clauses[i]);
+    clauses[i] = new_clauses[0];
+    // determine length
+    int t_len = 0; while(new_clauses[0][t_len]) t_len++;
+    cl[i] = t_len; // usually 3, but could be 2. 
+    
+    // add remaining clauses
+    for (int k = 1; k < (int)new_clauses.size(); k++) {
+      // inline append to avoid add_clause overhead
+      cc++; // clause count
+      TEST_NOT_NULL(clauses = (int**)realloc(clauses, sizeof(int*)*(cc+1)))
+      TEST_NOT_NULL(cl      = (int*)realloc(cl,sizeof(int)*(cc+1)))
+      clauses[cc-1] = new_clauses[k];
+      // determine length
+      t_len = 0; while(new_clauses[k][t_len]) t_len++;
+      cl[cc-1] = t_len;
+      clauses[cc] = NULL;
+      cl[cc] = 0;
+    }
+  }
+}
+
 //-----------------------------------------------
 //
 //         Constructors / Destructors
@@ -1085,11 +1214,11 @@ void Cnf::populate_from_clauses() {
   TEST_NOT_NULL(cl = (int*)calloc(sizeof(int),cc+1))
   vc = 0;
   for (int i=0; clauses[i]!=NULL; i++) {
-    int j=0;
-    for (j = IS_XOR_CLAUSE(i) ? 1 : 0; clauses[i][j] != 0; j++)
+    int j_start = IS_XOR_CLAUSE(i) ? 1 : 0;
+    for (j = j_start; clauses[i][j] != 0; j++)
       if (abs(clauses[i][j]) > vc)
         vc = abs(clauses[i][j]);
-    cl[i] = j;
+    cl[i] = j + (IS_XOR_CLAUSE(i) ? 1 : 0);
   }
 }
 
