@@ -423,7 +423,7 @@ SatSolver::SatSolver(
     bool short_stopping,
     string &heuristic_rotation_scheme,
     int phase)
-    : CnfManager(cnf) {
+  : CnfManager(cnf->compile_xor_to_cnf()) {
 this->phase = phase;
 this->decisions = 0;
   this->communicator_sls = communicator_sls;

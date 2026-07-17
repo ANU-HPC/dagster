@@ -57,7 +57,7 @@ If not, see <http://www.gnu.org/licenses/>.
 //   p q 0
 //   -p -q 0
 // **************************************************************************************************************
-void Cnf::compile_xor_to_cnf() {
+Cnf* Cnf::compile_xor_to_cnf() {
   // XOR clause indicies
   vector<int> xor_indices;
   for (int i = 0; i < cc; i++)
@@ -65,7 +65,7 @@ void Cnf::compile_xor_to_cnf() {
       xor_indices.push_back(i);
   
   if (xor_indices.empty()) // is pure CNF
-    return;
+    return this;
 
   // Compile each XOR constraint to CNF
   for (int xi = 0; xi < (int)xor_indices.size(); xi++) {
@@ -162,6 +162,8 @@ void Cnf::compile_xor_to_cnf() {
       cl[cc] = 0;
     }
   }
+
+  return this;
 }
 
 //-----------------------------------------------
@@ -1215,6 +1217,7 @@ void Cnf::populate_from_clauses() {
   vc = 0;
   for (int i=0; clauses[i]!=NULL; i++) {
     int j_start = IS_XOR_CLAUSE(i) ? 1 : 0;
+    int j;
     for (j = j_start; clauses[i][j] != 0; j++)
       if (abs(clauses[i][j]) > vc)
         vc = abs(clauses[i][j]);

@@ -44,8 +44,8 @@ public:
   
   bool dereferenced;
 
-  // compile XOR flagged constraints into CNF clause sets given that we now support parsing and storage of XOR clauses. 
-  void compile_xor_to_cnf();
+  // In place, compile XOR flagged constraints into CNF clause sets given that we now support parsing and storage of XOR clauses. 
+  Cnf* compile_xor_to_cnf();
   
   Cnf();
   Cnf(const char *fname);
