@@ -139,6 +139,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       for (i=0; i<organiser->num_workers; i++)
         if (!(organiser->workers[i].polled)) break;
       if (i==organiser->num_workers) break;
+      break;
     }
 
     organiser->allocate_assignments(); // call the organisers function to arrange messages to workers

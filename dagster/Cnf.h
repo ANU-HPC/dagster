@@ -44,8 +44,18 @@ public:
   
   bool dereferenced;
 
-  // In place, compile XOR flagged constraints into CNF clause sets given that we now support parsing and storage of XOR clauses. 
+  // True iff some clause is still a native XOR/PB constraint. XOR clauses can only enter this CNF
+  // at construction, add_clause() or join(), and can only leave via compile_xor_to_cnf(), so this
+  // is maintained at those points rather than rescanned. Lets callers decide whether grounding
+  // (and the neighborhood work it would invalidate) is needed at all, without invoking the grounder.
+  bool has_xor;
+
+  // In place, compile XOR flagged constraints into CNF clause sets given that we now support parsing and storage of XOR clauses.
   Cnf* compile_xor_to_cnf(bool odd_parity = true /*Normal semantics*/);
+
+  // The vc this CNF would have after compile_xor_to_cnf(), computed without building anything.
+  // Lets a caller size buffers to the grounded variable space while keeping the XORs native.
+  int grounded_vc() const;
   
   Cnf();
   Cnf(const char *fname);

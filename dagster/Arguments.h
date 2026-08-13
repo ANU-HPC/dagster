@@ -81,6 +81,28 @@ struct Arguments {
   // providing heuristic information.
   int novelty_number;
 
+  // Backend for helper processes in modes 1 and 2.
+  // Supported values: "sls" (default) and "cls".
+  std::string helper_backend;
+
+  // Python executable used by the CLS helper bridge.
+  std::string cls_python_executable;
+
+  // Python script path used by the CLS helper bridge.
+  std::string cls_python_script;
+
+  // Optional shell command run before launching Python, for example:
+  // "source /path/to/venv/bin/activate"
+  std::string cls_python_activate;
+
+  // GPU list exposed to CLS processes through CUDA_VISIBLE_DEVICES.
+  // Value "all" keeps all visible GPUs.
+  std::string cls_visible_gpus;
+
+  // Number of GPUs to expose per CLS helper process.
+  // 0 means expose all from cls_visible_gpus.
+  int cls_gpus_per_helper;
+
   // If this number is one then the master will use BDDmaster
   // otherwise use SettableMaster
   int master_sub_mode;

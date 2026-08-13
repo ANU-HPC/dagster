@@ -109,10 +109,29 @@ int gnovelty_main(MPI_Comm *communicator, int suggestionSize, const string &advi
     phase = buffer[fname_length - 1];
 
     Message *m = new Message(buffer);
-    cnf_holder->get_Cnf(m->to)->compute_variable_neighborhoods(); // compute variable neighborhoods on the root CNF
-    if (m->additional_clauses!=NULL)
-      m->additional_clauses->compute_variable_neighborhoods__DEPRECATED_2(); // and compute variable neighborhoods on the additional clauses, such that compile_cnf_from_message joins the neighborhood info
+
+    // The local search has no native XOR handling (unlike the CLS/afsat helper, which keeps XOR
+    // native and applies RREF), so any XOR constraints must be ground to CNF before the search
+    // runs. This happens on the per-message copy only, never the shared holder CNF, and it keeps
+    // the helper's variable space (including Tseitin auxiliaries) identical to the CDCL worker
+    // that grounds the same message, so the PREFIX literals line up.
+    const bool needs_grounding = cnf_holder->get_Cnf(m->to)->has_xor
+                              || ((m->additional_clauses != NULL) && m->additional_clauses->has_xor);
+
+    // Precomputing neighborhoods here lets compile_Cnf_from_Message join the neighborhood info
+    // incrementally rather than rebuilding it. That is only worth doing when nothing is about to
+    // be ground away -- grounding introduces auxiliary variables and discards these buffers, so
+    // for a hybrid message the work (and the copy of it) would be thrown away untouched.
+    if (!needs_grounding) {
+      cnf_holder->get_Cnf(m->to)->compute_variable_neighborhoods(); // compute variable neighborhoods on the root CNF
+      if (m->additional_clauses!=NULL)
+        m->additional_clauses->compute_variable_neighborhoods__DEPRECATED_2(); // and compute variable neighborhoods on the additional clauses, such that compile_cnf_from_message joins the neighborhood info
+    }
     Cnf *cnf = cnf_holder->compile_Cnf_from_Message(m);
+
+    if (needs_grounding)
+      cnf->compile_xor_to_cnf();
+    cnf->compute_variable_neighborhoods(); // early-returns when the buffers were joined above
 
     Gnovelty *gnovelty;
     if (dynamic_local_search)

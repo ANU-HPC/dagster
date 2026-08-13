@@ -518,7 +518,7 @@ SatSolver::SatSolver(
   sls_solution_request = NULL;
 
 
-  cnf->print();
+  // cnf->print();
   //exit(-9);
 }
 

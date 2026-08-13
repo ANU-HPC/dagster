@@ -41,6 +41,12 @@ Arguments::Arguments() { // all the default arguments
   dag_filename = NULL;
   cnf_filename = NULL;
   advise_scheme = "";
+  helper_backend = "sls";
+  cls_python_executable = "python3";
+  cls_python_script = "";
+  cls_python_activate = "";
+  cls_visible_gpus = "all";
+  cls_gpus_per_helper = 0;
   heuristic_rotation_scheme = "";
   BDD_compilation_scheme = "";
   mode=0;
@@ -69,6 +75,16 @@ Arguments::Arguments() { // all the default arguments
 
 static char doc[] = "Uses MPI to spawn SAT solvers working on different parts of a problem\nneed to specify a CNF file and associated DAG structure\nsee documenation for specifications.";
 static char args_doc[] = "DAG_FILE CNF_FILE";
+
+enum {
+  OPT_HELPER_BACKEND = 300,
+  OPT_CLS_PYTHON_EXECUTABLE,
+  OPT_CLS_PYTHON_SCRIPT,
+  OPT_CLS_PYTHON_ACTIVATE,
+  OPT_CLS_VISIBLE_GPUS,
+  OPT_CLS_GPUS_PER_HELPER
+};
+
 static struct argp_option options[] = { 
   { "SLS_HEURISTIC", 'a', "SLS_HEURISTIC", 0, "the type of heuristic guidance being provided by gNovelty+ to a CDCL solver"},
   { "breadth first search", 'b', "breadth_first_search", 0, "whether dagster should allocate messages in the dag depth first (recommended)"},
@@ -83,6 +99,12 @@ static struct argp_option options[] = {
   { "number of gnovelties per solver", 'k', "novelty_number", 0, "number of gnovelties per sat solver (only in gnovelty mode)"},
   { "gnovelty solution checking time", 'l', "gnovelty_solution_checking_time", 0, "the number decsions that the CDCL will make before checking for a solution from gnovelties"},
   { "MODE", 'm', "MODE", 0, "The mode of dagster operation, defult is no gnovelty, specified is with gnovelty"},
+  { "helper_backend", OPT_HELPER_BACKEND, "BACKEND", 0, "helper backend in modes 1 and 2: sls (default) or cls"},
+  { "cls_python_executable", OPT_CLS_PYTHON_EXECUTABLE, "PYTHON", 0, "python executable for cls backend"},
+  { "cls_python_script", OPT_CLS_PYTHON_SCRIPT, "SCRIPT", 0, "python script for cls backend"},
+  { "cls_python_activate", OPT_CLS_PYTHON_ACTIVATE, "COMMAND", 0, "shell command run before launching cls python"},
+  { "cls_visible_gpus", OPT_CLS_VISIBLE_GPUS, "GPU_LIST", 0, "CUDA_VISIBLE_DEVICES for cls backend, use 'all' to keep all visible GPUs"},
+  { "cls_gpus_per_helper", OPT_CLS_GPUS_PER_HELPER, "COUNT", 0, "number of GPUs to expose per cls helper process, 0 means all"},
   
   { "OUTPUT_FILE", 'o', "OUTPUT_FILE", 0, "the filename to be outputted to"},
   { "tinisat restarting", 'p', "tinisat_restarting", 0, "a flag that is set if tinisat is to do restarts in its decision process."},
@@ -158,6 +180,24 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
   case 'm':
     PARSE_ARGUMENT(arguments->mode,"-m::mode");
     break;
+  case OPT_HELPER_BACKEND:
+    PARSE_ARGUMENT(arguments->helper_backend, "--helper_backend");
+    break;
+  case OPT_CLS_PYTHON_EXECUTABLE:
+    PARSE_ARGUMENT(arguments->cls_python_executable, "--cls_python_executable");
+    break;
+  case OPT_CLS_PYTHON_SCRIPT:
+    PARSE_ARGUMENT(arguments->cls_python_script, "--cls_python_script");
+    break;
+  case OPT_CLS_PYTHON_ACTIVATE:
+    PARSE_ARGUMENT(arguments->cls_python_activate, "--cls_python_activate");
+    break;
+  case OPT_CLS_VISIBLE_GPUS:
+    PARSE_ARGUMENT(arguments->cls_visible_gpus, "--cls_visible_gpus");
+    break;
+  case OPT_CLS_GPUS_PER_HELPER:
+    PARSE_ARGUMENT(arguments->cls_gpus_per_helper, "--cls_gpus_per_helper");
+    break;
   case 'o':
     arguments->output_filename = arg;
     break;
@@ -198,6 +238,18 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
     if ( arguments->dag_filename == NULL || arguments->cnf_filename == NULL ) {
       LOG(ERROR) << "need to provide a DAG and CNF file";
       argp_usage( state );
+    }
+    if ((arguments->helper_backend != "sls") && (arguments->helper_backend != "cls")) {
+      LOG(ERROR) << "invalid helper_backend: " << arguments->helper_backend << " (expected sls or cls)";
+      argp_usage(state);
+    }
+    if ((arguments->helper_backend == "cls") && (arguments->cls_python_script == "")) {
+      LOG(ERROR) << "cls backend requires --cls_python_script";
+      argp_usage(state);
+    }
+    if (arguments->cls_gpus_per_helper < 0) {
+      LOG(ERROR) << "cls_gpus_per_helper must be >= 0";
+      argp_usage(state);
     }
     break;
   default:

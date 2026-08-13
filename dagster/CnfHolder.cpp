@@ -180,8 +180,16 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
   // for each line
   while((c=getc(ifp)) != EOF){
     if (isspace(c)) continue; else ungetc(c,ifp);
-    // search for the first non-whitespace character
-    if ((c=='-') || isdigit(c)) {
+    // search for the first non-whitespace character; 'x'-prefixed lines are
+    // native XOR clauses (mirroring Cnf::load_DIMACS_Cnf). They must be
+    // preserved into the split files and still counted as clauses so that
+    // per-node clause indices stay aligned with the in-memory decomposition.
+    bool is_xor_line = false;
+    if (c == 'x') {
+      getc(ifp); // consume the 'x' marker
+      is_xor_line = true;
+    }
+    if ((c=='-') || isdigit(c) || is_xor_line) {
       int literal_input;
       int j=-1;
       int vc = 0;
@@ -208,7 +216,9 @@ int CnfHolder::split_CNF(char* cnf_filename, vector<RangeSet> &indices) {
         // if not past the end of the respective indicies and for range pair [a,b] that clause_index >= a
         if ((node_index_pairs[i] != indices[i].buffer.end()) &&
             (clause_index >= (*(node_index_pairs[i])).first)) {
-          // print the clause
+          // print the clause, preserving the XOR marker for hybrid files
+          if (is_xor_line)
+            fprintf(file_pointers[i], "x ");
           for (int* literal = literals; *literal; literal++)
             fprintf(file_pointers[i], "%i ",*literal);
           fprintf(file_pointers[i], "0\n");
