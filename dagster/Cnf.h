@@ -28,35 +28,14 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "RangeSet.h"
 using namespace std;
 
-
-#define XOR_CLAUSE_FLAG INT_MIN
-#define IS_XOR_CLAUSE(i) (clauses[i][0] == XOR_CLAUSE_FLAG)
-#define XOR_CLAUSE_LEN(i) (cl[i] - 1)        // actual literal count
-#define XOR_CLAUSE_LITS(i) (&clauses[i][1])  // pointer to first real literal
-
-
 class Cnf {
 public:
-  int vc;	        // var count
-  int cc;	        // clause count
+  int vc;	// var count
+  int cc;	// clause count
   int **clauses;	// 2-dim. array with entries same as in cnf file
-  int *cl;	        // clause length
-  
+  int *cl;	// clause length
   bool dereferenced;
 
-  // True iff some clause is still a native XOR/PB constraint. XOR clauses can only enter this CNF
-  // at construction, add_clause() or join(), and can only leave via compile_xor_to_cnf(), so this
-  // is maintained at those points rather than rescanned. Lets callers decide whether grounding
-  // (and the neighborhood work it would invalidate) is needed at all, without invoking the grounder.
-  bool has_xor;
-
-  // In place, compile XOR flagged constraints into CNF clause sets given that we now support parsing and storage of XOR clauses.
-  Cnf* compile_xor_to_cnf(bool odd_parity = true /*Normal semantics*/);
-
-  // The vc this CNF would have after compile_xor_to_cnf(), computed without building anything.
-  // Lets a caller size buffers to the grounded variable space while keeping the XORs native.
-  int grounded_vc() const;
-  
   Cnf();
   Cnf(const char *fname);
   Cnf(const char *fname, const vector<int> &indices);

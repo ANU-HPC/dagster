@@ -20,7 +20,6 @@ Public License along with Dagster.
 If not, see <http://www.gnu.org/licenses/>.
 *************************/
 
-#include "wallclock.h"
 #include <iostream>
 #include <mpi.h>
 #include <stack>
@@ -83,14 +82,14 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
   }
   bool terminate_trigger = false;
   
-  clock_t t = wall_clock();
-  clock_t t2 = wall_clock();
+  clock_t t = clock();
+  clock_t t2 = clock();
   int checkpointing_index = 0;
   while (true) {
     // checkpointing timing logic
     if (checkpointing!=0) {
-      if (wall_clock()-t2 > checkpointing*CLOCKS_PER_SEC) {
-        t2 = wall_clock();
+      if (clock()-t2 > checkpointing*CLOCKS_PER_SEC) {
+        t2 = clock();
         std::stringstream ss;
         ss << command_line_arguments.checkpoint_file_prefix<<"_"<<checkpointing_index<<".check";
         VLOG(1) << "MASTER: dumping checkpoint file: "<<ss.str().c_str();
@@ -101,8 +100,8 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       }
     }
     // timing and assignment message every 1 seconds
-    if (wall_clock()-t > 1*CLOCKS_PER_SEC) {
-      t = wall_clock();
+    if (clock()-t > 1*CLOCKS_PER_SEC) {
+      t = clock();
       stats->print_stats();
       std::stringstream ss;
       ss << std::fixed << std::setprecision(2) << "MASTER: message buffer -- ";
@@ -111,7 +110,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
         if (organiser->workers[i].assigned==NULL) {
           ss << "###" << "," << "###" << " ";
         } else {
-          ss << organiser->workers[i].assigned->to << "," << (wall_clock() - organiser->workers[i].assigned->time_start)*1.0/CLOCKS_PER_SEC << " ";
+          ss << organiser->workers[i].assigned->to << "," << (clock() - organiser->workers[i].assigned->time_start)*1.0/CLOCKS_PER_SEC << " ";
         }
       }
       VLOG(3) << ss.str();
@@ -125,7 +124,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
           delete mess;
           continue;
         }
-        mess->time_start = wall_clock();
+        mess->time_start = clock();
         organiser->add_message(mess);
       } else
         break;
@@ -140,7 +139,6 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       for (i=0; i<organiser->num_workers; i++)
         if (!(organiser->workers[i].polled)) break;
       if (i==organiser->num_workers) break;
-      break;
     }
 
     organiser->allocate_assignments(); // call the organisers function to arrange messages to workers
@@ -182,7 +180,7 @@ vector<Message*> Master::loop(const char* checkpoint_file) {
       // everybody is done with the message
       if (organiser->workers[source_worker-1].assigned != NULL) {
         stats->register_finish(source_worker-1);
-        VLOG(4) << "MASTER: timing message for node " << organiser->workers[source_worker-1].assigned->to << " took " << (wall_clock() - organiser->workers[source_worker-1].assigned->time_start)*1.0/CLOCKS_PER_SEC;
+        VLOG(4) << "MASTER: timing message for node " << organiser->workers[source_worker-1].assigned->to << " took " << (clock() - organiser->workers[source_worker-1].assigned->time_start)*1.0/CLOCKS_PER_SEC;
         delete organiser->workers[source_worker-1].assigned;
         organiser->remove_message(organiser->workers[source_worker-1].assigned);
       }

@@ -67,11 +67,10 @@ If not, see <http://www.gnu.org/licenses/>.
 #define GNOVELTY_MAIN_HH
 
 #include <mpi.h>
-#include <string>
 
 int gnovelty_main(MPI_Comm* communicator,
 	int _suggestionSize,
-	const std::string& advise_scheme,
+	const string& advise_scheme,
 	int dynamic_local_search = 0);
 
 #endif
