@@ -163,6 +163,22 @@ The command-line invocation of Dagster has a number of options, the most importa
  - `-m 3` : solving units consist of a CDCL process, and a separate CDCL procedure for clause minimization.
  - `-m 4` : solving units consist of a single process running a CDCL SAT solving procedure - specifically the MiniSAT procedure.
 
+Helper backend selection for modes 1 and 2:
+
+ - `--helper_backend sls` keeps the existing gNovelty+ helper backend (default).
+ - `--helper_backend cls` runs the CLS helper bridge, where each helper MPI rank launches one Python process.
+
+CLS helper bridge options:
+
+ - `--cls_python_script <path>` path to the Python script to execute (required when `--helper_backend cls`).
+ - `--cls_python_executable <path-or-name>` python executable to use (default: `python3`).
+ - `--cls_python_activate <command>` optional shell command run before launching Python, for example `source /path/to/venv/bin/activate`.
+ - `--cls_visible_gpus <list-or-all>` compatible GPU list for CLS helper binding. `all` (default) uses inherited `CUDA_VISIBLE_DEVICES` if set, otherwise auto-detects GPU indices via `nvidia-smi`.
+ - `--cls_gpus_per_helper <n>` number of GPUs to expose per helper. If `0`, helpers are auto-assigned `J//M` GPUs each where `J` is compatible GPU count and `M` is CLS helper count.
+ - If compatible GPU count is less than CLS helper count, Dagster exits early with a clear GPU binding error.
+
+A minimal protocol-compatible script is included at `dagster/gnovelty/afsat_bridge_stub.py`.
+
 An example invocation with these options is:
 
 ```

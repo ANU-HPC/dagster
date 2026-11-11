@@ -45,7 +45,7 @@ using namespace std;
 
 #include "Cnf.h"
 #include "Dag.h"
-#include "arguments.h"
+#include "Arguments.h"
 #include "gnovelty/gnovelty_main.hh"
 #include "Master.h"
 #include "Worker.h"

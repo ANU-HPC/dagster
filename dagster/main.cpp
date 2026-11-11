@@ -36,6 +36,7 @@ using namespace std;
 #include "Cnf.h"
 #include "Dag.h"
 #include "Arguments.h"
+#include "gnovelty/afsat_main.hh"
 #include "gnovelty/gnovelty_main.hh"
 #include "Master.h"
 #include "Worker.h"
@@ -56,11 +57,16 @@ int world_size; // absolute MPI global world size
 Arguments command_line_arguments; // holder for parsed command line arguments
 CnfHolder* cnf_holder; // the cnf_holder object for retrieving CNF components for a dag
 
+static inline bool using_cls_backend() {
+  return command_line_arguments.helper_backend == "cls";
+}
+
 
 // for a given message, output it to the results file
 void process_solution(Dag* dag, Message* m) {
   FILE *fout;
   TEST_NOT_NULL(fout = fopen(command_line_arguments.output_filename, "a"))
+  fprintf(stdout, "s SATISFIABLE\n");
   for (int i = 0; i < m->assignments.size(); i++)
     if (dag->reporting.find( abs(m->assignments[i])) )    // only print the variable if it is in reporting
       fprintf(fout, "%i ", m->assignments[i]);
@@ -138,8 +144,20 @@ vector<Message*> mode_1_execute(WrappedSolutionsInterface *master_implementation
     } else {
       // we are a gNovelty helper process
       MPI_Comm_split(MPI_COMM_WORLD, MPI_UNDEFINED, 0, &mastercommunicator);
-      // dump the process into gnovelty_main with the appropriate subcommunicator, and hope everything works >_<
-      gnovelty_main(&subcommunicator, command_line_arguments.suggestion_size, command_line_arguments.advise_scheme, command_line_arguments.dynamic_local_search);
+      if (using_cls_backend()) {
+
+        afsat_main(
+            &subcommunicator,
+            command_line_arguments.suggestion_size,
+            command_line_arguments.cls_python_executable,
+            command_line_arguments.cls_python_script,
+            command_line_arguments.cls_python_activate,
+            command_line_arguments.cls_visible_gpus,
+            command_line_arguments.cls_gpus_per_helper);
+      } else {
+        // dump the process into gnovelty_main with the appropriate subcommunicator, and hope everything works >_<
+        gnovelty_main(&subcommunicator, command_line_arguments.suggestion_size, command_line_arguments.advise_scheme, command_line_arguments.dynamic_local_search);
+      }
     }
   }
   return solutions;
@@ -199,12 +217,25 @@ vector<Message*> mode_2_execute(WrappedSolutionsInterface *master_implementation
       delete worker;
     } else if (bin_modulo == 1) { // we are a strengthener instance
       strengthener_surrogate_main(&subcommunicator_strengthener, cnf_holder);
-    } else if (command_line_arguments.novelty_number > 0) { // we are a gnovelty instance
+    } else if (command_line_arguments.novelty_number > 0) { // we are a helper instance
       int subcommunicator_sls_world_rank;
       MPI_Comm_rank(subcommunicator_sls, &subcommunicator_sls_world_rank);
-      // dump the process into gnovelty_main with the appropriate subcommunicator_sls, and hope everything works >_<
-      gnovelty_main(&subcommunicator_sls, command_line_arguments.suggestion_size, command_line_arguments.advise_scheme, command_line_arguments.dynamic_local_search);
+      if (using_cls_backend()) {
+        fprintf(stdout, "using CLS");
+        afsat_main(
+            &subcommunicator_sls,
+            command_line_arguments.suggestion_size,
+            command_line_arguments.cls_python_executable,
+            command_line_arguments.cls_python_script,
+            command_line_arguments.cls_python_activate,
+            command_line_arguments.cls_visible_gpus,
+            command_line_arguments.cls_gpus_per_helper);
+      } else {
+        // dump the process into gnovelty_main with the appropriate subcommunicator_sls, and hope everything works >_<
+        gnovelty_main(&subcommunicator_sls, command_line_arguments.suggestion_size, command_line_arguments.advise_scheme, command_line_arguments.dynamic_local_search);
+      }
     } else {
+      fprintf(stdout, "using SLS");
       VLOG(2) << "process " << world_rank << " is left over and will not contribute to SAT solving" << std::endl;
     }
   }
@@ -291,6 +322,17 @@ int main(int argc, char **argv) {
   MPI_Init(NULL, NULL);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  // CLS helpers consume hybrid (native-XOR) problem files materialised per DAG
+  // node. Producing those files requires -h (cnf_directory); when the cls
+  // backend is selected without an explicit -h, default it to /tmp/dagster.
+  // NOTE: this path must be reachable by every rank that reads node CNFs; on a
+  // multi-node run point -h at shared storage instead.
+  if (using_cls_backend() && command_line_arguments.cnf_directory == NULL) {
+    static char default_cls_cnf_dir[] = "/tmp/dagster";
+    command_line_arguments.cnf_directory = default_cls_cnf_dir;
+    LOG(INFO) << "cls backend: defaulting -h cnf_directory to " << default_cls_cnf_dir;
+  }
 
   // load the dag, and do all required CNF splitting
   Dag* dag = new Dag(command_line_arguments.dag_filename);

@@ -35,6 +35,176 @@ If not, see <http://www.gnu.org/licenses/>.
 
 
 
+// compile all XOR constraints in-place to equivalent CNF clauses using Tseitin encoding with auxiliary variables
+// **************************************************************************************************************
+// Tseitin encoding in our context for XOR( x1  x2 ... xn ) is
+//
+// Introducing auxiliary variables a1...a(n-2) at vc+1..vc+n-2
+//
+// a1 = x1 XOR x2
+// a2 = a1 XOR x3
+// ...
+// a(n-2) = a(n-3) XOR x(n-1)
+// a(n-2) XOR xn = 1
+//
+// Each "a = p XOR q" is encoded as 4 clauses:
+//   p   q -a 0  -- TTF
+//   p  -q  a 0  -- TFT
+//  -p   q  a 0  -- FTT
+//  -p  -q -a 0  -- FFF
+//
+// The final step "p XOR q = 1" (no auxiliary) is 2 clauses:
+//   p q 0
+//   -p -q 0
+// **************************************************************************************************************
+Cnf* Cnf::compile_xor_to_cnf(bool odd_parity) {
+  // XOR clause indicies
+  vector<int> xor_indices;
+  for (int i = 0; i < cc; i++)
+    if (IS_XOR_CLAUSE(i))
+      xor_indices.push_back(i);
+  
+  if (xor_indices.empty()) { // is pure CNF
+    has_xor = false;
+    return this;
+  }
+
+  // The clause set and (via Tseitin auxiliaries) the variable count are both about to change,
+  // so any occurence/neighborhood information is invalidated. Drop it up front, while it is
+  // still consistent with the current vc; callers wanting it must recompute after grounding.
+  free_occurence_and_neighborhood_buffers();
+
+  // Compile each XOR constraint to CNF
+  for (int xi = 0; xi < (int)xor_indices.size(); xi++) {
+    int i = xor_indices[xi];
+    int* lits = XOR_CLAUSE_LITS(i);   // pointer to real literals
+    int  len  = XOR_CLAUSE_LEN(i);    // number of real literals
+
+    if (len == 0) {
+      // An empty XOR constraint should not be reachable from any well formed input. Rewrite it as
+      // an empty CNF clause rather than leaving an XOR flagged clause behind in a formula we are
+      // about to declare pure CNF -- a stray XOR_CLAUSE_FLAG would be read downstream as a literal.
+      // Note the empty clause is false, which is the correct odd-parity reading of an empty XOR.
+      free(clauses[i]);
+      TEST_NOT_NULL(clauses[i] = (int*)calloc(sizeof(int), 1))
+      clauses[i][0] = 0;
+      cl[i] = 0;
+      continue;
+    }
+
+    if (len == 1) { // We are not expecting unit XOR clauses, but just in case...
+      free(clauses[i]);
+      TEST_NOT_NULL(clauses[i] = (int*)calloc(sizeof(int), 2))
+      clauses[i][0] = lits[0];
+      clauses[i][1] = 0;
+      cl[i] = 1;
+      continue; // done rewriting unit XOR as unit CNF clause
+    }
+
+    int num_aux = len - 2;  // number of auxiliary variables needed
+    int aux_start = vc + 1; // first auxiliary variable index
+    vc += num_aux;          // expand variable count
+
+    // build the CNF clauses for this XOR
+    // we will replace clauses[i] with the first new clause
+    // and add the rest via add_clause
+
+    // chain: prev = lits[0], then pair with lits[1..n-2] via aux vars,
+    // then pair final aux with lits[n-1]
+    int prev = lits[0];
+
+    // we accumulate all new clauses here first
+    vector<int*> new_clauses;
+
+    for (int k = 1; k < len; k++) {
+      int q = lits[k];
+      bool is_last = (k == len - 1);
+
+      if (!is_last) {
+        // introduce auxiliary variable a = prev XOR q
+        int a = aux_start + (k - 1);
+
+        // 4 clauses for a = prev XOR q
+        int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 4))
+        c1[0]=  prev; c1[1]=  q; c1[2]= -a; c1[3]= 0;
+        new_clauses.push_back(c1);
+
+        int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 4))
+        c2[0]=  prev; c2[1]= -q; c2[2]=  a; c2[3]= 0;
+        new_clauses.push_back(c2);
+
+        int* c3; TEST_NOT_NULL(c3 = (int*)calloc(sizeof(int), 4))
+        c3[0]= -prev; c3[1]=  q; c3[2]=  a; c3[3]= 0;
+        new_clauses.push_back(c3);
+
+        int* c4; TEST_NOT_NULL(c4 = (int*)calloc(sizeof(int), 4))
+        c4[0]= -prev; c4[1]= -q; c4[2]= -a; c4[3]= 0;
+        new_clauses.push_back(c4);
+
+        prev = a;  // chain: next step uses this aux as input
+      } else {
+	if (odd_parity){
+	  // final step: prev XOR q = 1, encoded as 2 clauses
+	  int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 3))
+	  c1[0]=  prev; c1[1]=  q; c1[2]= 0;
+	  new_clauses.push_back(c1);
+
+	  int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 3))
+          c2[0]= -prev; c2[1]= -q; c2[2]= 0;
+	  new_clauses.push_back(c2);
+	} else {
+	  int* c1; TEST_NOT_NULL(c1 = (int*)calloc(sizeof(int), 3))
+	  c1[0]=  prev; c1[1]= -q; c1[2]= 0;
+	  new_clauses.push_back(c1);
+	  
+	  int* c2; TEST_NOT_NULL(c2 = (int*)calloc(sizeof(int), 3))
+	  c2[0]= -prev; c2[1]=  q; c2[2]= 0;
+	  new_clauses.push_back(c2);
+	}
+      }
+    }
+
+
+    free(clauses[i]);
+    clauses[i] = new_clauses[0];
+    // determine length
+    int t_len = 0; while(new_clauses[0][t_len]) t_len++;
+    cl[i] = t_len; // usually 3, but could be 2. 
+    
+    // add remaining clauses
+    for (int k = 1; k < (int)new_clauses.size(); k++) {
+      // inline append to avoid add_clause overhead
+      cc++; // clause count
+      TEST_NOT_NULL(clauses = (int**)realloc(clauses, sizeof(int*)*(cc+1)))
+      TEST_NOT_NULL(cl      = (int*)realloc(cl,sizeof(int)*(cc+1)))
+      clauses[cc-1] = new_clauses[k];
+      // determine length
+      t_len = 0; while(new_clauses[k][t_len]) t_len++;
+      cl[cc-1] = t_len;
+      clauses[cc] = NULL;
+      cl[cc] = 0;
+    }
+  }
+
+  has_xor = false; // every XOR clause has now been rewritten as CNF
+  return this;
+}
+
+
+// The vc this CNF would have after compile_xor_to_cnf(), without building the grounded copy.
+// Mirrors the Tseitin chain below: a constraint over len literals introduces len-2 auxiliaries,
+// and constraints of len <= 2 introduce none.
+int Cnf::grounded_vc() const {
+  int v = vc;
+  for (int i = 0; i < cc; i++)
+    if (IS_XOR_CLAUSE(i)) {
+      int len = XOR_CLAUSE_LEN(i);
+      if (len > 2)
+        v += len - 2;
+    }
+  return v;
+}
+
 //-----------------------------------------------
 //
 //         Constructors / Destructors
@@ -44,8 +214,9 @@ If not, see <http://www.gnu.org/licenses/>.
 Cnf::Cnf() {
   cc = 0;
   vc = 0;
+  has_xor = false;
   TEST_NOT_NULL(clauses = (int**)calloc(sizeof(int*),1))
-  TEST_NOT_NULL(cl = (int*)calloc(sizeof(int*),1))
+  TEST_NOT_NULL(cl = (int*)calloc(sizeof(int),1))
   occurence = NULL;
   numOccurence = NULL;
   neighbourVar = NULL;
@@ -123,6 +294,7 @@ Cnf::Cnf(const char *fname, RangeSet &indices) {
 Cnf::Cnf(Cnf* cnf) {
   vc = cnf->vc;
   cc = cnf->cc;
+  has_xor = cnf->has_xor; // exact: this constructor copies the whole clause set
   TEST_NOT_NULL(cl = (int*)calloc(sizeof(int),cc+1))
   for (int i=0; i<cc; i++)
     cl[i] = cnf->cl[i];
@@ -196,7 +368,8 @@ void Cnf::output_dimacs(const char *fname) {
   TEST_NOT_NULL(f = fopen(fname,"w"))
   fprintf(f, "p cnf %d %d\n", vc, cc);
   for (int i=0; i<cc; i++) {
-    for (int j=0; j<cl[i]; j++) {
+    if (IS_XOR_CLAUSE(i)) fprintf(f, "x ");
+    for (int j = IS_XOR_CLAUSE(i) ? 1 : 0; j < cl[i]; j++) {
       fprintf(f,"%i ",clauses[i][j]);
     }
     fprintf(f,"0\n");
@@ -208,7 +381,8 @@ void Cnf::output_dimacs(const char *fname) {
 void Cnf::output_dimacs(FILE* f) {
   fprintf(f, "p cnf %d %d\n", vc, cc);
   for (int i=0; i<cc; i++) {
-    for (int j=0; j<cl[i]; j++) {
+    if (IS_XOR_CLAUSE(i)) fprintf(f, "x ");
+    for (int j = IS_XOR_CLAUSE(i) ? 1 : 0; j < cl[i]; j++) {
       fprintf(f,"%i ",clauses[i][j]);
     }
     fprintf(f,"0\n");
@@ -219,7 +393,8 @@ void Cnf::output_dimacs(FILE* f) {
 void Cnf::print() {
   printf("p cnf %d %d\n", vc, cc);
   for (int i=0; i<cc; i++) {
-    for (int j=0; j<cl[i]; j++) {
+    if (IS_XOR_CLAUSE(i)) printf("x ");
+    for (int j = IS_XOR_CLAUSE(i) ? 1 : 0; j<cl[i]; j++) {
       printf("%i ",clauses[i][j]);
     }
     printf("0\n");
@@ -310,6 +485,7 @@ void Cnf::load_DIMACS_Cnf(const char* fname) {
 void Cnf::load_DIMACS_Cnf(FILE* ifp) {
   cc = 0;
   vc = 0;
+  has_xor = false; // set below for each XOR line actually retained by this load
   int max_clause_len = 1024, max_clause_count = 1024, *literals;
   TEST_NOT_NULL(literals = (int *) malloc(max_clause_len * sizeof(int)))
 
@@ -343,11 +519,26 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
   // for each line
   while((c=getc(ifp)) != EOF){
     if (isspace(c)) continue; else ungetc(c,ifp);
+    
     // search for the first non-whitespace character
-    if ((c=='-') || isdigit(c)) {
+    bool is_xor_line = false;
+    if ( 'x' == c ) {
+      getc(ifp); // consume
+      is_xor_line = true;
+    }
+
+    if ( (c=='-') || isdigit(c) || is_xor_line ) {
       int literal_input_count;
       int literal_input;
       int j=-1;
+
+      
+      // false as XOR if needed
+      if (is_xor_line) {
+        j++;
+        literals[j] = XOR_CLAUSE_FLAG;
+      }
+      
       // scan the line into the literals buffer one character at a time, until the zero is scanned
       do {
         j++;
@@ -366,16 +557,20 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp) {
       TEST_NOT_NULL(clauses[cc] = (int *) calloc(j + 1, sizeof(int)))
       // load the new clause in checking for duplicate and contradicting literals
       for(int k = 0; k <= j; k++){
-        for(int x = 0; x < k; x++) {
-          if(literals[x] == literals[k])
-            throw ParsingException("duplicate literals in clause in CNF file \n");
-          else if (literals[x] + literals[k] == 0)
-            throw ParsingException("contradicting literals in clause in CNF file \n");
-        }
+	if (!is_xor_line || k > 0) { // skip flag literal for XOR
+	  for(int x = (is_xor_line ? 1 : 0); x < k; x++) {
+	    if(literals[x] == literals[k])
+	      throw ParsingException("duplicate literals in clause in CNF file \n");
+	    else if (literals[x] + literals[k] == 0)
+	      throw ParsingException("contradicting literals in clause in CNF file \n");
+	  }
+	}
         clauses[cc][k] = literals[k];
       }
       // set the clause length, increment the clause count, and expand buffers as nessisary
       cl[cc] = j;
+      if (is_xor_line)
+        has_xor = true; // only reached for clauses this load actually keeps, so subsets are exact
       cc++;
       if(cc+1 >= max_clause_count) {
         max_clause_count *= 2;
@@ -414,6 +609,7 @@ void Cnf::load_DIMACS_Cnf(const char* fname, const vector<int> &indices) {
 void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
   cc = 0;
   vc = 0;
+  has_xor = false; // set below for each XOR line actually retained by this load
   int max_clause_len = 1024, max_clause_count = 1024, *literals;
   TEST_NOT_NULL(literals = (int *) malloc(max_clause_len * sizeof(int)))
   char line[100000];
@@ -454,8 +650,17 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
     if (clause_index==header_cc) {
       break;
     }
+
+    
     // search for the first non-whitespace character
-    if ((c=='-') || isdigit(c)) {
+    bool is_xor_line = false;
+    if ( 'x' == c ) {
+      getc(ifp); // consume
+      is_xor_line = true;
+    }
+    
+    // search for the first non-whitespace character
+    if ((c=='-') || isdigit(c)  || is_xor_line ) {
       // if clause_index in indices then include it, else bypass
       bool in_list = false;
       if ((clause_index >= min_index) && (clause_index <= max_index)) {
@@ -472,6 +677,14 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
       int literal_input_count;
       int literal_input;
       int j=-1;
+
+      
+      // false as XOR if needed
+      if (is_xor_line) {
+        j++;
+        literals[j] = XOR_CLAUSE_FLAG;
+      }
+      
       // scan the line into the literals buffer one character at a time, until the zero is scanned
       do {
         j++;
@@ -490,16 +703,20 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, const vector<int> &indices) {
       TEST_NOT_NULL(clauses[cc] = (int *) calloc(j + 1, sizeof(int)))
       // load the new clause in checking for duplicate and contradicting literals
       for(int k = 0; k <= j; k++){
-        for(int x = 0; x < k; x++) {
-          if(literals[x] == literals[k])
-            throw ParsingException("duplicate literals in clause in CNF file \n");
-          else if (literals[x] + literals[k] == 0)
-            throw ParsingException("contradicting literals in clause in CNF file \n");
-        }
+	if (!is_xor_line || k > 0) { // skip flag literal for XOR
+	  for(int x = (is_xor_line ? 1 : 0); x < k; x++) {
+	    if(literals[x] == literals[k])
+	      throw ParsingException("duplicate literals in clause in CNF file \n");
+	    else if (literals[x] + literals[k] == 0)
+	      throw ParsingException("contradicting literals in clause in CNF file \n");
+	  }
+	}
         clauses[cc][k] = literals[k];
       }
       // set the clause length, increment the clause count, and expand buffers as nessisary
       cl[cc] = j;
+      if (is_xor_line)
+        has_xor = true; // only reached for clauses this load actually keeps, so subsets are exact
       cc++;
       if(cc+1 >= max_clause_count) {
         max_clause_count *= 2;
@@ -536,6 +753,7 @@ void Cnf::load_DIMACS_Cnf(const char* fname, RangeSet &set_indices) {
 void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
   cc = 0;
   vc = 0;
+  has_xor = false; // set below for each XOR line actually retained by this load
   int max_clause_len = 1024, max_clause_count = 1024, *literals;
   TEST_NOT_NULL(literals = (int *) malloc(max_clause_len * sizeof(int)))
   char line[100000];
@@ -566,8 +784,18 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
       break;
     }
     if (isspace(c)) continue; else ungetc(c,ifp);
+
+
+    
     // search for the first non-whitespace character
-    if ((c=='-') || isdigit(c)) {
+    bool is_xor_line = false;
+    if ( 'x' == c ) {
+      getc(ifp); // consume
+      is_xor_line = true;
+    }
+    
+    // search for the first non-whitespace character
+    if ( (c=='-') || isdigit(c) || is_xor_line ) {
       // if clause_index in indices then include it, else bypass
       clause_index++;
       if (!(set_indices.find(clause_index))) {
@@ -578,6 +806,16 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
       int literal_input_count;
       int literal_input;
       int j=-1;
+
+
+      
+      
+      // false as XOR if needed
+      if (is_xor_line) {
+        j++;
+        literals[j] = XOR_CLAUSE_FLAG;
+      }
+      
       // scan the line into the literals buffer one character at a time, until the zero is scanned
       do {
         j++;
@@ -596,16 +834,20 @@ void Cnf::load_DIMACS_Cnf(FILE* ifp, RangeSet &set_indices) {
       TEST_NOT_NULL(clauses[cc] = (int *) calloc(j + 1, sizeof(int)))
       // load the new clause in checking for duplicate and contradicting literals
       for(int k = 0; k <= j; k++){
-        for(int x = 0; x < k; x++) {
-          if(literals[x] == literals[k])
-            throw ParsingException("duplicate literals in clause in CNF file \n");
-          else if (literals[x] + literals[k] == 0)
-            throw ParsingException("contradicting literals in clause in CNF file \n");
-        }
+	if (!is_xor_line || k > 0) { // skip flag literal for XOR
+	  for(int x = (is_xor_line ? 1 : 0); x < k; x++) {
+	    if(literals[x] == literals[k])
+	      throw ParsingException("duplicate literals in clause in CNF file \n");
+	    else if (literals[x] + literals[k] == 0)
+	      throw ParsingException("contradicting literals in clause in CNF file \n");
+	  }
+	}
         clauses[cc][k] = literals[k];
       }
       // set the clause length, increment the clause count, and expand buffers as nessisary
       cl[cc] = j;
+      if (is_xor_line)
+        has_xor = true; // only reached for clauses this load actually keeps, so subsets are exact
       cc++;
       if(cc+1 >= max_clause_count) {
         max_clause_count *= 2;
@@ -647,7 +889,7 @@ void Cnf::compute_occurance_buffers() {
   TEST_NOT_NULL(occurence = (int**)calloc(sizeof(int*),vc*2+1+1))
   // count the number of occurances of each literal
   for (int i=0; i < cc; i++)
-    for (int j=0; j < cl[i]; j++)
+    for (int j = IS_XOR_CLAUSE(i) ? 1 : 0; j < cl[i]; j++)
       numOccurence[clauses[i][j]+vc]++; // Increment the number of occurences of this literal in the input formula
   // allocate the occurence buffer, which stores clause indices which contain each literal
   for (int i = 0; i < vc*2+1; i++) {
@@ -657,7 +899,7 @@ void Cnf::compute_occurance_buffers() {
   }
   // load the data into the occurence buffer, recalculating numOccurence's.
   for (int i = 0; i < cc; i++)
-    for (int j = 0; j < cl[i]; j++) {
+    for (int j = IS_XOR_CLAUSE(i) ? 1 : 0; j < cl[i]; j++){
       int pos = clauses[i][j]+vc;
       occurence[pos][numOccurence[pos]] = i;
       numOccurence[pos]++;
@@ -685,7 +927,7 @@ void Cnf::compute_variable_neighborhoods() {
     auto clause_length = cl[clause_index];
     
     size_t index__temp__variables = 0;
-    for (auto literal_index = 0; literal_index < clause_length ; literal_index++){
+    for (auto literal_index = IS_XOR_CLAUSE(clause_index) ? 1 : 0; literal_index < clause_length; literal_index++){
       auto literal = clause[literal_index];
       auto variable = abs(literal);
       temp__variables[index__temp__variables++] = variable;
@@ -827,8 +1069,8 @@ void Cnf::add_unitary_clause(int unit) {
 
   int var = abs(unit);
   if (var>vc) {
-    vc = var;
     free_occurence_and_neighborhood_buffers();
+    vc = var;
   }
   clauses[cc-1][0] = unit;
   
@@ -848,6 +1090,8 @@ void Cnf::add_unitary_clause(int unit) {
 void Cnf::add_clause(int* clause) {
   if (clause == NULL)
     throw BadParameterException("CNF cannot add_clause with NULL");
+  if (clause[0] == XOR_CLAUSE_FLAG)
+    has_xor = true;
   // discover the size of the new clause
   int size;
   for (size=0; clause[size]!=0; size++);
@@ -864,8 +1108,8 @@ void Cnf::add_clause(int* clause) {
     int literal = clause[i];
     int var = abs(literal);
     if (var>vc) {
-      vc = var; // increase the variable count
       free_occurence_and_neighborhood_buffers();// trigger occurence/neighborhood buffer reset()
+      vc = var; // increase the variable count
     }
     clauses[cc-1][i] = literal;
   }
@@ -921,6 +1165,7 @@ void Cnf::add_clause(int* clause) {
 void Cnf::join(Cnf* c) {
   if (c == NULL)
     throw BadParameterException("CNF cannot join with NULL CNF");
+  has_xor = has_xor || c->has_xor; // a pure-CNF node can become hybrid by joining additional clauses
   int old_cc = cc;
   cc = cc + c->cc;
   TEST_NOT_NULL(clauses = (int**)realloc(clauses, sizeof(int*)*(cc + 1)))
@@ -932,11 +1177,11 @@ void Cnf::join(Cnf* c) {
     cl[old_cc+i] = c->cl[i];
     for (int j=0; j<c->cl[i]; j++) {
       int lit = c->clauses[i][j];
-      int var = abs(lit);
+      int var = (lit == XOR_CLAUSE_FLAG) ? 0 : abs(lit);
       clauses[old_cc+i][j] = lit;
       if (var>vc) {
-        vc = var;
         free_occurence_and_neighborhood_buffers();// trigger occurence/neighborhood buffer reset()
+        vc = var;
       }
     }
   }
@@ -1023,18 +1268,27 @@ void Cnf::populate_from_clauses() {
   cc = length;
   TEST_NOT_NULL(cl = (int*)calloc(sizeof(int),cc+1))
   vc = 0;
+  has_xor = false; // recomputed here rather than inherited, so clause subsets are exact
   for (int i=0; clauses[i]!=NULL; i++) {
-    int j=0;
-    for (j=0; clauses[i][j]!= 0; j++)
+    int j_start = IS_XOR_CLAUSE(i) ? 1 : 0;
+    if (j_start)
+      has_xor = true;
+    int j;
+    for (j = j_start; clauses[i][j] != 0; j++)
       if (abs(clauses[i][j]) > vc)
         vc = abs(clauses[i][j]);
-    cl[i] = j;
+    cl[i] = j;// + (IS_XOR_CLAUSE(i) ? 1 : 0);
   }
 }
 
 
 // delete neighbor and occurance buffer information (insofar as they exist)
 void Cnf::free_occurence_and_neighborhood_buffers() {
+  // NOTE: these buffers are sized against the vc that was current when they were
+  // allocated, and they are walked here with the current vc. Every caller that grows
+  // vc (add_unitary_clause, add_clause, join, compile_xor_to_cnf) must therefore call
+  // this BEFORE it changes vc -- freeing after the increase walks off the end of the
+  // arrays and free()s whatever memory happens to follow them.
   if (occurence != NULL) {
     for (int i=0; i<vc*2+1; i++)
       if (occurence[i] != NULL)
@@ -1054,9 +1308,4 @@ void Cnf::free_occurence_and_neighborhood_buffers() {
     neighbourVar = NULL;
   }
 }
-
-
-
-
-
 

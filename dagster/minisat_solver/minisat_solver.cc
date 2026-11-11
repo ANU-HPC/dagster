@@ -39,6 +39,12 @@ MinisatSolver::MinisatSolver(Cnf* cnf) {
 DB(printf("adding CNF to minisatsolver\n");
 cnf->print();)
 	this->cnf = new Cnf(cnf);
+	// Minisat (like tinisat) has no native XOR handling, so ground the private
+	// copy to pure CNF via Tseitin before loading it — otherwise the XOR flag
+	// (INT_MIN) would be read as a literal below. Grounding the copy leaves the
+	// shared holder CNF and its native PB fragments untouched.
+	this->cnf->compile_xor_to_cnf();
+	cnf = this->cnf; // load the grounded formula (grounded vc/clauses) below
 	this->mark2 = (bool*)calloc(sizeof(bool),cnf->vc+1);
 	this->solver_unit_contradiction = false;
 	this->unit_assignments.clear(true);
