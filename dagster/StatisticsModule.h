@@ -24,7 +24,6 @@ If not, see <http://www.gnu.org/licenses/>.
 #ifndef STATISTICS_MODULE_H_
 #define STATISTICS_MODULE_H_
 
-#include "wallclock.h"
 #include <time.h>
 #include <string>
 #include <iostream>
@@ -105,7 +104,7 @@ class StatisticsModule {
     //if (worker_status[worker_index] != 0) {
     //  VLOG(3) << "MASTER: inappropriate use of statisticsmodule, bad start_message";
     //}
-    clock_t t = wall_clock();
+    clock_t t = clock();
     worker_message_node[worker_index] = node;
     worker_start_time[worker_index] = t;
     worker_last_solution_time[worker_index] = t;
@@ -118,7 +117,7 @@ class StatisticsModule {
     if (worker_status[worker_index] != 1) {
       VLOG(3) << "MASTER: inappropriate use of statisticsmodule, bad register_solution";
     }
-    clock_t t = wall_clock();
+    clock_t t = clock();
     clock_t duration = t - worker_last_solution_time[worker_index];
     worker_last_solution_time[worker_index] = t;
     node_statistics[worker_message_node[worker_index]].add_solution_count(((double)duration)/CLOCKS_PER_SEC);
@@ -130,7 +129,7 @@ class StatisticsModule {
     if (worker_status[worker_index] != 1) {
       VLOG(3) << "MASTER: inappropriate use of statisticsmodule, bad register_finish";
     }
-    clock_t t = wall_clock();
+    clock_t t = clock();
     node_statistics[worker_message_node[worker_index]].add_message_count(((double)(t-worker_start_time[worker_index]))/CLOCKS_PER_SEC,
       ((double)(t-worker_last_solution_time[worker_index]))/CLOCKS_PER_SEC);
     worker_status[worker_index] = 0;
