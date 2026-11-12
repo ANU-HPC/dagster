@@ -484,7 +484,10 @@ SatSolver::SatSolver(
     mpi_buffer = NULL;
   }
   if (communicator_sls != NULL) {
-    sls_solution_buffer_size = cnf_holder->max_vc+2;
+    // A helper reports a full assignment of its own copy of this message's CNF. gnovelty grounds that copy's XOR
+    // clauses as this solver does (Tseitin auxiliaries), so a report can hold up to this solver's grounded variable
+    // count, which exceeds cnf_holder->max_vc on hybrid (XOR) instances: size for the larger of the two.
+    sls_solution_buffer_size = std::max(cnf_holder->max_vc, (int)vc) + 2;
     TEST_NOT_NULL(sls_solution_buffer = (int *)malloc(sls_solution_buffer_size * sizeof(int)))
   } else {
     sls_solution_buffer_size = 0;
@@ -574,7 +577,7 @@ int SatSolver::sls__get_solutions() {
     return 0;
   MPI_Status status;
   if (sls_solution_request==NULL) {
-    MPI_Irecv(sls_solution_buffer, cnf_holder->max_vc+2, MPI_INT, MPI_ANY_SOURCE, SLS_SOLUTION_TAG, *communicator_sls, &sls_solution_request);
+    MPI_Irecv(sls_solution_buffer, sls_solution_buffer_size, MPI_INT, MPI_ANY_SOURCE, SLS_SOLUTION_TAG, *communicator_sls, &sls_solution_request);
   }
   VLOG(4) << "checking for solutions from SLS";
   int incoming = 0;
@@ -619,7 +622,7 @@ int SatSolver::sls__get_solutions() {
         VLOG(3) << "received solution from SLS " << status.MPI_SOURCE << " is NOT novel ";
       }
     }
-    MPI_Irecv(sls_solution_buffer, cnf_holder->max_vc+2, MPI_INT, MPI_ANY_SOURCE, SLS_SOLUTION_TAG, *communicator_sls, &sls_solution_request);
+    MPI_Irecv(sls_solution_buffer, sls_solution_buffer_size, MPI_INT, MPI_ANY_SOURCE, SLS_SOLUTION_TAG, *communicator_sls, &sls_solution_request);
   }
   return false;
 }
