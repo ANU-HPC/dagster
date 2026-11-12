@@ -660,8 +660,12 @@ int afsat_main(
 
     if (node_paths.find(m->to) == node_paths.end())
     {
+      // Under $TMPDIR (else /tmp), and named by process id as well as rank: concurrent Dagster runs on one host
+      // have the same ranks and node ids.
+      const char *tmpdir = getenv("TMPDIR");
       ostringstream path;
-      path << "/tmp/dagster_afsat_rank_" << world_rank << "_node_" << m->to << ".cnf";
+      path << ((tmpdir && tmpdir[0] != '\0') ? tmpdir : "/tmp") << "/dagster_afsat_" << getpid() << "_rank_"
+           << world_rank << "_node_" << m->to << ".cnf";
       cnf_holder->get_Cnf(m->to)->output_dimacs(path.str().c_str());
       node_paths[m->to] = path.str();
       VLOG(4) << "afsat " << world_rank << " wrote node " << m->to << " CNF to " << path.str();
