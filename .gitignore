@@ -66,3 +66,22 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Local shell state and temporary source backups
+/.bash_history
+*.before-configurable-width
+
+# Native executables produced by the in-tree Makefiles
+/c_pro/c_pro
+/dagster/dagster
+
+# Generated dependency fragments not covered by *.d
+/dagster/minisat_solver/depend.mk
+/dagster/strengthener/depend.mk
+
+# Generated benchmark runs; curated evidence is tracked separately
+/Benchmarks/cpro_guarded_php_benchmark/results/
+
+# Python caches
+__pycache__/
+*.py[cod]

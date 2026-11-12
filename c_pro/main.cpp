@@ -32,6 +32,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
+#include <cerrno>
+#include <climits>
 #include <cstdlib>
 #include <utility>
 
@@ -190,8 +192,31 @@ void generate_dagster_input_files(const CNF& cnf, int N, const std::string& pref
   std::cout<<"Successfully generated "<<prefix<<".cnf, "<<prefix<<".dag and the trivial DAG _"<<prefix<<".dag\n";
 }
 
+int parse_positive_int(const char* text, const char* name) {
+  errno = 0;
+  char* end = nullptr;
+  const long value = std::strtol(text, &end, 10);
+  if (errno != 0 || end == text || *end != '\0' || value < 1 || value > INT_MAX) {
+    std::cerr<<"Invalid "<<name<<": "<<(text ? text : "(null)")
+             <<"; expected a positive integer.\n";
+    std::exit(EXIT_FAILURE);
+  }
+  return static_cast<int>(value);
+}
+
 int main(int argc, char** argv){
+  if (argc > 4) {
+    std::cerr<<"Usage: "<<argv[0]
+             <<" [input.cnf [split-width [output-prefix]]]\n";
+    return 1;
+  }
+
   const char* input_cnf_filename = (argc > 1) ? argv[1] : nullptr;
+  const int split_width = (argc > 2)
+    ? parse_positive_int(argv[2], "split width")
+    : 32;
+  const std::string output_prefix = (argc > 3) ? argv[3] : "x";
+
   FILE* file_pointer = input_cnf_filename ? std::fopen(input_cnf_filename, "rb") : stdin; // assume stdin if no input file given
   if (!file_pointer) { std::perror("Unable to open intput file."); return 1; }
   
@@ -224,7 +249,9 @@ int main(int argc, char** argv){
 
 
     // Print DAG and CNF files for Dagster
-    generate_dagster_input_files(cnf,32,"x");
+    std::cerr<<"Generating c_pro DAG with split width "<<split_width
+             <<" and output prefix '"<<output_prefix<<"'.\n";
+    generate_dagster_input_files(cnf, split_width, output_prefix);
     
   } catch (const std::exception& e) {
     if (input_cnf_filename) std::fclose(file_pointer);
