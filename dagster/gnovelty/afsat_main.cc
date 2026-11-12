@@ -22,6 +22,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 #include "afsat_main.hh"
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <cerrno>
@@ -37,6 +38,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <map>
 #include <vector>
 
 #include "../CnfHolder.h"
@@ -587,7 +589,9 @@ int afsat_main(
     const string &python_script,
     const string &python_activate,
     const string &visible_gpus,
-    int gpus_per_helper)
+    int gpus_per_helper,
+    int host_helper_index,
+    int host_helper_count)
 {
   int sub_rank = 0;
   int sub_size = 0;
@@ -597,23 +601,39 @@ int afsat_main(
   // Prevent termination on EPIPE when the helper stdin pipe closes unexpectedly.
   signal(SIGPIPE, SIG_IGN);
 
-  const int helper_rank = sub_rank - 1;
+  const int helper_rank = sub_rank - 1;   // within this CDCL group (passed to python for logging)
   const int helper_count = sub_size - 1;
 
+  // GPUs are bound by the helper's position among all helper ranks on this host, not within its CDCL group
+  // (which is 0 of 1 for every group with -k 1, so every helper would otherwise take every GPU).
   vector<string> compatible_gpus = get_compatible_gpu_list(visible_gpus);
   VLOG(4) << "afsat " << world_rank << " compatible GPU list: "
-          << (compatible_gpus.empty() ? string("<none>") : join_csv(compatible_gpus));
+          << (compatible_gpus.empty() ? string("<none>") : join_csv(compatible_gpus))
+          << "; host helper " << host_helper_index << " of " << host_helper_count;
   if (compatible_gpus.empty())
   {
     cerr << "AFSAT GPU binding error: no compatible GPUs detected for CLS helpers" << endl;
     MPI_Abort(*communicator, 1);
   }
-  if (static_cast<int>(compatible_gpus.size()) < helper_count)
-  {
-    cerr << "AFSAT GPU binding error: cannot bind " << helper_count
-         << " CLS helpers when only " << compatible_gpus.size() << " compatible GPUs are available" << endl;
-    MPI_Abort(*communicator, 1);
-  }
+  if (static_cast<int>(compatible_gpus.size()) < host_helper_count)
+    LOG(WARNING) << "AFSAT rank " << world_rank << ": " << host_helper_count << " CLS helpers on this host share "
+                 << compatible_gpus.size() << " GPUs";
+
+  // One live python worker for the whole run. A DAG node's clause set is fixed and messages only change its
+  // assignments, which the CDCL's trail (and so every PREFIX) already contains; so each node's clauses are written
+  // once, without the message units, and python is never relaunched for a new message. Per message the bridge
+  // sends, numbered by a message counter:
+  //   NODE <seq> <id> <cnf path>   only when the node differs from the worker's current one (a compiled session
+  //                                per node is kept on the python side)
+  //   MESSAGE <seq> <n> <lits>     the job's incoming assignments, always
+  // and the worker answers READY <seq> once it is serving that message. Only a READY carrying the current number
+  // enables prefix forwarding; output before it belongs to an earlier message and is discarded, so a burst of short
+  // jobs cannot deliver one job's advice to another.
+  PythonBridge bridge;
+  bool launched = false;
+  map<int, string> node_paths;
+  long long msg_seq = 0;
+  int live_node = -1;
 
   while (true)
   {
@@ -638,17 +658,16 @@ int afsat_main(
     Cnf *cnf = cnf_holder->compile_Cnf_from_Message(m);
     free(buffer);
 
-    string cnf_path;
+    if (node_paths.find(m->to) == node_paths.end())
     {
       ostringstream path;
-      path << "/tmp/dagster_afsat_rank_" << world_rank
-           << "_node_" << m->to
-           << "_phase_" << phase
-           << ".cnf";
-      cnf_path = path.str();
+      path << "/tmp/dagster_afsat_rank_" << world_rank << "_node_" << m->to << ".cnf";
+      cnf_holder->get_Cnf(m->to)->output_dimacs(path.str().c_str());
+      node_paths[m->to] = path.str();
+      VLOG(4) << "afsat " << world_rank << " wrote node " << m->to << " CNF to " << path.str();
     }
-    cnf->output_dimacs(cnf_path.c_str());
-    VLOG(4) << "afsat " << world_rank << " wrote effective CNF to " << cnf_path;
+    const string cnf_path = node_paths[m->to];
+    msg_seq++;
 
     // Suggestion window shared with the CDCL process via passive-target RMA.
     // NOTE: MPI_Win_allocate / MPI_Win_free are collective over *communicator
@@ -675,7 +694,8 @@ int afsat_main(
       suggestions[i] = 0;
     VLOG(4) << "afsat " << world_rank << " allocated and cleared suggestion window";
 
-    string cls_visible_gpus = select_visible_gpus(helper_rank, helper_count, compatible_gpus, gpus_per_helper);
+    string cls_visible_gpus = select_visible_gpus(host_helper_index, std::max(host_helper_count, 1),
+                                                  compatible_gpus, gpus_per_helper);
     VLOG(4) << "afsat " << world_rank << " selected CUDA_VISIBLE_DEVICES='"
             << (cls_visible_gpus.empty() ? string("<inherited/all>") : cls_visible_gpus) << "'";
     string python_command = build_python_command(
@@ -691,14 +711,28 @@ int afsat_main(
         cls_visible_gpus);
     VLOG(5) << "afsat " << world_rank << " launch command prepared: " << python_command;
 
-    PythonBridge bridge;
-    if (!bridge.launch(python_command))
+    if (launched && bridge.is_alive())
     {
-      VLOG(0) << "AFSAT rank " << world_rank << " failed to launch python bridge command";
-      cerr << "AFSAT bridge launch failed on rank " << world_rank << endl;
-      MPI_Abort(*communicator, 1);
+      if (m->to != live_node)
+      {
+        // Same live worker, another node: switch its session (a lookup once the node has been compiled).
+        bridge.send_line("NODE " + to_string(msg_seq) + " " + to_string(m->to) + " " + cnf_path);
+        live_node = m->to;
+        VLOG(4) << "afsat " << world_rank << " sent NODE " << m->to << " (message " << msg_seq << ")";
+      }
     }
-    VLOG(4) << "afsat " << world_rank << " python helper launched";
+    else
+    {
+      if (!bridge.launch(python_command))
+      {
+        VLOG(0) << "AFSAT rank " << world_rank << " failed to launch python bridge command";
+        cerr << "AFSAT bridge launch failed on rank " << world_rank << endl;
+        MPI_Abort(*communicator, 1);
+      }
+      launched = true;
+      live_node = m->to;
+      VLOG(4) << "afsat " << world_rank << " python helper launched";
+    }
     bool bridge_alive = true;
     int relaunch_count = 0;
 
@@ -712,6 +746,23 @@ int afsat_main(
     // anything (== original_vc when the node carries no XOR).
     const int original_vc = cnf->vc;
     const int grounded_vc = cnf->grounded_vc();
+
+    // The job's incoming assignments, which hold for its whole lifetime (the trail churns around them). The worker
+    // can condition on these alone (AFSAT_ADVICE_CONDITION=message); a source node's message is empty.
+    string message_str;
+    {
+      ostringstream message_line;
+      vector<int> kept;
+      for (int lit : m->assignments)
+        if (lit != 0 && abs(lit) <= original_vc)
+          kept.push_back(lit);
+      message_line << "MESSAGE " << msg_seq << " " << kept.size();
+      for (int lit : kept)
+        message_line << " " << lit;
+      message_str = message_line.str();
+      bridge.send_line(message_str);
+      VLOG(4) << "afsat " << world_rank << " sent MESSAGE with " << kept.size() << " literals for node " << m->to;
+    }
 
     // The prefix is a set of assignments the helper cannot change. The persistent
     // receive writes into `prefix`; `pending_prefix` retains the latest one so we
@@ -747,6 +798,8 @@ int afsat_main(
         return false;
       }
       python_ready = false;
+      live_node = m->to;             // the relaunched worker starts on this message's node
+      bridge.send_line(message_str); // and needs this job's message too (same number, so its READY counts)
       if (pending_prefix_length > 0)
         has_pending_prefix = true; // re-send last prefix once python reports READY
       return true;
@@ -768,9 +821,20 @@ int afsat_main(
           VLOG(5) << "afsat " << world_rank << " polled: " << line;
           if (line.rfind("READY", 0) == 0)
           {
-            python_ready = true;
-            VLOG(4) << "afsat " << world_rank << " python helper reported READY; prefix forwarding enabled";
+            long long seq = -1;
+            istringstream(line.substr(5)) >> seq;   // a bare READY (start-up) carries no number and never matches
+            if (seq == msg_seq)
+            {
+              python_ready = true;
+              VLOG(4) << "afsat " << world_rank << " python helper READY for message " << seq
+                      << "; prefix forwarding enabled";
+            }
             continue;
+          }
+          if (!python_ready && line.rfind("LOG", 0) != 0)
+          {
+            VLOG(5) << "afsat " << world_rank << " discarding output from before READY: " << line.substr(0, 40);
+            continue; // advice or a solution for the previous message
           }
           process_bridge_line(line, suggestions, suggestionSize, communicator, phase);
         }
@@ -862,17 +926,18 @@ int afsat_main(
     }
 
     shutdown_prefix_request(&prefixRequest);
-    bridge.stop();
-    VLOG(2) << "afsat " << world_rank << " python helper stopped and prefix listener closed";
+    VLOG(2) << "afsat " << world_rank << " prefix listener closed; python helper kept live for the next message";
 
     MPI_Win_free(&window);
-    unlink(cnf_path.c_str());
-    VLOG(2) << "afsat " << world_rank << " cleaned up suggestion window and temporary CNF file";
+    VLOG(2) << "afsat " << world_rank << " cleaned up suggestion window";
 
     delete cnf;
     delete m;
   }
 
+  bridge.stop();
+  for (const auto &np : node_paths)
+    unlink(np.second.c_str());
   VLOG(2) << "CLS helper loop terminated";
   return 0;
 }

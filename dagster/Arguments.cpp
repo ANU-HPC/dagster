@@ -42,6 +42,7 @@ Arguments::Arguments() { // all the default arguments
   cnf_filename = NULL;
   advise_scheme = "";
   helper_backend = "sls";
+  advice_mode = "decision";
   cls_python_executable = "python3";
   cls_python_script = "";
   cls_python_activate = "";
@@ -82,7 +83,8 @@ enum {
   OPT_CLS_PYTHON_SCRIPT,
   OPT_CLS_PYTHON_ACTIVATE,
   OPT_CLS_VISIBLE_GPUS,
-  OPT_CLS_GPUS_PER_HELPER
+  OPT_CLS_GPUS_PER_HELPER,
+  OPT_ADVICE_MODE
 };
 
 static struct argp_option options[] = { 
@@ -105,6 +107,7 @@ static struct argp_option options[] = {
   { "cls_python_activate", OPT_CLS_PYTHON_ACTIVATE, "COMMAND", 0, "shell command run before launching cls python"},
   { "cls_visible_gpus", OPT_CLS_VISIBLE_GPUS, "GPU_LIST", 0, "CUDA_VISIBLE_DEVICES for cls backend, use 'all' to keep all visible GPUs"},
   { "cls_gpus_per_helper", OPT_CLS_GPUS_PER_HELPER, "COUNT", 0, "number of GPUs to expose per cls helper process, 0 means all"},
+  { "advice_mode", OPT_ADVICE_MODE, "MODE", 0, "how the CDCL uses helper advice in modes 1 and 2: decision (default, as decision literals), phase (as saved phases) or phase_force (phases that also override activity-based polarity)"},
   
   { "OUTPUT_FILE", 'o', "OUTPUT_FILE", 0, "the filename to be outputted to"},
   { "tinisat restarting", 'p', "tinisat_restarting", 0, "a flag that is set if tinisat is to do restarts in its decision process."},
@@ -198,6 +201,9 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
   case OPT_CLS_GPUS_PER_HELPER:
     PARSE_ARGUMENT(arguments->cls_gpus_per_helper, "--cls_gpus_per_helper");
     break;
+  case OPT_ADVICE_MODE:
+    PARSE_ARGUMENT(arguments->advice_mode, "--advice_mode");
+    break;
   case 'o':
     arguments->output_filename = arg;
     break;
@@ -241,6 +247,11 @@ static error_t parse_option( int key, char *arg, struct argp_state *state )
     }
     if ((arguments->helper_backend != "sls") && (arguments->helper_backend != "cls")) {
       LOG(ERROR) << "invalid helper_backend: " << arguments->helper_backend << " (expected sls or cls)";
+      argp_usage(state);
+    }
+    if ((arguments->advice_mode != "decision") && (arguments->advice_mode != "phase") &&
+        (arguments->advice_mode != "phase_force")) {
+      LOG(ERROR) << "invalid advice_mode: " << arguments->advice_mode << " (expected decision, phase or phase_force)";
       argp_usage(state);
     }
     if ((arguments->helper_backend == "cls") && (arguments->cls_python_script == "")) {

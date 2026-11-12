@@ -46,6 +46,7 @@ extern CnfHolder* cnf_holder;
 
 #define HALFLIFE 128 // the halflife number of cycles of the variable scores used in VSIDS variable selection rule.
 #define _DT 32 // RSAT phase selection threshold
+#define ADVICE_PHASE_INTERVAL 256 // decisions between phase refreshes from the helpers' buffers (advice_mode phase / phase_force)
 
 
 // function used for sorting variables in order of their score 
@@ -63,19 +64,52 @@ int SatSolver::selectLiteral() {
   if (short_stopping)
     if (verifySolution()) // if CNF is already satisfied return 0
       return 0;
+  if (advice_mode != 0) { // phase advice: helpers still get prefixes, but never choose the decision variable
+    if (communicator_sls != NULL)
+      send_prefix_at_tier();
+    x = selectLiteral__conflict();
+    if (x != 0) {
+      stat_dec_conflict++;
+    } else {
+      x = selectLiteral__vsids();
+      if (x != 0) stat_dec_vsids++;
+    }
+    return x;
+  }
 //#ifndef GEOMETRIC_RESTARTING_SCHEME
 if (command_line_arguments.opportunity_modulo!=0) {
   if (heuristic_rotation == suggestion_first) // The first thing to try is to select a variable using an SLS process. if suggestion_first flag set
     x = get_suggestion();
 }
 //#endif
-  if (x == 0)
+  if (x != 0)
+    stat_dec_suggest++;
+  if (x == 0) {
     x = selectLiteral__conflict(); // choose a variable from a conflict clause
-  if ((x == 0) && (heuristic_rotation == cdcl_first))
+    if (x != 0) stat_dec_conflict++;
+  }
+  if ((x == 0) && (heuristic_rotation == cdcl_first)) {
     x = get_suggestion();
-  if (x == 0) // USE VSIDS
+    if (x != 0) stat_dec_suggest++;
+  }
+  if (x == 0) { // USE VSIDS
     x = selectLiteral__vsids();
+    if (x != 0) stat_dec_vsids++;
+  }
   return x;
+}
+
+// ADVICE_STATS: one log line with the decision sources and suggestion counters (verbosity 1: a source node can
+// report thousands of solutions).
+void SatSolver::log_advice_stats(const char* when) {
+  long long total = stat_dec_conflict + stat_dec_suggest + stat_dec_vsids;
+  VLOG(1) << "ADVICE_STATS " << when << " decisions=" << total << " from_conflict=" << stat_dec_conflict
+            << " from_suggestion=" << stat_dec_suggest << " from_vsids=" << stat_dec_vsids
+            << " suggestion_share=" << (total ? (double)stat_dec_suggest / total : 0.0)
+            << " suggestions_skipped_not_free=" << stat_sugg_skipped << " buffer_refills=" << stat_sugg_refills
+            << " prefixes_sent=" << stat_prefix_sent << " conflicts=" << stat_conflicts
+            << " helpers=" << numSLSProcesses << " advice_mode=" << advice_mode
+            << " phase_refreshes=" << stat_phase_refreshes << " phase_hints=" << stat_phase_hints;
 }
 
 // pick best var in unsatisfied conflict clause nearest to top of stack
@@ -101,6 +135,8 @@ int SatSolver::selectLiteral__conflict() {
         x = VAR(*p);
         score = SCORE(x);
       }
+    if (forced_phase && forced_phase[x])
+      return forced_phase[x] > 0 ? x : -x;
     // RSAT phase selection
     int d = vars[x].activity[_POSI] - vars[x].activity[_NEGA];
     if (d > _DT)
@@ -120,6 +156,8 @@ int SatSolver::selectLiteral__vsids() {
     if (vars[varOrder[i]].value == _FREE) {
       x = varOrder[i];
       nextVar = i + 1;
+      if (forced_phase && forced_phase[x])
+        return forced_phase[x] > 0 ? x : -x;
       // RSAT phase selection
       int d = vars[x].activity[_POSI] - vars[x].activity[_NEGA];
       if (d > _DT)
@@ -163,8 +201,13 @@ int SatSolver::run(Message* m) {
     }
     bool decision = decide(lit);
     this->decisions++;
+    if (advice_mode != 0 && communicator_sls != NULL && (this->decisions % ADVICE_PHASE_INTERVAL) == 0)
+      apply_phase_advice();
+    if (((stat_dec_conflict + stat_dec_suggest + stat_dec_vsids) & ((1LL << 20) - 1)) == 0)
+      log_advice_stats("periodic");
     if (!decision)
       do { // decision/conflict
+        stat_conflicts++;
         // conflict has occurred in dLevel 1, unsat
         if (aLevel == 0)
           return false;
@@ -210,6 +253,7 @@ if (command_line_arguments.opportunity_modulo!=0) {
     throw ConsistencyException("SatSolver somehow generated bad SAT result");
   if (command_line_arguments.solution_trimming==2)
   	purge_negative_literals();
+  log_advice_stats("solved");
   return true;
 }
 
@@ -517,8 +561,16 @@ SatSolver::SatSolver(
   int *dummy;
   if (numSLSProcesses > 0)
     MPI_Win_allocate(0, sizeof(int), MPI_INFO_NULL, *communicator_sls, &dummy, &window);
-  
+
   sls_solution_request = NULL;
+
+  advice_mode = (command_line_arguments.advice_mode == "phase") ? 1
+              : (command_line_arguments.advice_mode == "phase_force") ? 2 : 0;
+  if (numSLSProcesses > 0 && advice_mode != 0) {
+    TEST_NOT_NULL(phase_advice_buffer = (int *)calloc(suggestion_size, sizeof(int)))
+    if (advice_mode == 2)
+      TEST_NOT_NULL(forced_phase = (signed char *)calloc(vc + 1, sizeof(signed char)))
+  }
 
 
   // cnf->print();
@@ -552,6 +604,8 @@ SatSolver::~SatSolver() {
   free(suggestions[0]);
   free(suggestions[1]);
   free(suggestions);
+  free(phase_advice_buffer);
+  free(forced_phase);
   if (mpi_buffer != NULL)
     delete mpi_buffer;
 }
@@ -636,6 +690,14 @@ int SatSolver::sls__get_solutions() {
 int SatSolver::get_suggestion() {
   if (communicator_sls == NULL)
     return 0;
+  if (send_prefix_at_tier())
+    return 0;
+  return take_suggestion();
+}
+
+// At a decision-interval tier marker, send the current assignment as a prefix to the next helper (round robin);
+// returns true when the tier condition held (whether or not anything was assigned to send).
+bool SatSolver::send_prefix_at_tier() {
   // number of decisions
   int decisions = dLevel - 1;
   // the decision 'tier' we are on, depth divided into decision_intervals
@@ -658,11 +720,42 @@ int SatSolver::get_suggestion() {
     // if there are solved literals, then send the prefix to the identified SLS and cycle to next currentSLS
     if (prefixLength > 0) {
       MPI_Send(prefix, prefixLength, MPI_INT, currentSLS + 1, PREFIX_TAG, *communicator_sls);
+      stat_prefix_sent++;
       currentSLS = (currentSLS + 1) % numSLSProcesses;
     }
-    return 0;
+    return true;
   }
- 
+  return false;
+}
+
+// Read every helper's suggestion buffer and set the saved phases from its literals (advice_mode phase), and for
+// phase_force also the polarity that overrides activity-based polarity. Phase saving later overwrites the saved
+// phases as variables are assigned, so the advice is reapplied every ADVICE_PHASE_INTERVAL decisions.
+void SatSolver::apply_phase_advice() {
+  if (forced_phase != NULL)
+    for (int v = 0; v <= (int)vc; v++)
+      forced_phase[v] = 0; // only the newest advice overrides polarity
+  for (int i = 0; i < numSLSProcesses; i++) {
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, i + 1, MPI_MODE_NOCHECK, window);
+    MPI_Get(phase_advice_buffer, suggestion_size, MPI_INT, i + 1, 0, suggestion_size, MPI_INT, window);
+    MPI_Win_unlock(i + 1, window);
+    stat_phase_refreshes++;
+    for (int j = 0; j < suggestion_size && phase_advice_buffer[j] != 0; j++) {
+      int s = phase_advice_buffer[j];
+      if (VAR(s) > (int)vc)
+        continue;
+      vars[VAR(s)].phase = (s > 0);
+      if (forced_phase != NULL)
+        forced_phase[VAR(s)] = (s > 0) ? 1 : -1;
+      stat_phase_hints++;
+    }
+  }
+}
+
+// Decision mode: the next free literal from the current suggestion buffer, refilling it from the helper whose
+// prefix is the deepest still above the current decision level; 0 if there is none.
+int SatSolver::take_suggestion() {
+
   // if the currentSuggestion is at the end of the currentSuggestionBuffer - need to get more suggestions
   if ((currentSuggestion >= suggestion_size) || (suggestions[currentSuggestionBuffer][currentSuggestion] == 0)) {
     // Then there are no more suggestions. Try to get some more.
@@ -681,6 +774,7 @@ int SatSolver::get_suggestion() {
     // if it is not the case that all SLS are at a greater depth than our CDCL and there is a 'bestSLS'
     // then repopulate the current buffer and switch to the next Suggestion Buffer
     if (bestSLS >= 0) {
+      stat_sugg_refills++;
       if (onGoingGet) { //We already have an ongoing getting process into the backbuffer
         // free the lock
         MPI_Win_unlock(lockedSLS, window);
@@ -716,6 +810,7 @@ int SatSolver::get_suggestion() {
     if (vars[VAR(s)].value == _FREE) { // if the suggestion is free, make the suggestion as a literal choice
       return s;
     }
+    stat_sugg_skipped++; // already assigned (by the prefix, propagation or an earlier suggestion)
   }
 
   return 0;

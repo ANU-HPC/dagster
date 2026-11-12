@@ -33,6 +33,8 @@ int afsat_main(
     const std::string &python_script,
     const std::string &python_activate,
     const std::string &visible_gpus,
-    int gpus_per_helper);
+    int gpus_per_helper,
+    int host_helper_index,   // this helper's position among the helper ranks on its host (GPU binding)
+    int host_helper_count);
 
 #endif

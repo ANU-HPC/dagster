@@ -61,6 +61,23 @@ static inline bool using_cls_backend() {
   return command_line_arguments.helper_backend == "cls";
 }
 
+// This rank's position among the helper ranks on its own host, for binding GPUs: the helper's rank within its
+// CDCL group is 0 for every group with one helper each (-k 1), so it cannot separate helpers. Collective over
+// MPI_COMM_WORLD: every rank must call it, helper or not. Non-helpers get (-1, 0).
+static void host_helper_position(bool is_helper, int *index, int *count) {
+  MPI_Comm host, helpers;
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank, MPI_INFO_NULL, &host);
+  MPI_Comm_split(host, is_helper ? 0 : MPI_UNDEFINED, world_rank, &helpers);
+  *index = -1;
+  *count = 0;
+  if (helpers != MPI_COMM_NULL) {
+    MPI_Comm_rank(helpers, index);
+    MPI_Comm_size(helpers, count);
+    MPI_Comm_free(&helpers);
+  }
+  MPI_Comm_free(&host);
+}
+
 
 // for a given message, output it to the results file
 void process_solution(Dag* dag, Message* m) {
@@ -114,6 +131,16 @@ vector<Message*> mode_1_execute(WrappedSolutionsInterface *master_implementation
     LOG(ERROR) << "World size must be at least enough to support a master, worker and associated gnovelties";
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
+  // group layout for workers: one CDCL process then novelty_number helpers per group
+  int num_procs_per_hybrid_group = 1 + command_line_arguments.novelty_number;
+  int hybrid_group_num = (world_rank - 1) / num_procs_per_hybrid_group;
+  int index_in_hybrid_group = (world_rank - 1) % num_procs_per_hybrid_group;
+  if (world_rank > 0 && (hybrid_group_num + 1) * num_procs_per_hybrid_group >= world_size) { // if we have an underfull final group then merge it into the previous one, to create an overfull group
+    hybrid_group_num--;
+    index_in_hybrid_group += 1 + (command_line_arguments.novelty_number);
+  }
+  int host_helper_index, host_helper_count;
+  host_helper_position(world_rank > 0 && index_in_hybrid_group != 0, &host_helper_index, &host_helper_count);
   // enter the master loop if rank zero
   if (world_rank == 0) {
     // master process does not have any gNovelty helpers
@@ -125,13 +152,6 @@ vector<Message*> mode_1_execute(WrappedSolutionsInterface *master_implementation
     solutions = master.loop(command_line_arguments.checkpoint_filename);
     delete comms;
   } else { // else we are a worker of some kind.
-    int num_procs_per_hybrid_group = 1 + command_line_arguments.novelty_number;
-    int hybrid_group_num = (world_rank - 1) / num_procs_per_hybrid_group;
-    int index_in_hybrid_group = (world_rank - 1) % num_procs_per_hybrid_group;
-    if ((hybrid_group_num + 1) * num_procs_per_hybrid_group >= world_size) { // if we have an underfull final group then merge it into the previous one, to create an overfull group
-      hybrid_group_num--;
-      index_in_hybrid_group += 1 + (command_line_arguments.novelty_number);
-    }
     MPI_Comm_split(MPI_COMM_WORLD, hybrid_group_num, index_in_hybrid_group, &subcommunicator);
     if (index_in_hybrid_group == 0) {
       // we are the controlling process of a HybridSatSolver group
@@ -153,7 +173,9 @@ vector<Message*> mode_1_execute(WrappedSolutionsInterface *master_implementation
             command_line_arguments.cls_python_script,
             command_line_arguments.cls_python_activate,
             command_line_arguments.cls_visible_gpus,
-            command_line_arguments.cls_gpus_per_helper);
+            command_line_arguments.cls_gpus_per_helper,
+            host_helper_index,
+            host_helper_count);
       } else {
         // dump the process into gnovelty_main with the appropriate subcommunicator, and hope everything works >_<
         gnovelty_main(&subcommunicator, command_line_arguments.suggestion_size, command_line_arguments.advise_scheme, command_line_arguments.dynamic_local_search);
@@ -176,6 +198,16 @@ vector<Message*> mode_2_execute(WrappedSolutionsInterface *master_implementation
     LOG(ERROR) << "World size must be at least enough to support a master, worker, strengthener and associated gnovelties";
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
+  // group layout for workers: one CDCL process, one strengthener, then novelty_number helpers per group
+  int bin_index = (world_rank - 1) / (2 + command_line_arguments.novelty_number);    // groups the processes into sizes of 1+novelty_number
+  int bin_modulo = (world_rank - 1) % (2 + command_line_arguments.novelty_number);   // the rank of the processes in each of the groups
+  if (world_rank > 0 && (bin_index + 1) * (2 + command_line_arguments.novelty_number) >= world_size) { // if we have an underfull final group then merge it into the previous one, to create an overfull group
+    bin_index--;
+    bin_modulo += 2 + command_line_arguments.novelty_number;
+  }
+  int host_helper_index, host_helper_count;
+  host_helper_position(world_rank > 0 && bin_modulo >= 2 && command_line_arguments.novelty_number > 0,
+                       &host_helper_index, &host_helper_count);
   // enter the master loop if rank zero
   if (world_rank == 0) {
     MPI_Comm_split(MPI_COMM_WORLD, 0, 0, &mastercommunicator);
@@ -188,12 +220,6 @@ vector<Message*> mode_2_execute(WrappedSolutionsInterface *master_implementation
     delete comms;
   } else {
     // we are a worker of some kind
-    int bin_index = (world_rank - 1) / (2 + command_line_arguments.novelty_number);    // groups the processes into sizes of 1+novelty_number
-    int bin_modulo = (world_rank - 1) % (2 + command_line_arguments.novelty_number);   // the rank of the processes in each of the groups
-    if ((bin_index + 1) * (2 + command_line_arguments.novelty_number) >= world_size) { // if we have an underfull final group then merge it into the previous one, to create an overfull group
-      bin_index--;
-      bin_modulo += 2 + command_line_arguments.novelty_number;
-    }
     // Splitting communicators
     if (bin_modulo == 0) { // Tinisat
       MPI_Comm_split(MPI_COMM_WORLD, 0, bin_index + 1, &mastercommunicator);
@@ -229,7 +255,9 @@ vector<Message*> mode_2_execute(WrappedSolutionsInterface *master_implementation
             command_line_arguments.cls_python_script,
             command_line_arguments.cls_python_activate,
             command_line_arguments.cls_visible_gpus,
-            command_line_arguments.cls_gpus_per_helper);
+            command_line_arguments.cls_gpus_per_helper,
+            host_helper_index,
+            host_helper_count);
       } else {
         // dump the process into gnovelty_main with the appropriate subcommunicator_sls, and hope everything works >_<
         gnovelty_main(&subcommunicator_sls, command_line_arguments.suggestion_size, command_line_arguments.advise_scheme, command_line_arguments.dynamic_local_search);

@@ -109,6 +109,23 @@ public:
 
   int decisions;
 
+  // ADVICE_STATS: where decision literals come from, and what happens to the helper's suggestions.
+  long long stat_dec_conflict = 0, stat_dec_suggest = 0, stat_dec_vsids = 0;
+  long long stat_sugg_skipped = 0, stat_sugg_refills = 0, stat_prefix_sent = 0, stat_conflicts = 0;
+  long long stat_phase_refreshes = 0, stat_phase_hints = 0;
+  void log_advice_stats(const char* when);
+
+  // Advice used as phases (Arguments::advice_mode "phase" / "phase_force"): every ADVICE_PHASE_INTERVAL
+  // decisions each helper's suggestion buffer is read and its literals set the saved phases (and, for
+  // phase_force, a polarity that overrides activity-based polarity until the next refresh). Decisions are then
+  // never taken from the buffer; prefixes are still sent at the decision-interval tiers.
+  int advice_mode = 0;                 // 0 decision, 1 phase, 2 phase_force
+  int *phase_advice_buffer = NULL;     // suggestion_size literals read from one helper
+  signed char *forced_phase = NULL;    // phase_force: +1 / -1 per variable, 0 when not hinted
+  bool send_prefix_at_tier();          // the prefix-sending part of get_suggestion; true at a tier marker
+  int take_suggestion();               // the decision-taking part of get_suggestion
+  void apply_phase_advice();
+
   int run(Message* m);
 
   void add_arbitrary_clause(int *inClauseArray, int inClauseLength, int inClauseLitPool, int inClauseLitPoolPos);

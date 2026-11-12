@@ -85,6 +85,13 @@ struct Arguments {
   // Supported values: "sls" (default) and "cls".
   std::string helper_backend;
 
+  // How the CDCL uses a helper's suggested literals (modes 1 and 2):
+  //   "decision"    (default) as decision literals, taken when no recent conflict clause offers a variable
+  //   "phase"       as saved phases: rewritten from the helper's buffer every ADVICE_PHASE_INTERVAL decisions;
+  //                 the CDCL still chooses its own variables, and activity-based polarity still takes precedence
+  //   "phase_force" as phases that also override activity-based polarity until the next refresh
+  std::string advice_mode;
+
   // Python executable used by the CLS helper bridge.
   std::string cls_python_executable;
 
